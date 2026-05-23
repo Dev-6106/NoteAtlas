@@ -1,20 +1,37 @@
 {
   "compilerOptions": {
-    "target": "ES6",
-    "module": "commonjs",
-    "moduleResolution": "node",
+    "target": "ES2022",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+
+    "strict": true,
+
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
-    "strict": true,
+
     "outDir": "dist",
     "rootDir": "src",
+
     "baseUrl": ".",
-    
-     "paths": {
-       "@/*": ["src/*"]
+
+    "paths": {
+      "@/*": ["src/*"]
     },
-    
+
+    "skipLibCheck": true
   },
-  "include": ["src", "lessons/tools.js", "lessons/runnable.ts", "lessons/index.ts", "lessons/graph.ts", "added/briefing-doc.ts", "added/mindMap.ts", "added/study-guide.ts", "src/pipelines/summary.ts",],
-  "exclude": ["node_modules"] 
+
+  "include": [
+    "src",
+    "lessons/tools.js",
+    "lessons/runnable.ts",
+    "lessons/index.ts",
+    "lessons/graph.ts",
+    "added/briefing-doc.ts",
+    "added/mindMap.ts",
+    "added/study-guide.ts",
+    "src/pipelines/summary.ts"
+  ],
+
+  "exclude": ["node_modules"]
 }
