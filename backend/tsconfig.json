@@ -1,0 +1,20 @@
+{
+  "compilerOptions": {
+    "target": "ES6",
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "strict": true,
+    "outDir": "dist",
+    "rootDir": "src",
+    "baseUrl": ".",
+    
+     "paths": {
+       "@/*": ["src/*"]
+    },
+    
+  },
+  "include": ["src", "lessons/tools.js", "lessons/runnable.ts", "lessons/index.ts", "lessons/graph.ts", "added/briefing-doc.ts", "added/mindMap.ts", "added/study-guide.ts", "src/pipelines/summary.ts",],
+  "exclude": ["node_modules"] 
+}
