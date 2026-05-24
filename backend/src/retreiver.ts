@@ -27,17 +27,21 @@ export async function queryVectorDB(query: string) {
   const retreiver = await vectorStore.asRetriever();
   const result = await retreiver.invoke(query);
 
-  const cohereRerank = new CohereRerank({
-    apiKey: process.env.COHERE_API_KEY,
-    model:"rerank-english-v3.0",
-  })
+  if (result.length === 0) return [];
 
-  const rerankedDocs = await cohereRerank.rerank(result,query, {topN:5});
-  if(result.length>0){
-    return [result[rerankedDocs[0].index]];
+  try {
+    const cohereRerank = new CohereRerank({
+      apiKey: process.env.COHERE_API_KEY,
+      model: "rerank-english-v3.0",
+    });
+
+    const rerankedDocs = await cohereRerank.rerank(result, query, { topN: 5 });
+    if (rerankedDocs.length > 0) {
+      return [result[rerankedDocs[0].index]];
+    }
+  } catch (err: any) {
+    console.warn("Cohere Rerank failed (likely rate limit), falling back to first retrieved document. Error:", err?.message || err);
   }
-  else return [];
-}
 
-const result = await queryVectorDB("When did Ramayana happened?");
-console.log(result);
+  return [result[0]];
+}
