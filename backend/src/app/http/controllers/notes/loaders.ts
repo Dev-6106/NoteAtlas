@@ -1,11 +1,11 @@
-import { TextLoader } from "langchain/document_loaders/fs/text";
+import { readFile } from "fs/promises";
 import { RecursiveCharacterTextSplitter } from "@langchain/textsplitters";
 import { CheerioWebBaseLoader } from "@langchain/community/document_loaders/web/cheerio";
 import { Document } from "@langchain/core/documents";
 import { PDFLoader } from "@langchain/community/document_loaders/fs/pdf";
 
 export async function splitDocToChunks(docs:Document<Record<string,any>>[],props:{chunkSize: number, chunkOverlap: number}){
-    const splitter = new RecursiveCharacterTextSplitter(...props);
+    const splitter = new RecursiveCharacterTextSplitter(props);
     const splitDocs = await splitter.splitDocuments(docs);
     return splitDocs
 };
@@ -23,16 +23,15 @@ export async function loadPDF(filePath: string){
 };
 
 export async function loadText(filePath:string) {
-    const loader = new TextLoader(filePath);
-    const docs = await loader.load();
-    return docs;
+    const text = await readFile(filePath, "utf-8");
+    return [new Document({ pageContent: text, metadata: { source: filePath } })];
 };
 
 export async function loadDocument(
     filePath: string,
     docType: "pdf" | "html" | "txt",
-    chunkSize: 1000,
-    chunkOverlap: 200
+    chunkSize: number = 1000,
+    chunkOverlap: number = 200
 ) {
     let docs = null;
     

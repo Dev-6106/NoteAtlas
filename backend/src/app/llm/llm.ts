@@ -1,17 +1,17 @@
-import { ChatFireWorks } from "@langchain/community/chat_models/fireworks";
+import { ChatFireworks } from "@langchain/community/chat_models/fireworks";
 export class LLM{
     private constructor(){}
-    private static instance(): ChatFireWorks;
+    private static instance: ChatFireworks;
 
-    public static getInstance(): ChatFireWorks{
+    public static getInstance(): ChatFireworks{
         if(!LLM.instance){
             if(!process.env.CHATFIREWORK_API_KEY){
                 throw new Error("Fireworks Api key is not set");
             }
-            LLM.instance = new ChatFireWorks({
+            LLM.instance = new ChatFireworks({
                 model: "accounts/fireworks/models/deepseek-v4-pro",
-                tempreature: 0.7,
-                apiKey: process.env.CHATFIREWORK_API_KEY;
+                temperature: 0.7,
+                apiKey: process.env.CHATFIREWORK_API_KEY,
             })
         };
         return LLM.instance;

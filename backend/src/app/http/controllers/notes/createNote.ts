@@ -6,8 +6,9 @@ import { generateTitle } from "./TitleGeneration";
 import { generatePrompt } from "./promptGenerator";
 import { generateImage } from "./generateImage";
 import { LLM } from "@/app/llm/llm";
+import { loadDocument } from "./loaders";
 
-export async function createContext(
+export async function createNote(
   req: Request,
   res: Response,
   next: NextFunction,
@@ -27,19 +28,15 @@ export async function createContext(
 
     const llm = LLM.getInstance();
 
-    // Load document
     const docSplit = await loadDocument(
       `${uploadDir}/${req.file.filename}`,
       "txt",
     );
 
-    // Generate title
     const title = await generateTitle(llm, docSplit);
 
-    // Generate image prompt
     const imagePrompt = await generatePrompt(llm, title);
 
-    // Generate image
     await generateImage(
       imagePrompt,
       uploadDir,

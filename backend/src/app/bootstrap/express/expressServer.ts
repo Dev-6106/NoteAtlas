@@ -8,6 +8,8 @@ import { Strategy as GoogleStrategy } from "passport-google-oauth20";
 import { UserRepository } from "@/app/http/controllers/auth/repository/user.repository";
 import { apiV1 } from "@/app/routes/apiV1";
 import MongoStore from "connect-mongo";
+import path from "path";
+import { cwd } from "process";
 
 export function expressServer(app: Express, PORT: number) {
   const router = Router();
@@ -43,7 +45,7 @@ export function expressServer(app: Express, PORT: number) {
     app.set("trust proxy", 1);
     sess.cookie.secure = true;
   }
-
+-
   app.use(session(sess));
   app.use(passport.initialize());
   app.use(passport.session());

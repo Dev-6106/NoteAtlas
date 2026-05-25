@@ -1,13 +1,12 @@
 import { SystemMessage, HumanMessage, AIMessage } from "langchain";
 import { PromptTemplate, ChatPromptTemplate } from "@langchain/core/prompts";
 import { Runnable } from "@langchain/core/runnables";
-import { formatDocumentsAsString } from "langchain/util/document";
 import z from "zod";
 import { zodToJsonSchema } from "zod-to-json-schema";
 import "dotenv/config";
 import { ChatFireWorks } from "@langchain/community/chat_models/fireworks";
 
-export async function generatePrompt<T extends Runnable>(llm: T) {
+export async function generatePrompt<T extends Runnable>(llm: T, title: string): Promise<string> {
   const prompt_image_generator = PromptTemplate.fromTemplate(`
       You are an expert prompt engieer for an AI image generator. your task is to take the user's input, which is a document title, and create a single,  concise prompt to generate a logo for it.
       
@@ -23,7 +22,7 @@ export async function generatePrompt<T extends Runnable>(llm: T) {
 
     const chain = prompt_image_generator.pipe(llm);
     const chainResult = await chain.invoke({
-      input: "Automation and AI in Agriculture"
+      input: title
     },{
       response_format: {
         type: "json_object",
@@ -33,7 +32,10 @@ export async function generatePrompt<T extends Runnable>(llm: T) {
           })
         )
       }
-    } as any)
+    } as any);
+
+    const result = JSON.parse((chainResult as any).content as string);
+    return result.prompt;
 };
 
 

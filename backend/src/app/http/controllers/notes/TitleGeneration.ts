@@ -2,8 +2,6 @@ import { PromptTemplate } from "@langchain/core/prompts";
 import { Runnable } from "@langchain/core/runnables";
 import { Document } from "@langchain/core/documents";
 
-import { formatDocumentsAsString } from "langchain/util/document";
-
 import z from "zod";
 import { zodToJsonSchema } from "zod-to-json-schema";
 
@@ -22,7 +20,7 @@ export async function generateTitle<T extends Runnable>(
   llm: T,
   docs: Document<Record<string, any>>[],
 ) {
-  const docToString = formatDocumentsAsString(docs);
+  const docToString = docs.map(doc => doc.pageContent).join('\n\n');
 
   const chain = generate_title_prompt.pipe(llm);
 
