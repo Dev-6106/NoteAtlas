@@ -1,6 +1,6 @@
 import agenda from "../agenda";
 
-import { generateImage } from "@/app/http/controllers/notes/generateImage";
+import { generateImage } from "@/app/http/controllers/notes/helpers/generateImage";
 
 agenda.define(
   "generateImage",

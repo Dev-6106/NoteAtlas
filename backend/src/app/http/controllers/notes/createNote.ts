@@ -3,10 +3,11 @@ import { NoteRepository } from "./repository/notes.respository";
 import { cwd } from "process";
 import path from "path";
 
-import { generateTitle } from "./TitleGeneration";
-import { generatePrompt } from "./promptGenerator";
+import { generateTitle } from "./helpers/TitleGeneration";
+import { generatePrompt } from "./helpers/promptGenerator";
 import { LLM } from "@/app/llm/llm";
-import { loadDocument } from "./loaders";
+import { loadDocument } from "./loader/loaders";
+import { DocRepository } from "./repository/DocRepository";
 
 export async function createNote(
   req: Request,
@@ -34,10 +35,10 @@ export async function createNote(
       Math.floor(Math.random() * 1e9);
 
     const llm = LLM.getInstance();
-
+    const fileName = req.file.filename;
     // Load document
     const docSplit = await loadDocument(
-      `${uploadDir}/${req.file.filename}`,
+      `${uploadDir}/${fileName}`,
     );
 
     // Take only first chunk
@@ -56,11 +57,10 @@ export async function createNote(
     );
 
     // Image path
-    const image =
-      `${process.env.APP_URL}/uploads/${randomName}.png`;
+    const image = `${process.env.APP_URL}/uploads/${randomName}.png`;
 
-    const NoteRepo =
-      NoteRepository.getInstance();
+    const NoteRepo = NoteRepository.getInstance();
+    const docRepo = DocRepository.getInstance();
 
     // Save note
     const newNote = await NoteRepo.createNote(
@@ -75,6 +75,8 @@ export async function createNote(
         randomName,
       },
     );
+
+    const newDoc = await docRepo.createDoc({fileName, title, userId, noteId: newNote._id})
 
     return res.status(201).send({
       message: "Note Created Successfully",
