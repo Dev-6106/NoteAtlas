@@ -18,6 +18,9 @@ export function expressServer(app: Express, PORT: number) {
     }),
   );
 
+
+  const currDir = cwd();
+  app.use(express.static(path.join(currDir,"public")));
   
   app.use(express.json());
   app.use(express.urlencoded({ extended: true }));

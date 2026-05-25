@@ -20,7 +20,7 @@ Title:
 
 export async function generateTitle<T extends Runnable>(
   llm: T,
-  docs: Document<Record<string, any>>[]
+  docs: Document<Record<string, any>>[],
 ) {
   const docToString = formatDocumentsAsString(docs);
 
@@ -36,10 +36,10 @@ export async function generateTitle<T extends Runnable>(
         schema: zodToJsonSchema(
           z.object({
             title: z.string().min(40).max(60),
-          })
+          }),
         ),
       },
-    }
+    },
   );
 
   const result = JSON.parse(chainResult.content as string);

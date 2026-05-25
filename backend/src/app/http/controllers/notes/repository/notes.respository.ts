@@ -11,7 +11,7 @@ export class NoteRepository {
     return NoteRepository.instance;
   }
 
-  async createNote(props: { name: string; image: string; userId: string }) {
+  async createNote(props: { title: string; image: string; userId: string }) {
     const note = new Note({
       ...props,
     });
