@@ -5,18 +5,17 @@ import { handleExpressError } from "../exceptions/handleExpressError";
 import passport from "passport";
 import session from "express-session";
 import { Strategy as GoogleStrategy } from "passport-google-oauth20";
+import { UserRepository } from "@/app/http/controllers/auth/repository/user.repository";
 
 export function expressServer(app: Express, PORT: number) {
   app.use(
     cors({
-      origin: "*",
+      origin: "http://localhost:8000",
       credentials: true,
     }),
   );
   app.use(express.json());
   app.use(express.urlencoded({ extended: true }));
-  app.use(handleExpressError);
-
   app.get("/", (req: Request, res: Response) => {
     res.json({ message: "Express app is running" });
   });
@@ -42,22 +41,52 @@ export function expressServer(app: Express, PORT: number) {
       {
         clientID: process.env.GOOGLE_CLIENT_ID as string,
         clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
-        callbackURL: process.env.CALLBACK_URL,
+        callbackURL:
+          process.env.CALLBACK_URL || "http://localhost:8000/auth/google/callback",
       },
       async (
         accessToken: string,
         refreshToken: string,
         profile: any,
         done: any,
-        user: any
       ) => {
-        console.log("Create user: ", user);
-        return done(null, user);
+        try {
+          const email = profile?.emails?.[0]?.value;
+          const googleId = profile?.id;
+          if (!email || !googleId) {
+            return done(new Error("Google profile missing required fields"), null);
+          }
+
+          const userRepo = UserRepository.getInstance();
+          const userInstance = await userRepo.createUser(
+            {
+              ...profile,
+              email,
+              googleId,
+            },
+            { accessToken, refreshToken },
+          );
+
+          return done(null, userInstance);
+        } catch (error) {
+          return done(error, null);
+        }
       },
     ),
   );
 
-  passport.serializeUser((user: any, done) => {});
+  passport.serializeUser((user: any, done) => {
+    console.log("User in seri::: ", user);
+    done(null, user);
+  });
+
+  passport.deserializeUser(async (obj: any, done) => {
+    try {
+      done(null, obj);
+    } catch (error) {
+      done(error);
+    }
+  });
 
   app.get(
     "/auth/google",
@@ -76,8 +105,8 @@ export function expressServer(app: Express, PORT: number) {
   app.get(
     "/auth/google/callback",
     passport.authenticate("google", {
-      failureRedirect: "/auth/logn",
-      successRedirect: process.env.REACT_APP_URL,
+      failureRedirect: "/auth/login",
+      successRedirect: process.env.REACT_APP_URL || "http://localhost:8000",
     }),
   );
 
@@ -85,7 +114,10 @@ export function expressServer(app: Express, PORT: number) {
     if (!req.user) return res.status(401).json({ error: "User not logged in" });
     res.json(req.user);
   });
+
+  app.use(handleExpressError);
+
   app.listen(PORT, () => {
-    console.log("App is running at port 8000...");
+    console.log(`App is running at port ${PORT}...`);
   });
 }
