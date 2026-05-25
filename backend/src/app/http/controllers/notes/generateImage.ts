@@ -12,37 +12,32 @@ export const generateImage = async (
 
     // Step 1: Send generation request
     const response = await fetch(
-      "https://api.fireworks.ai/inference/v1/workflows/accounts/fireworks/models/flux-dev-fp8/text_to_image",
+      "https://api.fireworks.ai/inference/v1/workflows/accounts/fireworks/models/flux-1-dev-fp8/text_to_image",
       {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Accept: "application/json",
+          Accept: "image/jpeg",
           Authorization: `Bearer ${API_KEY}`,
         },
         body: JSON.stringify({
           prompt,
-          width: 1024,
-          height: 1024,
-          steps: 28,
-          cfg_scale: 3.5,
+          aspect_ratio: "1:1",
+          guidance_scale: 3.5,
+          num_inference_steps: 28,
           seed: Math.floor(Math.random() * 1000000),
         }),
       }
     );
 
     if (!response.ok) {
-      throw new Error(`Generation failed: ${response.statusText}`);
+      const errText = await response.text();
+      throw new Error(`Generation failed: ${response.statusText} - ${errText}`);
     }
 
-    const result = await response.json();
-
-    // Fireworks usually returns base64 image
-    const imageData = result?.image || result?.data?.[0]?.b64_json;
-
-    if (!imageData) {
-      throw new Error("No image data returned from API");
-    }
+    // Fireworks with Accept: image/jpeg returns the raw image bytes
+    const arrayBuffer = await response.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
 
     // Ensure directory exists
     if (!fs.existsSync(path)) {
@@ -52,7 +47,6 @@ export const generateImage = async (
     const finalPath = `${path}/${fileName}.png`;
 
     // Save image
-    const buffer = Buffer.from(imageData, "base64");
     fs.writeFileSync(finalPath, buffer);
 
     console.log(`Image saved at ${finalPath}`);

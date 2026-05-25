@@ -48,7 +48,7 @@ const upload = multer({
 
 export const createNoteRouter = (router: Router) => {
     router.post(
-        "/upload-documents",
+        "/notes",
         upload.single("doc"),
         createNote
     );

@@ -2,9 +2,9 @@ import { Request, Response, NextFunction } from "express";
 import { NoteRepository } from "./repository/notes.respository";
 import { cwd } from "process";
 import path from "path";
+
 import { generateTitle } from "./TitleGeneration";
 import { generatePrompt } from "./promptGenerator";
-import { generateImage } from "./generateImage";
 import { LLM } from "@/app/llm/llm";
 import { loadDocument } from "./loaders";
 
@@ -21,46 +21,81 @@ export async function createNote(
     const userId = req.body?.userId;
 
     const currentDir = cwd();
-    const uploadDir = path.join(currentDir, "public", "uploads");
+
+    const uploadDir = path.join(
+      currentDir,
+      "public",
+      "uploads",
+    );
 
     const randomName =
-      Date.now() + "-" + Math.floor(Math.random() * 1e9);
+      Date.now() +
+      "-" +
+      Math.floor(Math.random() * 1e9);
 
     const llm = LLM.getInstance();
 
+    // Load document
     const docSplit = await loadDocument(
       `${uploadDir}/${req.file.filename}`,
-      "txt",
     );
 
-    const title = await generateTitle(llm, docSplit);
+    // Take only first chunk
+    const firstChunk = getDocChunk(docSplit);
 
-    const imagePrompt = await generatePrompt(llm, title);
+    // Generate title
+    const title = await generateTitle(
+      llm,
+      firstChunk,
+    );
 
-    await generateImage(
-      imagePrompt,
-      uploadDir,
-      randomName,
-      async (fileName: string) => {
-        const image =
-          `${process.env.APP_URL}/uploads/${fileName}`;
+    // Generate image prompt
+    const imagePrompt = await generatePrompt(
+      llm,
+      title,
+    );
 
-        const NoteRepo = NoteRepository.getInstance();
+    // Image path
+    const image =
+      `${process.env.APP_URL}/uploads/${randomName}.png`;
 
-        await NoteRepo.createNote({
-          title,
-          image,
-          userId,
-        });
+    const NoteRepo =
+      NoteRepository.getInstance();
+
+    // Save note
+    const newNote = await NoteRepo.createNote(
+      {
+        title,
+        image,
+        userId,
+      },
+      {
+        generateImagePrompt: imagePrompt,
+        uploadDir,
+        randomName,
       },
     );
 
     return res.status(201).send({
       message: "Note Created Successfully",
-      title,
-      image: `${process.env.APP_URL}/uploads/${randomName}.png`,
+      newNote
     });
+
   } catch (error) {
     next(error);
   }
 }
+
+function getDocChunk(docSplit: any[]) {
+  const docChunk: any[] = [];
+
+  if (docSplit.length > 0) {
+    docChunk.push(docSplit[0]);
+  } else {
+    throw new Error(
+      "The provided document is empty",
+    );
+  }
+
+  return docChunk;
+} 

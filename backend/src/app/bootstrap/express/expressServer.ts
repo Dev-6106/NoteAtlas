@@ -32,7 +32,7 @@ export function expressServer(app: Express, PORT: number) {
 
   const sess = {
     store: MongoStore.create({
-      mongoUrl: "mongodb://127.0.0.1:27017/notebooklm",
+      mongoUrl: process.env.DB_URL,
       collectionName: "sessions",
     }),
     secret: process.env.COOKIE_KEY as string,
