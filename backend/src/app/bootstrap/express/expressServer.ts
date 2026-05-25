@@ -1,4 +1,4 @@
-import { Express, Request, Response } from "express";
+import { Express, Request, Response, Router } from "express";
 import cors from "cors";
 import express from "express";
 import { handleExpressError } from "../exceptions/handleExpressError";
@@ -6,14 +6,19 @@ import passport from "passport";
 import session from "express-session";
 import { Strategy as GoogleStrategy } from "passport-google-oauth20";
 import { UserRepository } from "@/app/http/controllers/auth/repository/user.repository";
+import { apiV1 } from "@/app/routes/apiV1";
+import MongoStore from "connect-mongo";
 
 export function expressServer(app: Express, PORT: number) {
+  const router = Router();
   app.use(
     cors({
       origin: "http://localhost:8000",
       credentials: true,
     }),
   );
+
+  
   app.use(express.json());
   app.use(express.urlencoded({ extended: true }));
   app.get("/", (req: Request, res: Response) => {
@@ -21,6 +26,10 @@ export function expressServer(app: Express, PORT: number) {
   });
 
   const sess = {
+    store: MongoStore.create({
+      mongoUrl: "mongodb://127.0.0.1:27017/notebooklm",
+      collectionName: "sessions",
+    }),
     secret: process.env.COOKIE_KEY as string,
     resave: false,
     saveUninitialized: true,
@@ -35,6 +44,10 @@ export function expressServer(app: Express, PORT: number) {
   app.use(session(sess));
   app.use(passport.initialize());
   app.use(passport.session());
+
+  // register application routes after session & passport so req.user and session
+  // are available to route handlers (fixes missing accessToken in authenticated routes)
+  apiV1(app, router);
 
   passport.use(
     new GoogleStrategy(
