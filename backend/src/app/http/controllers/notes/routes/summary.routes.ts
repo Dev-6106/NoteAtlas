@@ -1,9 +1,9 @@
 import { Router } from "express";
-import { getDocSummary } from "../getDocSummary";
-import { updateOrCreateSummary } from "../updateOrCreateSummary";
+import { getDocSummary } from "../summary/getDocSummary";
+import { updateOrCreateSummary } from "../summary/updateOrCreateSummary";
 
-export function summaryRoutes(router: Router){
+export function summaryRoutes(router: Router) {
     router.get('/notes/sumarry', getDocSummary);
-    router.put('/notes/summary',updateOrCreateSummary);
+    router.put('/notes/summary', updateOrCreateSummary);
     return router;
 }

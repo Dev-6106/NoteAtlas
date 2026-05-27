@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from "express";
-import { NoteRepository } from "./repository/notes.respository";
+import { env } from "@/config/env";
+import { NoteRepository } from "./repository/notes.repository";
 import { cwd } from "process";
 import path from "path";
 
@@ -57,7 +58,7 @@ export async function createNote(
     );
 
     // Image path
-    const image = `${process.env.APP_URL}/uploads/${randomName}.png`;
+    const image = `${env.APP_URL}/uploads/${randomName}.png`;
 
     const NoteRepo = NoteRepository.getInstance();
     const docRepo = DocRepository.getInstance();

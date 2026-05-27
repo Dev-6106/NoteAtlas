@@ -1,111 +1,76 @@
 import { Express, Request, Response, Router } from "express";
 import cors from "cors";
 import express from "express";
-import { handleExpressError } from "../exceptions/handleExpressError";
 import passport from "passport";
 import session from "express-session";
-import { Strategy as GoogleStrategy } from "passport-google-oauth20";
-import { UserRepository } from "@/app/http/controllers/auth/repository/user.repository";
-import { apiV1 } from "@/app/routes/apiV1";
 import MongoStore from "connect-mongo";
 import path from "path";
 import { cwd } from "process";
 
+import { env } from "@/config/env";
+import { logger } from "@/lib/logger";
+import { errorHandler } from "@/middleware/error.middleware";
+import { rateLimit } from "@/middleware/rate-limit.middleware";
+import { configurePassport } from "../passport/passport.config";
+import { apiV1 } from "@/app/routes/apiV1";
+
 export function expressServer(app: Express, PORT: number) {
   const router = Router();
+
+  // ─── CORS ────────────────────────────────────────────────
   app.use(
     cors({
-      origin: "http://localhost:8000",
+      origin: env.FRONTEND_URL,
       credentials: true,
-    }),
+    })
   );
 
-
+  // ─── Body Parsing ────────────────────────────────────────
   const currDir = cwd();
-  app.use(express.static(path.join(currDir,"public")));
-  
-  app.use(express.json());
+  app.use(express.static(path.join(currDir, "public")));
+  app.use(express.json({ limit: "10mb" }));
   app.use(express.urlencoded({ extended: true }));
-  app.get("/", (req: Request, res: Response) => {
-    res.json({ message: "Express app is running" });
+
+  // ─── Rate Limiting ──────────────────────────────────────
+  app.use(rateLimit(60_000, 100));
+
+  // ─── Health Check ───────────────────────────────────────
+  app.get("/", (_req: Request, res: Response) => {
+    res.json({ status: "ok", message: "NotebookLM API is running" });
   });
 
-  const sess = {
+  // ─── Session ────────────────────────────────────────────
+  const sess: session.SessionOptions = {
     store: MongoStore.create({
-      mongoUrl: process.env.DB_URL,
+      mongoUrl: env.DB_URL,
       collectionName: "sessions",
     }),
-    secret: process.env.COOKIE_KEY as string,
+    secret: env.COOKIE_KEY,
     resave: false,
-    saveUninitialized: true,
-    cookie: { secure: false },
+    saveUninitialized: false,
+    cookie: {
+      secure: env.NODE_ENV === "production",
+      httpOnly: true,
+      sameSite: env.NODE_ENV === "production" ? "none" : "lax",
+      maxAge: 24 * 60 * 60 * 1000, // 24 hours
+    },
   };
 
-  if (process.env.NODE_ENV === "production") {
+  if (env.NODE_ENV === "production") {
     app.set("trust proxy", 1);
-    sess.cookie.secure = true;
   }
--
+
   app.use(session(sess));
+
+  // ─── Passport ───────────────────────────────────────────
   app.use(passport.initialize());
   app.use(passport.session());
+  configurePassport();
 
-  // register application routes after session & passport so req.user and session
-  // are available to route handlers (fixes missing accessToken in authenticated routes)
+  // ─── API Routes ─────────────────────────────────────────
   apiV1(app, router);
 
-  passport.use(
-    new GoogleStrategy(
-      {
-        clientID: process.env.GOOGLE_CLIENT_ID as string,
-        clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
-        callbackURL:
-          process.env.CALLBACK_URL || "http://localhost:8000/auth/google/callback",
-      },
-      async (
-        accessToken: string,
-        refreshToken: string,
-        profile: any,
-        done: any,
-      ) => {
-        try {
-          const email = profile?.emails?.[0]?.value;
-          const googleId = profile?.id;
-          if (!email || !googleId) {
-            return done(new Error("Google profile missing required fields"), null);
-          }
-
-          const userRepo = UserRepository.getInstance();
-          const userInstance = await userRepo.createUser(
-            {
-              ...profile,
-              email,
-              googleId,
-            },
-            { accessToken, refreshToken },
-          );
-
-          return done(null, userInstance);
-        } catch (error) {
-          return done(error, null);
-        }
-      },
-    ),
-  );
-
-  passport.serializeUser((user: any, done) => {
-    console.log("User in seri::: ", user);
-    done(null, user);
-  });
-
-  passport.deserializeUser(async (obj: any, done) => {
-    try {
-      done(null, obj);
-    } catch (error) {
-      done(error);
-    }
-  });
-
+  // ─── Auth Routes ────────────────────────────────────────
   app.get(
     "/auth/google",
     passport.authenticate("google", {
@@ -117,25 +82,42 @@ export function expressServer(app: Express, PORT: number) {
       ],
       accessType: "offline",
       prompt: "consent",
-    }),
+    } as any)
   );
 
   app.get(
     "/auth/google/callback",
     passport.authenticate("google", {
-      failureRedirect: "/auth/login",
-      successRedirect: process.env.REACT_APP_URL || "http://localhost:8000",
-    }),
+      failureRedirect: `${env.FRONTEND_URL}/auth/login`,
+      successRedirect: `${env.FRONTEND_URL}/auth/callback`,
+    })
   );
 
-  app.get("/auth/me", (req: any, res: any) => {
-    if (!req.user) return res.status(401).json({ error: "User not logged in" });
+  app.get("/auth/me", (req: Request, res: Response) => {
+    if (!req.user) {
+      res.status(401).json({ error: { message: "User not logged in", status: 401 } });
+      return;
+    }
     res.json(req.user);
   });
 
-  app.use(handleExpressError);
+  app.get("/auth/logout", (req: Request, res: Response) => {
+    req.logout((err) => {
+      if (err) {
+        res.status(500).json({ error: { message: "Logout failed", status: 500 } });
+        return;
+      }
+      req.session.destroy(() => {
+        res.json({ message: "Logged out successfully" });
+      });
+    });
+  });
 
+  // ─── Error Handler (must be last) ──────────────────────
+  app.use(errorHandler);
+
+  // ─── Start Server ──────────────────────────────────────
   app.listen(PORT, () => {
-    console.log(`App is running at port ${PORT}...`);
+    logger.info(`Server running at ${env.APP_URL} [${env.NODE_ENV}]`);
   });
 }

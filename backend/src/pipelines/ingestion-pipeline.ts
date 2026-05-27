@@ -4,37 +4,36 @@ import { CohereEmbeddings } from "@langchain/cohere";
 import { PineconeStore } from "@langchain/pinecone";
 import { Pinecone as PineconeClient } from "@pinecone-database/pinecone";
 import { CheerioWebBaseLoader } from "@langchain/community/document_loaders/web/cheerio";
-import "dotenv/config";
+import { env } from "@/config/env";
+import { logger } from "@/lib/logger";
 
-export async function webFileEmbedding(url:string){
-    // Step 01 - Loading the data
-    const loader = new CheerioWebBaseLoader(url);
-    const docs = await loader.load();
+export async function webFileEmbedding(url: string) {
+  const loader = new CheerioWebBaseLoader(url);
+  const docs = await loader.load();
 
-    const textSplitter = new RecursiveCharacterTextSplitter({
-        chunkSize: 500,
-        chunkOverlap: 200,
-    });
+  const textSplitter = new RecursiveCharacterTextSplitter({
+    chunkSize: 500,
+    chunkOverlap: 200,
+  });
 
-    const allSplits = await textSplitter.splitDocuments(docs);
-    
-    const embeddings = new CohereEmbeddings({
-        model:"embed-english-v3.0",
-        apiKey: process.env.COHERE_API_KEY,
-    });
+  const allSplits = await textSplitter.splitDocuments(docs);
 
-    const pinecone = new PineconeClient({
-        apiKey: process.env.PINECONE_API_KEY as string,
-    });
+  const embeddings = new CohereEmbeddings({
+    model: "embed-english-v3.0",
+    apiKey: env.COHERE_API_KEY,
+  });
 
-    const pineconeIndex = pinecone.Index(process.env.PINECONE_INDEX as string)
+  const pinecone = new PineconeClient({
+    apiKey: env.PINECONE_API_KEY,
+  });
 
-    const vectorStore = new PineconeStore(embeddings,{
-        pineconeIndex,
-        maxConcurrency:5,
-    });
-    await vectorStore.addDocuments(allSplits);
-    console.log("Finished indexing...")
+  const pineconeIndex = pinecone.Index(env.PINECONE_INDEX);
+
+  const vectorStore = new PineconeStore(embeddings, {
+    pineconeIndex,
+    maxConcurrency: 5,
+  });
+
+  await vectorStore.addDocuments(allSplits);
+  logger.info("Finished indexing documents");
 }
-
-webFileEmbedding('https://en.wikipedia.org/wiki/Ramayana');

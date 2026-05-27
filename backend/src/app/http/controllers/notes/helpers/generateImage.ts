@@ -1,5 +1,7 @@
 import fs from "fs";
 import fetch from "node-fetch";
+import { env } from "@/config/env";
+import { logger } from "@/lib/logger";
 
 export const generateImage = async (
   prompt: string,
@@ -8,9 +10,6 @@ export const generateImage = async (
   cb: (fileName: string) => void
 ): Promise<void> => {
   try {
-    const API_KEY = process.env.CHATFIREWORK_API_KEY;
-
-    // Step 1: Send generation request
     const response = await fetch(
       "https://api.fireworks.ai/inference/v1/workflows/accounts/fireworks/models/flux-1-dev-fp8/text_to_image",
       {
@@ -18,7 +17,7 @@ export const generateImage = async (
         headers: {
           "Content-Type": "application/json",
           Accept: "image/jpeg",
-          Authorization: `Bearer ${API_KEY}`,
+          Authorization: `Bearer ${env.CHATFIREWORK_API_KEY}`,
         },
         body: JSON.stringify({
           prompt,
@@ -32,27 +31,22 @@ export const generateImage = async (
 
     if (!response.ok) {
       const errText = await response.text();
-      throw new Error(`Generation failed: ${response.statusText} - ${errText}`);
+      throw new Error(`Image generation failed: ${response.statusText} - ${errText}`);
     }
 
-    // Fireworks with Accept: image/jpeg returns the raw image bytes
     const arrayBuffer = await response.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 
-    // Ensure directory exists
     if (!fs.existsSync(path)) {
       fs.mkdirSync(path, { recursive: true });
     }
 
     const finalPath = `${path}/${fileName}.png`;
-
-    // Save image
     fs.writeFileSync(finalPath, buffer);
 
-    console.log(`Image saved at ${finalPath}`);
-
+    logger.info(`Image saved at ${finalPath}`);
     cb(`${fileName}.png`);
   } catch (error) {
-    console.error("Error generating image:", error);
+    logger.error("Error generating image", error);
   }
 };

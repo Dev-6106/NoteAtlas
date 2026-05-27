@@ -2,6 +2,7 @@ import z from "zod";
 import { ChatFireworks } from "@langchain/community/chat_models/fireworks";
 import { PromptTemplate } from "@langchain/core/prompts";
 import zodToJsonSchema from "zod-to-json-schema";
+import { Runnable } from "@langchain/core/runnables";
 
 const MindElixirNode = z.object({
   id: z.string(),
@@ -28,18 +29,20 @@ const MindElixirNode = z.object({
 });
 
 const MindElixitData = z.object({
-    nodeData: MindElixirNode
+  nodeData: MindElixirNode
 });
 
-const llm = new ChatFireworks({
-  model:
-    "accounts/fireworks/models/deepseek-v4-pro",
-  temperature: 0,
-  maxRetries: 5,
-  apiKey: process.env.CHATFIREWORK_API_KEY,
-});
+// const llm = new ChatFireworks({
+//   model:
+//     "accounts/fireworks/models/deepseek-v4-pro",
+//   temperature: 0,
+//   maxRetries: 5,
+//   apiKey: process.env.CHATFIREWORK_API_KEY,
+// });
 
-const prompt = PromptTemplate.fromTemplate(`
+export async function generateMindMap<T extends Runnable>(llm: T, studguide: string) {
+
+  const prompt = PromptTemplate.fromTemplate(`
 You are an expert-level tutor in the education department. Your task is to create a **Mind Map** that enhances studying, improves recall, and organizes information in a highly structured way.
 
 The Mind Map must be:
@@ -122,14 +125,17 @@ Study Guide:
 Output the Mind Map as JSON only, fully compatible with MindElixir.
 `);
 
-const responseFormat = z.object({
-  nodeData: MindElixirNode
-});
+  const responseFormat = z.object({
+    nodeData: MindElixirNode
+  });
 
-const structuredLlm = llm.withStructuredOutput(responseFormat);
+  const structuredLlm = (llm as any).withStructuredOutput(responseFormat);
 
-const chain = prompt.pipe(structuredLlm);
+  const chain = prompt.pipe(structuredLlm);
 
-const chainResult = await chain.invoke({study_guide_text:`Text`});
+  const chainResult = await chain.invoke({ study_guide_text: studguide });
 
- 
+  // withStructuredOutput automatically parses the response into the Zod object format!
+  const mindMap = JSON.stringify(chainResult, null, 2);
+  return mindMap;
+};

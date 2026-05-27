@@ -380,13 +380,8 @@ export async function generateSummary<T extends Runnable>(llm: T, splitDocs: Doc
   )) {
     console.log(Object.keys(step));
 
-    if (
-      step.hasOwnProperty(
-        "generateFinalSummary"
-      )
-    ) {
-      finalSummary =
-        step.generateFinalSummary;
+    if (step.generateFinalSummary) {
+      finalSummary = step.generateFinalSummary.finalSummary;
     }
   }
 

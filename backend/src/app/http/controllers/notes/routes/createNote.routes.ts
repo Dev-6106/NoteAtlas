@@ -4,6 +4,7 @@ import fs from "fs";
 import { Router } from "express";
 import { cwd } from "process";
 import { createNote } from "../createNote";
+import { createBlankNote } from "../createBlankNote";
 
 const currDir = cwd();
 
@@ -52,6 +53,8 @@ export const createNoteRouter = (router: Router) => {
         upload.single("doc"),
         createNote
     );
+
+    router.post("/blank/notes", createBlankNote);
 
     return router;
 };

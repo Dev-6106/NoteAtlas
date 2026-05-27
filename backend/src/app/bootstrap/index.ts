@@ -2,10 +2,12 @@ import { Express } from "express";
 import { expressServer } from "./express/expressServer";
 import { dbConnection } from "./mongoose/dbConnection";
 import agenda from "./agenda/agenda";
-import './agenda/jobs/image.job'
+import "./agenda/jobs/image.job";
+import { logger } from "@/lib/logger";
 
 export async function bootStrapApp(app: Express, PORT: number) {
-    await dbConnection();
-    await agenda.start();
-    expressServer(app, PORT)
+  await dbConnection();
+  await agenda.start();
+  logger.info("Agenda job queue started");
+  expressServer(app, PORT);
 }

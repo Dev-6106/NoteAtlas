@@ -1,10 +1,11 @@
 import { Agenda } from "agenda";
+import { env } from "@/config/env";
 
 const agenda = new Agenda({
-    db: {
-        address: process.env.DB_URL as string,
-        collection: "jobs",
-    },
+  db: {
+    address: env.DB_URL,
+    collection: "jobs",
+  },
 });
 
 export default agenda;

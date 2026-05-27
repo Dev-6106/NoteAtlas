@@ -5,7 +5,7 @@ import {
 } from "express";
 
 import { NoteRepository }
-    from "./repository/notes.respository";
+    from "./repository/notes.repository";
 
 export async function updateNote(
     req: Request,
