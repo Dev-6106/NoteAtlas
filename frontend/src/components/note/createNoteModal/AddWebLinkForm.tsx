@@ -1,100 +1,92 @@
-import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2, Link as LinkIcon } from "lucide-react";
+import { zodResolver } from "@hookform/resolvers/zod"
 
-import { useAppDispatch } from "@/hooks/useTypedStore";
-import { sendWeblink } from "@/api/notes";
-import { fetchSingleNote } from "@/store/chatSlice";
-import { showError, showSuccess } from "@/util/toast-notification";
+import { Loader2, MoveLeft } from "lucide-react";
+
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import { sendWeblink } from "@/api/notes";
 
+import { useDispatch, useSelector } from "react-redux";
+import type { AppDispatch } from "@/store";
+import { fetchSingleNote } from "@/store/chatSlice";
+// 1. Schema validation with Zod
 const formSchema = z.object({
-  weblink: z
-    .string()
-    .min(1, "Link is required")
-    .url("Please enter a valid URL"),
+    weblink: z
+        .string()
+        .min(1, "Link is required")
+        .url("Please enter a valid URL"),
 });
 
 type FormValues = z.infer<typeof formSchema>;
 
-export default function AddWebLinkForm({
-  onComplete,
-  noteId,
-}: {
-  onComplete?: () => void;
-  noteId?: string;
-}) {
-  const dispatch = useAppDispatch();
-  const [loading, setLoading] = useState(false);
+const AddWebLinkForm = ({ hideWebLinkForm,noteId }: { hideWebLinkForm: () => void,noteId?:string }) => {
+    // 2. Setup react-hook-form with Zod resolver
+    
+      const dispatch = useDispatch<AppDispatch>();
+    const {
+        register,
+        handleSubmit,
+        formState: { errors, isSubmitting },
+        reset,
+    } = useForm<FormValues>({
+        resolver: zodResolver(formSchema),
+    });
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-    reset,
-  } = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
-  });
+    // 3. Submission handler
+    const onSubmit = async (data: FormValues) => {
 
-  const onSubmit = async (data: FormValues) => {
-    if (!noteId) {
-      showError("Notebook ID is missing");
-      return;
-    }
+      await  sendWeblink(data?.weblink,noteId)
+       dispatch(fetchSingleNote(noteId as string))
 
-    setLoading(true);
-    try {
-      await sendWeblink(data.weblink, noteId);
-      dispatch(fetchSingleNote(noteId));
-      showSuccess("Web page successfully extracted and added.");
-      reset();
-      onComplete?.();
-    } catch (err) {
-      showError("Failed to extract web page. Make sure the link is publicly accessible.");
-    } finally {
-      setLoading(false);
-    }
-  };
+        // Reset form after submit
+        reset();
+        // hideWebLinkForm();
+    };
 
-  return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
-      <div className="space-y-1.5">
-        <label htmlFor="web-link" className="text-sm font-medium text-foreground flex items-center gap-2">
-          <LinkIcon className="w-4 h-4 text-green-500" />
-          Website URL
-        </label>
-        <p className="text-xs text-muted-foreground">
-          Paste a link to any public article, documentation, or blog post.
-        </p>
-      </div>
+    return (
+        <form onSubmit={handleSubmit(onSubmit)} className="p-1 mb-4 mt-4 space-y-3">
+            <div className="flex items-center gap-2">
+                <button type="button" onClick={hideWebLinkForm} className="cursor-pointer">
+                    <MoveLeft />
+                </button>
+                <Label htmlFor="link" className="text-sm font-semibold">
+                    Paste a link
+                </Label>
+            </div>
 
-      <div className="space-y-2">
-        <input
-          id="web-link"
-          type="text"
-          placeholder="https://example.com/article"
-          className="w-full px-3 py-2.5 bg-background border border-border/60 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-ring/30 focus:border-ring shadow-sm transition-all placeholder:text-muted-foreground"
-          {...register("weblink")}
-        />
-        {errors.weblink && (
-          <p className="text-destructive text-xs">{errors.weblink.message}</p>
-        )}
-      </div>
+            <Textarea
+                id="link"
+                placeholder="https://www.npmjs.com/package/react-google-drive-picker"
+                className="resize-y min-h-[100px] mt-2 text-sm placeholder:text-sm"
+                {...register("weblink")}
+            />
 
-      <div className="flex justify-end pt-2">
-        <Button
-          type="submit"
-          disabled={loading}
-          className="w-full sm:w-auto"
-        >
-          {loading ? (
-            <Loader2 className="w-4 h-4 animate-spin mr-2" />
-          ) : null}
-          {loading ? "Processing..." : "Add Source"}
-        </Button>
-      </div>
-    </form>
-  );
-}
+            {errors.weblink && (
+                <p className="text-red-500 text-xs mt-1">{errors.weblink.message}</p>
+            )}
+
+            <div className="flex">
+                <div></div>
+                <div></div>
+                <div className="ml-auto">
+                    <Button type="submit" className="w-full" disabled={isSubmitting}>
+                        {isSubmitting ? (
+                            <>
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                Submitting...
+                            </>
+                        ) : (
+                            "Submit"
+                        )}
+                    </Button>
+                </div>
+            </div>
+
+        </form>
+    );
+};
+
+export default AddWebLinkForm;

@@ -1,109 +1,179 @@
-import { useEffect, useState } from "react";
-import { Plus, Search, Sparkles, X } from "lucide-react";
-import { useAppDispatch, useAppSelector } from "@/hooks/useTypedStore";
-import { fetchNotes } from "@/store/noteSlice";
-import NoteCard from "@/components/note/NoteCard";
-import CreateNoteModal from "@/components/note/createNoteModal/CreateNoteModal";
-import { NoteCardSkeleton } from "@/components/common/LoadingSpinner";
-import { useAuth } from "@/hooks/useAuth";
-import { useDebounce } from "@/hooks/useDebounce";
+import CreateNoteModal from '@/components/note/createNoteModal/CreateNoteModal';
+import DiscoveryModal from '@/components/note/DiscoveryModal';
+import EditNoteModal from '@/components/note/EditNoteModal';
+import NoteCard from '@/components/note/NoteCard';
+import type { AppDispatch, RootState } from '@/store';
+import { fetchNotes } from '@/store/noteSlice';
+import { Loader2, Plus } from 'lucide-react'
+import { useCallback, useEffect, useState } from 'react'
+import { useDispatch, useSelector } from 'react-redux';
+// shadcn pagination
+import {
+    Pagination,
+    PaginationContent,
+    PaginationItem,
+    PaginationLink,
+    PaginationNext,
+    PaginationPrevious,
+} from "@/components/ui/pagination"
+import { Input } from '@/components/ui/input';
+import { debounce } from 'lodash'
+import { toggleAddSourceNoteModal } from '@/store/addSourceSlice';
+import { useNavigate } from 'react-router';
+import { createBlankNote } from '@/api/notes';
+import { attribNoteVal } from '@/store/chatSlice';
 
-export default function NotePage() {
-  const dispatch = useAppDispatch();
-  const { notes, loading } = useAppSelector((state) => state.notes);
-  const { user } = useAuth();
-  
-  const [searchTerm, setSearchTerm] = useState("");
-  const debouncedSearch = useDebounce(searchTerm, 400);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+function NotePage() {
+    // const [count, setCount] = useState(0)
 
-  useEffect(() => {
-    if (user?._id) {
-      dispatch(fetchNotes({ page: 1, search: debouncedSearch, userId: user._id }));
+    const dispatch = useDispatch<AppDispatch>();
+    const { notes, loading, pagination } = useSelector((state: RootState) => state.note);
+
+    const [page, setPage] = useState(1);
+    const [search, setSearch] = useState('')
+    const totalPages = pagination?.totalPages ?? 1;
+    const navigate = useNavigate()
+
+
+    const [createNoteLoading, setCreateNoteLoading] = useState(false);
+
+
+
+    const fetchNoteWithDebounce = useCallback(debounce((page: number, search: string) => {
+        dispatch(fetchNotes({ page, search }))
+
+    }, 500), [dispatch])
+
+
+    const searchNote = (e: React.ChangeEvent<HTMLInputElement>) => {
+
+        const title = e.target.value
+
+        setSearch(title)
+        setPage(1)
+
     }
-  }, [dispatch, debouncedSearch, user?._id]);
 
-  return (
-    <div className="w-full max-w-7xl mx-auto flex flex-col gap-8 animate-in fade-in duration-500">
-      {/* Header section */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-6 border-b border-border/40">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight text-foreground mb-2">My Notebooks</h1>
-          <p className="text-muted-foreground text-sm">
-            Organize your research, chat with documents, and generate insights.
-          </p>
-        </div>
+    const viewNoteDetail = (id: string) => {
+        navigate('/chats/' + id)
 
-        <div className="flex items-center gap-3 w-full md:w-auto">
-          <div className="relative flex-1 md:w-72 group">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
-            <input
-              type="text"
-              placeholder="Search notebooks..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-9 pr-9 py-2 h-10 bg-secondary/50 border border-border/60 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-ring/30 focus:border-ring focus:bg-background shadow-sm transition-all placeholder:text-muted-foreground"
-            />
-            {searchTerm && (
-              <button 
-                onClick={() => setSearchTerm("")}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                aria-label="Clear search"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            )}
-          </div>
-          <button
-            onClick={() => setIsModalOpen(true)}
-            className="flex items-center gap-2 px-4 py-2 h-10 bg-primary text-primary-foreground font-medium rounded-xl hover:opacity-90 transition-opacity shadow-sm active:scale-95 shrink-0"
-          >
-            <Plus className="w-4 h-4" />
-            <span className="hidden sm:inline text-sm">New Notebook</span>
-          </button>
-        </div>
-      </div>
+    }
 
-      {/* Grid section */}
-      {loading && notes.length === 0 ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {[1, 2, 3, 4, 5, 6].map((i) => (
-            <NoteCardSkeleton key={i} />
-          ))}
-        </div>
-      ) : notes.length > 0 ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 stagger-in">
-          {notes.map((note) => (
-            <NoteCard key={note._id} note={note} />
-          ))}
-        </div>
-      ) : (
-        /* Empty State */
-        <div className="w-full py-24 flex flex-col items-center justify-center text-center border-2 border-dashed border-border/60 rounded-2xl bg-secondary/10 fade-in">
-          <div className="w-16 h-16 rounded-2xl bg-secondary flex items-center justify-center mb-6 border border-border/50 shadow-sm">
-            <Sparkles className="w-6 h-6 text-muted-foreground" />
-          </div>
-          <h3 className="text-lg font-semibold mb-2 text-foreground">No notebooks found</h3>
-          <p className="text-muted-foreground max-w-sm mb-8 text-sm leading-relaxed">
-            {debouncedSearch 
-              ? `No results matching "${debouncedSearch}". Try a different term or clear your search.` 
-              : "Create your first notebook to start chatting with your documents, generating mind maps, and more."}
-          </p>
-          {!debouncedSearch && (
-            <button
-              onClick={() => setIsModalOpen(true)}
-              className="flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground text-sm font-medium rounded-xl hover:opacity-90 transition-opacity shadow-sm active:scale-95"
-            >
-              <Plus className="w-4 h-4" />
-              Create Notebook
-            </button>
-          )}
-        </div>
-      )}
 
-      {isModalOpen && (
-        <CreateNoteModal onClose={() => setIsModalOpen(false)} />
-      )}
-    </div>
-  );
+
+    const showAddNoteSourceModal = async () => {
+
+        try {
+            setCreateNoteLoading(true)
+            const data = await createBlankNote()
+            dispatch(toggleAddSourceNoteModal())
+            dispatch(attribNoteVal(data?.newNote))
+
+            navigate('/chats/' + data?.newNote?._id)
+            setCreateNoteLoading(false)
+        } catch (error) {
+            setCreateNoteLoading(false)
+
+        }
+
+    }
+
+
+    useEffect(() => {
+
+        fetchNoteWithDebounce(page, search)
+    }, [page, search, fetchNoteWithDebounce])
+
+
+
+
+    return (
+        <>
+
+            <main className="min-h-screen bg-white p-6">
+
+
+
+                <div className='flex justify-between'>
+                    <div>
+                        <h1 className="text-2xl font-bold text-gray-800 mb-6">
+                            Recent notebooks
+                        </h1>
+                    </div>
+                    <div>
+                        <Input onChange={searchNote} value={search} placeholder='search...'></Input>
+                    </div>
+
+                </div>
+
+
+                <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+                    {/* Create new notebook card */}
+                    <div onClick={() => showAddNoteSourceModal()} className="flex items-center justify-center border-2 border-dashed border-gray-300 rounded-xl h-40 cursor-pointer hover:bg-gray-100 transition">
+                        <div className="flex flex-col items-center ">
+
+                            {
+                                createNoteLoading ? (<>
+                                    <Loader2  className="mr-2 h-4 w-4 animate-spin" />
+                                </>) :
+                                    (
+                                        <>
+                                            <span className='w-8 h-8 bg-blue-100 rounded-full'>
+
+                                                <Plus className="w-8 h-8  rounded-full text-blue-600 mb-2" />
+                                            </span>
+                                        </>
+                                    )
+                            }
+
+
+                            <span className="text-gray-600 font-medium">
+                                Create new notebook
+                            </span>
+                        </div>
+
+
+                    </div>
+
+
+                    <NoteCard viewNoteDetail={viewNoteDetail} notebooks={notes} />
+
+
+                </div>
+
+                {/* Pagination */}
+                <div className="mt-6 flex justify-center">
+                    <Pagination>
+                        <PaginationContent>
+                            <PaginationItem>
+                                <PaginationPrevious
+                                    onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
+                                />
+                            </PaginationItem>
+
+                            {[...Array(totalPages)].map((_, i) => (
+                                <PaginationItem key={i}>
+                                    <PaginationLink
+                                        isActive={page === i + 1}
+                                        onClick={() => setPage(i + 1)}
+                                    >
+                                        {i + 1}
+                                    </PaginationLink>
+                                </PaginationItem>
+                            ))}
+
+                            <PaginationItem>
+                                <PaginationNext
+                                    onClick={() => setPage((prev) => Math.min(prev + 1, totalPages))}
+                                />
+                            </PaginationItem>
+                        </PaginationContent>
+                    </Pagination>
+                </div>
+            </main>
+
+        </>
+    )
 }
+
+export default NotePage

@@ -9,6 +9,7 @@ import { generatePrompt } from "./helpers/promptGenerator";
 import { LLM } from "@/app/llm/llm";
 import { loadDocument } from "./loader/loaders";
 import { DocRepository } from "./repository/DocRepository";
+import { getDocChunk } from "@/util/getDocChunk";
 
 export async function createNote(
   req: Request,
@@ -88,17 +89,3 @@ export async function createNote(
     next(error);
   }
 }
-
-function getDocChunk(docSplit: any[]) {
-  const docChunk: any[] = [];
-
-  if (docSplit.length > 0) {
-    docChunk.push(docSplit[0]);
-  } else {
-    throw new Error(
-      "The provided document is empty",
-    );
-  }
-
-  return docChunk;
-} 

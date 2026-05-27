@@ -1,301 +1,332 @@
-import { useState } from "react";
+
+import { PanelRight, Sparkles, Video, GitBranch, FileText, Star, HelpCircle, Pencil, NotepadText, AwardIcon, Music2 } from "lucide-react";
+import { Button } from "../ui/button";
+import { useDispatch, useSelector } from "react-redux";
+import { addExtraWidth, reduceExtraWidth, toggleRightPanel } from "@/store/chatSlice";
+import './animate.css'
+
 import {
-  PanelRight, PanelRightClose, Sparkles, Video, GitBranch,
-  FileText, Music2, Loader2, FileAudio,
-} from "lucide-react";
-import {
-  DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem,
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
-
-import { useAppDispatch, useAppSelector } from "@/hooks/useTypedStore";
-import { toggleRightPanel } from "@/store/chatSlice";
-import { fetchNoteSourceResult, showSourceModalContent } from "@/store/rightPanelSlice";
-import {
-  createBriefingDoc, createFAQ, createMindMap, createStudyGuide, createSummary,
-} from "@/api/notes";
+import { Checkbox } from "@radix-ui/react-checkbox";
+import { createBriefingDoc, createFAQ, createMindMap, createStudyGuide, createSummary } from "@/api/notes";
+import type { AppDispatch, RootState } from "@/store";
 import { showError } from "@/util/toast-notification";
+import { useEffect, useState } from "react";
+import { fetchNoteSourceResult, closeSourceModal, showSourceModalContent } from "@/store/rightPanelSlice";
 import { truncateTitle } from "@/util/truncateTitle";
-import { env } from "@/config/env";
-import type { SourceResultType } from "@/types/note-types";
-
 import { SourceModal } from "../note/rightpanel/SourceModal";
 import MindMapSourceModal from "../note/rightpanel/MindMapSourceModal";
 import AudioSection from "./AudioSection";
+import { apiUrl } from "@/config/get-env";
 
-export default function RightPanel({ noteId }: { noteId?: string }) {
-  const dispatch = useAppDispatch();
-  const { rightPanelOpen } = useAppSelector((state) => state.chat);
-  const { docIds, sources, audioCard } = useAppSelector((state) => state.rightPanel);
+const RightPanel = ({ noteId }: { noteId?: string }) => {
 
-  const [audioLoading, setAudioLoading] = useState(false);
-  const [mindMapLoading, setMindMapLoading] = useState(false);
+  const dispatch = useDispatch<AppDispatch>();
+  const { rightPanelOpen } = useSelector((state: RootState) => state.chat);
+  const { docIds, sources, sourceModal, audioCard } = useSelector((state: RootState) => state.rightPanel);
+
+
+
+  function showSourceModal(source: any) {
+    dispatch(showSourceModalContent(source))
+  }
+  function fetchSources() {
+    dispatch(fetchNoteSourceResult(noteId))
+
+  }
+
 
   function togglePanel() {
-    dispatch(toggleRightPanel());
-  }
+    if (rightPanelOpen) {
+      dispatch(addExtraWidth())
+      dispatch(toggleRightPanel())
 
-  function fetchSources() {
-    if (noteId) dispatch(fetchNoteSourceResult(noteId));
+    } else {
+
+      dispatch(reduceExtraWidth())
+      dispatch(toggleRightPanel())
+    }
+
   }
+const [audioLoading, setAudioLoading] = useState(false);
+  const [mindMapLoading, setMindMapLoading] = useState(false);
 
   async function generateMindMap() {
-    if (docIds.length === 0) {
-      showError("Please select at least one source document");
-      return;
+
+   try {
+
+     if (docIds.length > 0) {
+      setMindMapLoading(true)
+      await createMindMap(noteId, docIds)
+      fetchSources()
+    } else {
+      showError("Please select a source");
     }
-    setMindMapLoading(true);
-    try {
-      await createMindMap(noteId!, docIds);
-      fetchSources();
-    } catch {
-      showError("Failed to generate mind map.");
-    } finally {
-      setMindMapLoading(false);
-    }
+    
+   } catch (error) {
+     showError("Failed to generate mind map");
+     setMindMapLoading(false)
+   }finally{
+     setMindMapLoading(false)
+   }
+
   }
+
+
+
+  
+
 
   async function generateAudio() {
-    if (docIds.length === 0) {
-      showError("Please select at least one source document");
-      return;
-    }
-    setAudioLoading(true);
-    try {
-      await createBriefingDoc(noteId!, docIds, "audio");
-      fetchSources();
-    } catch {
-      showError("Failed to generate audio briefing.");
-    } finally {
-      setAudioLoading(false);
+    if (docIds.length > 0) {
+      try {
+        setAudioLoading(true);
+
+
+        await createBriefingDoc(noteId, docIds, 'audio')
+
+        fetchSources()
+
+        setAudioLoading(false);
+
+      } catch (error) {
+        setAudioLoading(false);
+
+      }
+    } else {
+      showError("Please select a source");
     }
   }
 
-  if (!rightPanelOpen) {
-    return (
-      <div className="h-full w-12 flex flex-col items-center py-4 border-l border-border/40 bg-background/50">
-        <button
-          onClick={togglePanel}
-          className="p-2 mb-4 rounded-lg text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors"
-          aria-label="Expand studio panel"
-        >
-          <PanelRight className="w-4 h-4" />
-        </button>
-        <div className="flex flex-col gap-2">
-          <CollapsedIcon icon={<Sparkles className="w-4 h-4" />} color="text-emerald-400" title="Audio Overview" />
-          <CollapsedIcon icon={<Video className="w-4 h-4" />} color="text-blue-400" title="Video Overview" />
-          <CollapsedIcon icon={<GitBranch className="w-4 h-4" />} color="text-orange-400" title="Mind Map" />
-          <CollapsedIcon icon={<FileText className="w-4 h-4" />} color="text-foreground" title="Reports" />
-        </div>
-      </div>
-    );
-  }
 
   return (
-    <div className="h-full w-80 flex flex-col bg-background/50 p-4 border-l border-border/40">
+
+
+    <div
+      className={`bg-white shadow-sm rounded-sm h-full transition-all duration-300 ml-auto mr-auto ${rightPanelOpen ? "w-[25%] p-4" : "w-16 p-2"
+        }`}
+    >
       <SourceModal />
       <MindMapSourceModal />
 
       {/* Header */}
-      <div className="flex justify-between items-center mb-5 shrink-0">
-        <h2 className="text-sm font-semibold tracking-tight text-foreground">Studio</h2>
-        <button
-          onClick={togglePanel}
-          className="p-1.5 rounded-lg text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors"
-          aria-label="Collapse studio panel"
+      <div className="flex justify-between items-center mb-2">
+        {rightPanelOpen && <p className="text-base text-gray-800">Studio</p>}
+        <Button
+          variant="link"
+          size="icon"
+          className="size-8 hover:bg-slate-100 cursor-pointer"
+          onClick={() => togglePanel()}
         >
-          <PanelRightClose className="w-4 h-4" />
-        </button>
+          <PanelRight size={52} />
+        </Button>
+      </div>
+      <hr />
+
+      {/* Content */}
+      <div className={`mt-4 grid ${rightPanelOpen ? "grid-cols-2 gap-4" : "grid-cols-1 gap-3"}`}>
+        <div
+          className={`${audioLoading ? 'animated-gradient-border' : ''}`}
+        >
+
+          <PanelItem generateSource={() => generateAudio()} rightPanelOpen={rightPanelOpen} icon={<Sparkles />} label="Audio Overview" />
+
+        </div>
+
+        <PanelItem rightPanelOpen={rightPanelOpen} generateSource={()=>showError('Look for video generation api, EVERY THING WORKS EXCEPT THE VIDEO GENERATION API')} icon={<Video />} label="Video Overview" />
+        <PanelItem generateSource={generateMindMap} loading={mindMapLoading} rightPanelOpen={rightPanelOpen} icon={<GitBranch />} label="Mind Map" />
+
+        <ReportPanelItem rightPanelOpen={rightPanelOpen} fetchSources={fetchSources} noteId={noteId} docIds={docIds} />
       </div>
 
-      {/* Actions Grid */}
-      <div className="grid grid-cols-2 gap-2.5 mb-5 shrink-0">
-        <PanelItem
-          icon={<Sparkles className="w-5 h-5 text-emerald-400" />}
-          label="Audio Overview"
-          bgClass="bg-emerald-500/[0.06] hover:bg-emerald-500/[0.12] border-emerald-500/15"
-          onClick={generateAudio}
-          loading={audioLoading}
-        />
-        <PanelItem
-          icon={<Video className="w-5 h-5 text-blue-400" />}
-          label="Video Overview"
-          bgClass="bg-blue-500/[0.06] hover:bg-blue-500/[0.12] border-blue-500/15"
-          onClick={() => showError("Video generation coming soon!")}
-        />
-        <PanelItem
-          icon={<GitBranch className="w-5 h-5 text-orange-400" />}
-          label="Mind Map"
-          bgClass="bg-orange-500/[0.06] hover:bg-orange-500/[0.12] border-orange-500/15"
-          onClick={generateMindMap}
-          loading={mindMapLoading}
-        />
-        <ReportPanelItem noteId={noteId!} docIds={docIds} fetchSources={fetchSources} />
-      </div>
 
-      {/* Audio Player */}
-      {audioCard?.show && audioCard?.content && (
-        <div className="mb-5 shrink-0 scale-in">
-          <AudioSection
-            audioUrl={`${env.apiUrl}/api/v1/notes/read/audios/${audioCard.content}`}
-            title={audioCard.title}
-          />
+      {rightPanelOpen && (
+        <AudioSection
+          audioUrl={`${apiUrl}/api/v1/notes/read/audios/${audioCard?.content}`}
+          title={audioCard?.title}
+        />
+      )}
+
+
+
+      <br />
+
+      {rightPanelOpen ? (
+
+
+        sources?.length > 0 ? (<div className={`space-y-3 ${audioCard.show ? 'max-h-60' : 'max-h-100'}  overflow-y-auto  pb-10`}>
+
+          {Array.isArray(sources) && sources.map((source) => (
+
+            <div
+              key={source._id}
+              onClick={() => showSourceModal(source)}
+              className="flex cursor-pointer items-center gap-2 hover:bg-gray-50 p-2 rounded-md"
+            >
+              {/* <FileText className="text-blue-500" size={20} /> */}
+
+              <SourceIcon type={source?.source_type} />
+
+              <div className="flex flex-col">
+                <span className="flex-1 text-base truncate"> {truncateTitle(source?.title, 35) || 'No title'}  </span>
+                <span className="text-xs">{source?.source_type} - {source?.total_source}  sources</span>
+              </div>
+            </div>
+          ))}
+        </div>) : (
+          <div className="flex flex-col items-center mt-10 justify-center  text-center">
+            <FileText className="text-gray-500 mx-auto" size={60} />
+            <p className="text-sm text-gray-400 font-semibold mt-4 px-3">
+              No sources, available
+            </p>
+          </div>
+
+        )
+
+
+
+
+      ) : (
+        <div className="flex flex-col items-center mt-6  pl-1  gap-4">
+          {/* {note?.docs.map((doc) => (
+            <Button key={doc._id} variant="outline" size="icon">
+              <FileText className="text-blue-500" size={20} />
+            </Button>
+          ))} */}
         </div>
       )}
 
-      <div className="flex items-center gap-4 text-muted-foreground/40 mb-3 shrink-0">
-        <div className="h-px flex-1 bg-border/40" />
-        <span className="text-[11px] font-semibold uppercase tracking-widest">
-          Generated
-        </span>
-        <div className="h-px flex-1 bg-border/40" />
-      </div>
 
-      {/* Generated Sources List */}
-      <div className="flex-1 overflow-y-auto custom-scrollbar">
-        {sources?.length > 0 ? (
-          <div className="space-y-1.5">
-            {sources.map((source) => (
-              <div
-                key={source._id}
-                onClick={() => dispatch(showSourceModalContent(source))}
-                className="flex items-center gap-3 p-2.5 rounded-xl surface surface-hover cursor-pointer group"
-                role="button"
-                tabIndex={0}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") dispatch(showSourceModalContent(source));
-                }}
-              >
-                <div className="shrink-0 w-7 h-7 rounded-lg bg-secondary/80 flex items-center justify-center">
-                  <SourceIcon type={source.source_type} />
-                </div>
-                <div className="flex flex-col flex-1 min-w-0">
-                  <span className="text-sm font-medium text-foreground truncate">
-                    {source.title || "Untitled Document"}
-                  </span>
-                  <span className="text-[11px] text-muted-foreground capitalize">
-                    {source.source_type.replace(/_/g, " ")}
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="flex flex-col items-center justify-center h-full text-center fade-in px-4">
-            <div className="w-14 h-14 rounded-2xl bg-secondary flex items-center justify-center mb-4 border border-border/60">
-              <FileAudio className="w-7 h-7 text-muted-foreground" />
-            </div>
-            <p className="text-sm text-muted-foreground leading-relaxed">
-              Generated reports, audio briefings, and mind maps will appear here.
-            </p>
-          </div>
-        )}
-      </div>
+
+      {/* Bottom note button */}
+      {/* <div className="mt-6 flex justify-center">
+        <Button
+          className={`flex items-center gap-2 rounded-full font-medium shadow-md ${rightPanelOpen ? "px-6 py-3" : "p-3"
+            }`}
+        >
+          <Pencil size={18} />
+          {rightPanelOpen && <span>Add note</span>}
+        </Button>
+      </div> */}
     </div>
+
   );
-}
+};
 
-// ─── Sub-components ───────────────────────────────────────
 
-function CollapsedIcon({ icon, color, title }: { icon: React.ReactNode; color: string; title: string }) {
-  return (
-    <div
-      className={`w-8 h-8 flex items-center justify-center rounded-lg bg-secondary/50 border border-border/40 ${color}`}
-      title={title}
-    >
-      {icon}
-    </div>
-  );
-}
 
-function PanelItem({
+const PanelItem = ({
   icon,
   label,
-  bgClass,
-  onClick,
+  rightPanelOpen,
+  generateSource,
   loading = false,
 }: {
   icon: React.ReactNode;
   label: string;
-  bgClass: string;
-  onClick: () => void;
+  rightPanelOpen: boolean;
+  generateSource: () => void;
   loading?: boolean;
-}) {
+}) => {
   return (
-    <button
-      onClick={onClick}
-      disabled={loading}
-      className={`flex flex-col items-center justify-center gap-1.5 p-3.5 h-20 rounded-xl border transition-all disabled:opacity-50 disabled:cursor-not-allowed group ${bgClass}`}
-      aria-label={label}
+    <div
+      onClick={!loading ? generateSource : undefined}
+      className={`flex items-center justify-center rounded-md transition
+        ${rightPanelOpen ? "flex-col p-4 h-24" : "p-2 h-14"}
+        ${label === "Mind Map" ? "bg-orange-50" : "bg-gray-100"}
+        ${label === "Audio Overview" ? "bg-green-50" : ""}
+        ${loading ? "cursor-not-allowed opacity-60" : "hover:bg-gray-200 cursor-pointer"}
+      `}
     >
       {loading ? (
-        <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+        <span className="h-6 w-6 animate-spin rounded-full border-2 border-gray-300 border-t-gray-600" />
       ) : (
-        <div className="group-hover:scale-110 transition-transform">{icon}</div>
+        icon
       )}
-      <span className="text-[11px] font-medium text-foreground">
-        {loading ? "Generating..." : label}
-      </span>
-    </button>
-  );
-}
 
-function ReportPanelItem({
-  noteId,
-  docIds,
-  fetchSources,
-}: {
-  noteId: string;
-  docIds: string[];
-  fetchSources: () => void;
-}) {
-  const [loading, setLoading] = useState(false);
+      {rightPanelOpen && (
+        <span className="mt-2 text-sm text-gray-700">
+          {loading ? "Loading..." : label}
+        </span>
+      )}
+    </div>
+  );
+};
+
+
+
+
+
+// / 🧾 Report menu (with dropdown)
+const ReportPanelItem = ({ rightPanelOpen, noteId, docIds, fetchSources }: { rightPanelOpen: boolean, noteId: string, docIds: string[], fetchSources: () => void }) => {
   const menuItems = ["Summary", "Study Guide", "Briefing Doc", "FAQ"];
+  const [loading, setLoading] = useState(false);
 
   async function generateSource(item: string) {
-    if (docIds.length === 0) {
-      showError("Please select at least one source document");
-      return;
-    }
-    setLoading(true);
-    try {
-      if (item === "Summary") await createSummary(noteId, docIds);
-      else if (item === "FAQ") await createFAQ(noteId, docIds);
-      else if (item === "Study Guide") await createStudyGuide(noteId, docIds);
-      else if (item === "Briefing Doc")
-        await createBriefingDoc(noteId, docIds, "briefing-doc");
-      fetchSources();
-    } catch {
-      showError(`Failed to generate ${item.toLowerCase()}.`);
-    } finally {
+    if (docIds.length > 0) {
+      setLoading(true);
+      if (item === "Summary") {
+
+
+        await createSummary(noteId, docIds);
+
+
+
+      }
+      else if (item === "FAQ") {
+
+        await createFAQ(noteId, docIds)
+      } else if (item === "Study Guide") {
+        await createStudyGuide(noteId, docIds)
+      }
+      else if (item === "Briefing Doc") {
+        await createBriefingDoc(noteId, docIds, 'briefing-doc')
+      }
+
+
+      fetchSources()
+
       setLoading(false);
+    } else {
+      showError("Please select a source");
     }
   }
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button
-          disabled={loading}
-          className="flex flex-col items-center justify-center gap-1.5 p-3.5 h-20 rounded-xl border border-border/60 bg-secondary/30 hover:bg-secondary/60 transition-all disabled:opacity-50 group"
-          aria-label="Generate reports"
+        <div
+          className={`flex items-center justify-center rounded-md bg-blue-50 hover:bg-gray-200 cursor-pointer transition ${rightPanelOpen ? "flex-col p-4 h-24" : "p-2 h-14"}`}
         >
           {loading ? (
-            <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+            <div className="animated-gradient-border w-full h-full flex items-center justify-center">
+              <div className="animated-gradient-inner flex items-center justify-center">
+                <FileText />
+              </div>
+            </div>
           ) : (
-            <FileText className="w-5 h-5 text-foreground group-hover:scale-110 transition-transform" />
+            <FileText />
           )}
-          <span className="text-[11px] font-medium text-foreground">Reports</span>
-        </button>
+
+          {rightPanelOpen && (
+            <span className="mt-2 text-sm font-medium text-gray-700">
+              Reports
+            </span>
+
+          )}
+        </div>
       </DropdownMenuTrigger>
-      <DropdownMenuContent
-        align="end"
-        className="w-44 bg-popover/95 backdrop-blur-xl border-border/50 rounded-xl shadow-xl p-1"
-      >
+
+      <DropdownMenuContent align="start" className="w-44">
         {menuItems.map((item) => (
           <DropdownMenuItem
             key={item}
             onClick={() => generateSource(item)}
-            className="cursor-pointer text-sm font-medium focus:bg-primary/10 focus:text-foreground rounded-lg px-3 py-2 my-0.5 transition-colors"
+            className="cursor-pointer"
           >
             {item}
           </DropdownMenuItem>
@@ -303,13 +334,29 @@ function ReportPanelItem({
       </DropdownMenuContent>
     </DropdownMenu>
   );
+};
+
+
+
+
+interface SourceIconProps {
+  type?: string;
 }
 
-function SourceIcon({ type = "" }: { type?: string }) {
+ function SourceIcon({ type = "" }: SourceIconProps) {
   const normalized = type.toLowerCase();
-  if (normalized.includes("audio"))
-    return <Music2 className="w-3.5 h-3.5 text-emerald-400" />;
-  if (normalized.includes("mindmap"))
-    return <GitBranch className="w-3.5 h-3.5 text-orange-400" />;
-  return <FileText className="w-3.5 h-3.5 text-foreground" />;
+
+  if (normalized.includes("audio")) {
+    return <Music2 className="text-green-500" />;
+  }
+
+  if (normalized.includes("mindmap")) {
+    return <GitBranch className="text-orange-500" size={20} />;
+  }
+
+
+
+  return <FileText className="text-blue-500" size={20} />;
 }
+
+export default RightPanel;

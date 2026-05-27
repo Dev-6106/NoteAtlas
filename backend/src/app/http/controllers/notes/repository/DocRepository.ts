@@ -1,6 +1,7 @@
 import { Doc } from "@/app/models/doc.models";
 import { Types } from "mongoose";
 import { NotFoundError } from "@/middleware/error.middleware";
+import { Note } from "@/app/models/note.models";
 
 type DocFieldUpdate = {
   userId: string;
@@ -25,6 +26,7 @@ export class DocRepository {
   }) {
     const doc = new Doc({ ...docProps });
     const newDoc = await doc.save();
+    await Note.findByIdAndUpdate(docProps.noteId, {$push: {docs: newDoc._id}});
     return newDoc.toObject();
   }
 

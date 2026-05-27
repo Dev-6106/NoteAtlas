@@ -12,6 +12,12 @@ export class NoteRepository {
     return NoteRepository.instance;
   }
 
+  async getSingleNote(noteId:string){
+    const note = await Note.findById(noteId)
+                  .populate("docs")
+                  .lean();
+    return note;
+  }
   async createNote(
     noteProps: {
       title: string;
@@ -96,6 +102,7 @@ export class NoteRepository {
         .skip(skip)
         .limit(limit)
         .sort({ createdAt: -1 })
+        .populate("docs")
         .lean(),
       Note.countDocuments(query),
     ]);

@@ -1,35 +1,39 @@
-import { useEffect, useRef } from "react";
-import { useNavigate } from "react-router";
-import { getAuthUserData } from "@/api/auth";
-import { LoadingSpinner } from "@/components/common/LoadingSpinner";
-import { showError } from "@/util/toast-notification";
+import { getAuthUserData } from "@/api/auth"
+import { useEffect } from "react"
 
-export default function AuthCallbackPage() {
-  const navigate = useNavigate();
-  const fetchedRef = useRef(false);
+function AuthCallbackPage() {
 
-  useEffect(() => {
-    // Prevent double-fetching in React Strict Mode
-    if (fetchedRef.current) return;
-    fetchedRef.current = true;
 
-    async function handleAuth() {
-      try {
-        const userData = await getAuthUserData();
-        if (userData && userData._id) {
-          localStorage.setItem("userData", JSON.stringify(userData));
-          navigate("/notes", { replace: true });
-        } else {
-          throw new Error("Invalid user data received");
+    const getUserData = async () => {
+        try {
+            const data = await getAuthUserData()
+            console.log("Auth data received:", data)
+            if (data) {
+                const { _id, name, email, image,googleAccessToken, ...resProps } = data
+                const user = { _id, name, email, image ,googleAccessToken}
+                console.log("Saving user to localStorage:", user)
+                localStorage.setItem('userData', JSON.stringify(user))
+                window.location.href='/notes'
+            }
+
+        } catch (error) {
+            console.error("Failed to get auth user data:", error)
         }
-      } catch (error) {
-        showError("Authentication failed. Please try again.");
-        navigate("/auth/login", { replace: true });
-      }
     }
 
-    handleAuth();
-  }, [navigate]);
+    useEffect(() => {
+        getUserData()
+    }, [])
 
-  return <LoadingSpinner fullPage label="Authenticating securely..." size="lg" />;
+
+
+    return (
+        <>
+            <div>
+                Authenticate....
+            </div>
+        </>
+    )
 }
+
+export default AuthCallbackPage

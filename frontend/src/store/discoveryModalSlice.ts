@@ -1,29 +1,23 @@
-import { createSlice } from "@reduxjs/toolkit";
+import { createSlice, configureStore } from '@reduxjs/toolkit'
 
-interface DiscoveryModalState {
-  modal: boolean;
-}
-
-const initialState: DiscoveryModalState = {
-  modal: false,
-};
-
-const discoveryModalSlice = createSlice({
-  name: "discoveryModal",
-  initialState,
-  reducers: {
-    toggleDiscoveryModal: (state) => {
-      state.modal = !state.modal;
+export const discoveryModalSlice= createSlice({
+    name: 'noteCreation',
+    initialState: {
+        modal: false,
+  
+      
     },
-    openDiscoveryModal: (state) => {
-      state.modal = true;
-    },
-    closeDiscoveryModal: (state) => {
-      state.modal = false;
-    },
-  },
-});
+    reducers: {
+        toggleDiscoveryModal: state => {
 
-export const { toggleDiscoveryModal, openDiscoveryModal, closeDiscoveryModal } =
-  discoveryModalSlice.actions;
-export default discoveryModalSlice.reducer;
+            state.modal=!state.modal
+        },
+       
+
+    }
+})
+
+export const { toggleDiscoveryModal } = discoveryModalSlice.actions
+
+
+export default discoveryModalSlice.reducer

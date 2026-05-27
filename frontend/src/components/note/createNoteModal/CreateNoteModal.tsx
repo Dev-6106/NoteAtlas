@@ -1,247 +1,337 @@
-import { useState, useRef } from "react";
-import { useNavigate } from "react-router";
-import { Loader2, Sparkles, Folder, UploadCloud, File as FileIcon, Youtube, Link as LinkIcon, Type } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { BaseModal } from "../../base/BaseModal"
+import { Button } from "../../ui/button"
+import { ClipboardMinus, HardDrive, Link2, Loader2, MoveLeft, Newspaper, Search, Youtube } from "lucide-react";
+import type { AppDispatch, RootState } from "@/store";
+import { useDispatch, useSelector } from "react-redux";
+import { toggleAddSourceNoteModal } from "@/store/addSourceSlice";
+import useDrivePicker from 'react-google-drive-picker'
+import { apiUrl, developerKey, googleClientId } from "@/config/get-env";
+import { getUserData } from "@/helper/getUserData";
 
-import { createBlankNote, createNoteWithDoc } from "@/api/notes";
-import { useAppDispatch } from "@/hooks/useTypedStore";
-import { fetchNotes } from "@/store/noteSlice";
-import { useAuth } from "@/hooks/useAuth";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
-
-import AddYoutubeLinkForm from "./AddYoutubeForm";
+import { Label } from "../../ui/label";
+import { Textarea } from "../../ui/textarea";
+import { uploadPickedFiles } from "@/api/notes";
+import { AddPasteTextForm } from "./AddPasteTextForm";
 import AddWebLinkForm from "./AddWebLinkForm";
-import AddPasteTextForm from "./AddPasteTextForm";
+import AddYoutubeLinkForm from "./AddYoutubeForm";
+import { toggleDiscoveryModal } from "@/store/discoveryModalSlice";
+import { showInfo } from "@/util/toast-notification";
 
-interface Props {
-  onClose: () => void;
-}
 
-type Tab = "file" | "youtube" | "weblink" | "text";
 
-export default function CreateNoteModal({ onClose }: Props) {
-  const [isLoading, setIsLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState<Tab>("file");
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const dispatch = useAppDispatch();
-  const navigate = useNavigate();
-  const { user } = useAuth();
+const CreateNoteModal = ({ noteId }: { noteId?: string }) => {
 
-  // Create notebook with file or blank
-  const handleCreateNote = async () => {
-    setIsLoading(true);
-    try {
-      let data;
-      if (selectedFile) {
-        const formData = new FormData();
-        formData.append("doc", selectedFile);
-        data = await createNoteWithDoc(formData);
-      } else {
-        data = await createBlankNote();
-      }
+    const dispatch = useDispatch<AppDispatch>();
+    const { modal } = useSelector((state: RootState) => state.addSource);
+    const userData = getUserData()
 
-      if (data?.newNote?._id) {
-        dispatch(fetchNotes({ page: 1, search: "", userId: user?._id }));
-        navigate(`/notes/${data.newNote._id}`);
-        onClose();
-      }
-    } finally {
-      setIsLoading(false);
+
+
+    const [openPicker, data, authResponse] = useDrivePicker();
+    const handleOpenPicker = async () => {
+
+        openPicker({
+            clientId: googleClientId,
+            developerKey: developerKey,
+            viewId: "DOCS",
+            token: userData?.googleAccessToken,
+            showUploadView: true,
+            showUploadFolders: true,
+            supportDrives: true,
+            multiselect: true,
+        })
+
+        dispatch(toggleAddSourceNoteModal())
+
+
     }
-  };
 
-  // For other tabs (YouTube, Web, Text), we need a blank note first
-  const [tempNoteId, setTempNoteId] = useState<string | null>(null);
 
-  // We wrap the forms to handle the blank note creation seamlessly
-  const handleTabFormComplete = (noteId: string) => {
-    dispatch(fetchNotes({ page: 1, search: "", userId: user?._id }));
-    navigate(`/notes/${noteId}`);
-    onClose();
-  };
+    const [dropZone, setDropZone] = useState(true)
+    const [youtubeLinkForm, setYoutubeLinkForm] = useState(false)
+    const [websiteLinkForm, setWebsiteLinkForm] = useState(false)
+    const [pasteTextForm, setPasteTextForm] = useState(false)
 
-  const getOrCreateBlankNote = async () => {
-    if (tempNoteId) return tempNoteId;
-    const data = await createBlankNote();
-    if (data?.newNote?._id) {
-      setTempNoteId(data.newNote._id);
-      return data.newNote._id;
+
+    //youtube form
+    const hideYoutubeLinkForm = () => {
+        setYoutubeLinkForm(false)
+        setDropZone(true)
     }
-    throw new Error("Failed to create blank note");
-  };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setSelectedFile(e.target.files[0]);
+    const showYoutubeLinkForm = () => {
+        setYoutubeLinkForm(true)
+        setDropZone(false)
     }
-  };
+    //end youtube form
 
-  return (
-    <Dialog open={true} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-xl p-0 overflow-hidden bg-card border-border/60 shadow-xl">
-        <div className="p-6 sm:p-8">
-          
-          <div className="flex items-center gap-4 mb-8">
-            <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 border border-primary/20">
-              <Folder className="w-6 h-6 text-primary" />
-            </div>
-            <div>
-              <DialogTitle className="text-2xl font-bold text-foreground">Create Notebook</DialogTitle>
-              <DialogDescription className="text-muted-foreground mt-1">
-                Upload a document or add a source to begin.
-              </DialogDescription>
-            </div>
-          </div>
 
-          {/* Tabs */}
-          <div className="flex bg-secondary/50 p-1 rounded-xl mb-6">
-            <TabButton active={activeTab === "file"} onClick={() => setActiveTab("file")}>
-              <UploadCloud className="w-4 h-4" /> File
-            </TabButton>
-            <TabButton active={activeTab === "youtube"} onClick={() => setActiveTab("youtube")}>
-              <Youtube className="w-4 h-4" /> YouTube
-            </TabButton>
-            <TabButton active={activeTab === "weblink"} onClick={() => setActiveTab("weblink")}>
-              <LinkIcon className="w-4 h-4" /> Link
-            </TabButton>
-            <TabButton active={activeTab === "text"} onClick={() => setActiveTab("text")}>
-              <Type className="w-4 h-4" /> Text
-            </TabButton>
-          </div>
 
-          {/* Content */}
-          <div className="min-h-[220px]">
-            {activeTab === "file" && (
-              <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
-                <div 
-                  onClick={() => fileInputRef.current?.click()}
-                  className={`w-full p-8 mb-6 border-2 border-dashed rounded-xl flex flex-col items-center justify-center cursor-pointer transition-all ${
-                    selectedFile ? "border-primary bg-primary/5" : "border-border/60 bg-background/50 hover:bg-muted"
-                  }`}
-                >
-                  <input 
-                    type="file" 
-                    className="hidden" 
-                    ref={fileInputRef} 
-                    onChange={handleFileChange}
-                    accept=".pdf,.doc,.docx,.txt,.csv"
-                  />
-                  {selectedFile ? (
+    //web linkform
+    const hideWebLinkForm = () => {
+        setWebsiteLinkForm(false)
+        setDropZone(true)
+    }
+
+    const showWebLinkForm = () => {
+        setWebsiteLinkForm(true)
+        setDropZone(false)
+    }
+
+    //end web linkform
+
+
+
+    //paste text form
+    const hidePasteTextForm = () => {
+        setPasteTextForm(false)
+        setDropZone(true)
+    }
+
+    const showPasteTextForm = () => {
+        setPasteTextForm(true)
+        setDropZone(false)
+    }
+
+    //paste text form
+
+
+    useEffect(() => {
+
+        uploadPickedFiles(data?.docs, noteId)
+
+    }, [data])
+
+
+    return (
+
+
+        <div>
+
+
+            <BaseModal
+                open={modal}
+                onOpenChange={() => dispatch(toggleAddSourceNoteModal())}
+                title="NotebookLM"
+                description=""
+                width={850}
+                height={600}
+                footer={
                     <>
-                      <FileIcon className="w-8 h-8 text-primary mb-3" />
-                      <span className="text-sm font-medium text-foreground">{selectedFile.name}</span>
-                      <span className="text-xs text-muted-foreground mt-1">Click to change file</span>
+
                     </>
-                  ) : (
-                    <>
-                      <UploadCloud className="w-8 h-8 text-muted-foreground mb-3" />
-                      <span className="text-sm font-medium text-foreground">Click to upload a document</span>
-                      <span className="text-xs text-muted-foreground mt-1">PDF, DOCX, TXT, CSV (Max 2MB)</span>
-                    </>
-                  )}
+                }
+            >
+
+                <div className="flex justify-between mb-10 ">
+                    <div className="text-xl font-semibold">Add Sources</div>
+                  
                 </div>
+                <div>
 
-                <DialogFooter className="flex flex-col sm:flex-row gap-3">
-                  <button
-                    onClick={onClose}
-                    disabled={isLoading}
-                    className="w-full sm:w-auto flex-1 px-4 py-2.5 rounded-lg font-medium border border-border bg-background hover:bg-muted transition-colors disabled:opacity-50"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={handleCreateNote}
-                    disabled={isLoading}
-                    className="w-full sm:w-auto flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-all shadow-sm active:scale-[0.98] disabled:opacity-50"
-                  >
-                    {isLoading ? (
-                      <Loader2 className="w-5 h-5 animate-spin" />
-                    ) : (
-                      <Sparkles className="w-4 h-4" />
-                    )}
-                    {selectedFile ? "Upload & Create" : "Create Empty"}
-                  </button>
-                </DialogFooter>
-              </div>
-            )}
 
-            {/* Note: For these tabs, we hijack the forms. 
-                When submitted, the form expects a noteId. We generate a blank one right before submission or let a wrapper handle it.
-                To keep it simple, we use a wrapper component for these tabs to handle the blank note creation flow. */}
-            
-            {activeTab === "youtube" && (
-              <FormWrapper 
-                getNoteId={getOrCreateBlankNote} 
-                onComplete={(id) => handleTabFormComplete(id)}
-              >
-                {(noteId) => <AddYoutubeLinkForm noteId={noteId} onComplete={() => handleTabFormComplete(noteId)} />}
-              </FormWrapper>
-            )}
 
-            {activeTab === "weblink" && (
-              <FormWrapper 
-                getNoteId={getOrCreateBlankNote} 
-                onComplete={(id) => handleTabFormComplete(id)}
-              >
-                {(noteId) => <AddWebLinkForm noteId={noteId} onComplete={() => handleTabFormComplete(noteId)} />}
-              </FormWrapper>
-            )}
+                    <p className="text-sm text-gray-600">Sources let NotebookLM base its responses on the information that matters most to you.
+                        (Examples: marketing plans, course reading, research notes, meeting transcripts, sales documents, etc.)</p>
+                </div>
+                {dropZone && <UploadFileSection noteId={noteId} />}
 
-            {activeTab === "text" && (
-              <FormWrapper 
-                getNoteId={getOrCreateBlankNote} 
-                onComplete={(id) => handleTabFormComplete(id)}
-              >
-                {(noteId) => <AddPasteTextForm noteId={noteId} onComplete={() => handleTabFormComplete(noteId)} />}
-              </FormWrapper>
-            )}
-          </div>
-          
+
+                {youtubeLinkForm && <AddYoutubeLinkForm noteId={noteId} hideYoutubeLinkForm={hideYoutubeLinkForm} />}
+
+                {websiteLinkForm && <AddWebLinkForm noteId={noteId} hideWebLinkForm={hideWebLinkForm} />}
+
+
+                {pasteTextForm && <AddPasteTextForm noteId={noteId} hidePasteTextForm={hidePasteTextForm} />}
+
+
+
+
+                {/* div card :actions buttons  */}
+                <div className="flex gap-2">
+                    <div className="flex-1  cursor-pointer rounded-md border border-gray-200 p-4">
+                        <div className="mb-5 ">
+                            <p className="text-gray-900">Google Workspace</p>
+                        </div>
+                        <button onClick={() => handleOpenPicker()} className="flex gap-2 bg-slate-100 p-2 rounded-md text-sm text-blue-600 font-semibold">
+                            <HardDrive></HardDrive>
+                            Google Drive
+
+                        </button>
+                    </div>
+                    <div className="flex-1 rounded-md border border-gray-200 p-4">
+                        <div className="flex gap-1 mb-5 ">
+                            <Link2></Link2>
+                            <p className="text-gray-900 font-semibold">Link</p>
+                        </div>
+                        <div className="flex gap-2">
+                            <button onClick={showWebLinkForm} className="flex cursor-pointer bg-slate-100 gap-2 p-2 rounded-md text-sm text-blue-600 font-semibold">
+                                <Newspaper size={20}></Newspaper>   Website
+                            </button>
+
+                            <button onClick={showYoutubeLinkForm} className="flex cursor-pointer gap-2 bg-slate-100 p-2 rounded-md text-sm text-blue-600 font-semibold">
+                                <span><Youtube></Youtube></span> Youtube</button>
+                        </div>
+                    </div>
+
+
+                    <div className="flex-1 rounded-md border border-gray-200 p-4">
+                        <div className="mb-5 " >
+                            <p className="flex cursor-pointer gap-2 font-semibold text-gray-900">
+                                <ClipboardMinus></ClipboardMinus> Paste text
+                            </p>
+                        </div>
+                        <button onClick={showPasteTextForm} className="bg-slate-100 p-2 rounded-md text-sm text-blue-600 font-semibold">Copied text</button>
+                    </div>
+
+                </div>
+            </BaseModal>
         </div>
-      </DialogContent>
-    </Dialog>
-  );
+    );
 }
 
-// ─── Subcomponents ──────────────────────────────────────────
 
-function TabButton({ children, active, onClick }: { children: React.ReactNode; active: boolean; onClick: () => void }) {
-  return (
-    <button
-      onClick={onClick}
-      className={`flex-1 flex items-center justify-center gap-2 py-2 text-sm font-medium rounded-lg transition-all ${
-        active 
-          ? "bg-background text-foreground shadow-sm ring-1 ring-border/50" 
-          : "text-muted-foreground hover:text-foreground hover:bg-background/50"
-      }`}
-    >
-      {children}
-    </button>
-  );
-}
 
-// Wrapper that passes the resolved blank note ID to the child form
-function FormWrapper({ 
-  getNoteId, 
-  children 
-}: { 
-  getNoteId: () => Promise<string>;
-  onComplete: (id: string) => void;
-  children: (noteId: string) => React.ReactNode;
-}) {
-  const [noteId, setNoteId] = useState<string | null>(null);
-  const [error, setError] = useState(false);
 
-  // We need the ID as soon as the tab mounts so the child form can submit to it.
-  // Actually, wait! The child form shouldn't submit until the ID is ready.
-  // Let's resolve the ID first.
-  useState(() => {
-    getNoteId().then(setNoteId).catch(() => setError(true));
-  });
 
-  if (error) return <div className="text-destructive text-sm py-4 text-center">Failed to initialize. Please try again.</div>;
-  if (!noteId) return <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-muted-foreground" /></div>;
 
-  return <>{children(noteId)}</>;
-}
+const UploadFileSection = ({ noteId }: { noteId?: string }) => {
+    const [isDragging, setIsDragging] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+    const [loading, setLoading] = useState(false);
+
+
+    const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+        e.preventDefault();
+        setIsDragging(true);
+    };
+
+    const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+        e.preventDefault();
+        setIsDragging(false);
+    };
+
+    const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+        e.preventDefault();
+        setIsDragging(false);
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            uploadFiles(files);
+        }
+    };
+
+    const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (loading) return; // prevent new uploads
+        const files = e.target.files;
+        if (files && files.length > 0) {
+            uploadFiles(files);
+        }
+    };
+
+    const uploadFiles = async (files: FileList) => {
+        setLoading(true);
+        const formData = new FormData();
+        const userData = getUserData()
+        const userId = userData?._id
+        Array.from(files).forEach((file) => {
+            formData.append("doc", file);
+            formData.append("userId", userId)
+            formData.append("noteId", noteId as string)
+
+        });
+
+        try {
+            const response = await fetch(`${apiUrl}/api/v1/notes/upload-files`, {
+                method: "POST",
+                body: formData,
+            });
+
+            if (!response.ok) {
+                throw new Error(`Upload failed: ${response.statusText}`);
+            }
+
+            const data = await response.json();
+            console.log("Upload successful:", data);
+            showInfo('File uploaded successfully')
+            setLoading(false);
+        } catch (error) {
+            setLoading(false);
+
+            console.error("Error uploading files:", error);
+        }
+    };
+
+
+
+
+
+    const handleClick = () => {
+        fileInputRef.current?.click();
+    };
+
+    return (
+
+
+
+
+        <div
+            className={`mb-8 mt-6 rounded-lg p-8 flex flex-col items-center justify-center text-center 
+      ${isDragging ? "border-solid border-2 border-indigo-500 bg-indigo-50" : "border-2 border-dashed border-gray-300"}`}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+            onClick={handleClick}
+            style={{ cursor: "pointer" }}
+        >
+
+
+            {loading && (
+                <div className="mb-4 flex items-center space-x-2 text-indigo-500">
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    <span>Uploading...</span>
+                </div>
+            )}
+
+            <div className="bg-indigo-50 rounded-full p-4 mb-3">
+                <svg
+                    className="w-8 h-8 text-indigo-500"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    viewBox="0 0 24 24"
+                >
+                    <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M16 12l-4-4m0 0l-4 4m4-4v12"
+                    />
+                </svg>
+            </div>
+
+            <p className="font-medium text-gray-900">Upload sources</p>
+            <p className="text-gray-500 text-sm mb-2">
+                Drag & drop or <span className="text-indigo-600 cursor-pointer">choose file</span> to upload
+            </p>
+            <p className="text-gray-400 text-xs">
+                Supported file types: PDF, .txt, Markdown, Audio (e.g. mp3)
+            </p>
+
+            <input
+                type="file"
+                ref={fileInputRef}
+                className="hidden"
+                onChange={handleFileSelect}
+                multiple
+            />
+        </div>
+    );
+};
+
+
+
+
+
+
+
+export default CreateNoteModal;

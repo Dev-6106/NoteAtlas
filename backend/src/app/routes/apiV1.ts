@@ -10,7 +10,7 @@ import { studyGuideRoutes } from "../http/controllers/notes/routes/studyGuide.ro
 import { mindMapRoutes } from "../http/controllers/notes/routes/mindMap.routes";
 import { mockRoutes } from "./mock.routes";
 
-export function apiV1(app: Express, router: Router){
+export function apiV1(app: Express, router: Router) {
     const driveRouter = driveRoutes(router);
     const noteRouter = createNoteRouter(router);
     const updateRouter = updateNoteRouter(router);
@@ -21,5 +21,5 @@ export function apiV1(app: Express, router: Router){
     const studyGuideRouter = studyGuideRoutes(router);
     const mindMapRouter = mindMapRoutes(router);
     const mockRouter = mockRoutes(router);
-    app.use('/api/v1',driveRouter,noteRouter, updateRouter, summaryRouter, briefingRouter, faqRouter, studyGuideRouter,mindMapRouter, getAllNotesRouter, mockRouter);
+    app.use('/api/v1', driveRouter, noteRouter, updateRouter, summaryRouter, briefingRouter, faqRouter, studyGuideRouter, mindMapRouter, getAllNotesRouter, mockRouter);
 }

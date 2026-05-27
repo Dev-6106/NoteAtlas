@@ -1,96 +1,62 @@
-import { env } from "@/config/env";
+import { apiUrl } from "@/config/get-env"
 
-interface RequestOptions {
-  method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
-  body?: Record<string, unknown> | FormData;
-  headers?: Record<string, string>;
-  /** Timeout in milliseconds (default: 30000) */
-  timeout?: number;
-}
+export type HttpVerbType = 'GET' | 'POST' | 'PUT' | 'DELETE'
+// export function makeHttpReq<T>(verb: HttpVerbType, endpoint: string, input?: T) {
 
-interface ApiResponse<T = unknown> {
-  data: T;
-  status: number;
-}
+//     return new Promise(async (resolve, reject) => {
 
-class ApiError extends Error {
-  constructor(
-    message: string,
-    public status: number,
-    public data?: unknown
-  ) {
-    super(message);
-    this.name = "ApiError";
-  }
-}
+//         try {
+//             const res = await fetch(`${apiUrl}/api/v1/${endpoint}`, {
+//                 method: verb,
+//                 credentials: "include",
+//                 headers: {
+//                     accept: "application/json",
+//                      "Content-Type": "application/json",
+//                 },
+//                 body: JSON.stringify(input)
+//             })
+//             if (!res.ok) throw new Error('failed to process this request')
+//             const data = res.json()
+//             resolve(data)
+//         } catch (error) {
 
-/**
- * Centralized HTTP request utility.
- * Automatically prepends the API URL and handles JSON.
- */
-export async function makeHttpReq<T = unknown>(
-  endpoint: string,
-  options: RequestOptions = {}
-): Promise<ApiResponse<T>> {
-  const {
-    method = "GET",
-    body,
-    headers: customHeaders = {},
-    timeout = 30000,
-  } = options;
+//             reject(error)
 
-  const url = `${env.apiUrl}${endpoint}`;
+//         }
 
-  const headers: Record<string, string> = {
-    ...customHeaders,
-  };
 
-  // Don't set Content-Type for FormData (browser sets boundary automatically)
-  if (body && !(body instanceof FormData)) {
-    headers["Content-Type"] = "application/json";
-  }
+//     })
+// }
 
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), timeout);
-
+export async function makeHttpReq<T>(verb: HttpVerbType, endpoint: string, input?: T) {
   try {
-    const response = await fetch(url, {
-      method,
-      headers,
+    const url = endpoint.startsWith('/') 
+      ? `${apiUrl}${endpoint}` 
+      : `${apiUrl}/api/v1/${endpoint}`;
+
+    const res = await fetch(url, {
+      method: verb,
       credentials: "include",
-      signal: controller.signal,
-      body: body
-        ? body instanceof FormData
-          ? body
-          : JSON.stringify(body)
-        : undefined,
+      headers: {
+        accept: "application/json",
+        "Content-Type": "application/json",
+      },
+      body: input ? JSON.stringify(input) : undefined,
     });
 
-    clearTimeout(timeoutId);
+    const data = await res.json();
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => null);
-      throw new ApiError(
-        errorData?.error?.message || `Request failed with status ${response.status}`,
-        response.status,
-        errorData
-      );
+    if (!res.ok) {
+      // Reject with the actual error from server
+      return Promise.reject(data);
     }
 
-    const data = await response.json();
-    return { data: data as T, status: response.status };
-  } catch (error) {
-    clearTimeout(timeoutId);
-
-    if (error instanceof ApiError) throw error;
-
-    if (error instanceof DOMException && error.name === "AbortError") {
-      throw new ApiError("Request timed out", 408);
-    }
-
-    throw new ApiError(
-      error instanceof Error ? error.message : "Network error",
-      0
-    );
+    return data;
+  } catch (error: any) {
+    // If fetch itself fails (network error), reject with the error object
+    return Promise.reject({
+      message: error.message || "Network error",
+      stack: error.stack,
+    });
   }
 }

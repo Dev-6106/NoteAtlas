@@ -1,39 +1,25 @@
+
+
 export type PaginationType = {
-  total: number;
-  page: number;
-  limit: number;
-  totalPages: number;
-};
+    total: number
+    page: number
+    limit: number
+    totalPages: number
+}
+export type NoteType = {
+    _id: string
+    title: string
+    image: string
+    userId: string
+    createdAt: string
+    docs:DocType[]
+}
 
 export type DocType = {
-  _id: string;
-  title: string;
-  fileName: string;
-  noteId: string;
-  userId: string;
-  source_type: string;
-};
-
-export type NoteType = {
-  _id: string;
-  title: string;
-  image: string;
-  userId: string;
-  createdAt: string;
-  docs: DocType[];
-};
-
-export type SourceResultType = {
-  _id: string;
-  title: string;
-  content: string;
-  source_type: string;
-  total_source?: number;
-  noteId?: string;
-  userId?: string;
-  createdAt?: string;
-};
-
-export type NoteServerData = { notes: NoteType[] } & {
-  pagination?: PaginationType;
-};
+    _id: string,
+    fileName: string,
+    noteId: string,
+    userId:string,
+    source_type:string
+}
+export type NoteServerData = { notes: NoteType[] } & { pagination?: PaginationType }

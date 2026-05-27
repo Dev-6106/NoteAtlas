@@ -1,47 +1,58 @@
-import { getUserCreditAndPayment } from "@/api/payment";
-import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import { getUserCreditAndPaymentMethod } from '@/api/payment';
+import { createSlice, createAsyncThunk, type PayloadAction } from '@reduxjs/toolkit'
 
-export interface CreditMenuStateType {
-  credits: number;
-  paymentType: string;
-}
+
 
 export const fetchUserCreditAndPayment = createAsyncThunk(
-  "creditMenu/fetchCredits",
-  async (userId: string) => getUserCreditAndPayment(userId)
+  "get-user-credit-and-payment",
+  async (userId:string) => getUserCreditAndPaymentMethod(userId)
 );
 
-interface CreditMenuState {
-  result: CreditMenuStateType;
-  loading: boolean;
-  error: string | null;
-}
 
-const initialState: CreditMenuState = {
-  result: { credits: 0, paymentType: "" },
-  loading: false,
+
+export type CreditMenuStateType={credits:number,paymentType:string|null}
+const creditMenuState= {
+  result:{
+    credits:0,
+    paymentType:null
+  } as CreditMenuStateType
+ ,
+ loading:false,
   error: null,
 };
 
+
 const creditMenuSlice = createSlice({
-  name: "creditMenu",
-  initialState,
-  reducers: {},
+  name: 'creditMenu',
+  initialState: {
+ 
+    ...creditMenuState
+  },
+  reducers: {
+   
+
+  },
   extraReducers: (builder) => {
-    builder
-      .addCase(fetchUserCreditAndPayment.pending, (state) => {
+    builder .addCase(fetchUserCreditAndPayment.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
-      .addCase(fetchUserCreditAndPayment.fulfilled, (state, action) => {
-        state.loading = false;
-        state.result = action.payload as CreditMenuStateType;
+      .addCase(fetchUserCreditAndPayment.fulfilled, (state, action: PayloadAction<{result:CreditMenuStateType}>) => {
+
+        console.log('result : :  ',action.payload)
+        state.result = action.payload.result;
+                state.loading = false;
       })
       .addCase(fetchUserCreditAndPayment.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.error.message ?? "Failed to fetch credits";
+        state.error = action.error.message || "Failed to fetch notes";
       });
+      
   },
-});
+})
 
-export default creditMenuSlice.reducer;
+export const { } = creditMenuSlice.actions
+
+
+
+export default creditMenuSlice.reducer

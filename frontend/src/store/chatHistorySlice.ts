@@ -1,51 +1,66 @@
-import { getNoteChats, type MessageType } from "@/api/notes";
-import { createSlice, createAsyncThunk, type PayloadAction } from "@reduxjs/toolkit";
+import { getNoteChats, type chatHistoryType } from '@/api/notes';
+import { createSlice, configureStore, createAsyncThunk, type PayloadAction } from '@reduxjs/toolkit'
+
+
 
 export const fetchChats = createAsyncThunk(
-  "chatHistory/fetchChats",
-  async ({ userId, noteId }: { userId: string; noteId: string }) =>
-    getNoteChats(userId, noteId)
+  "chats/history",
+  async ({userId,noteId}:{userId:string,noteId:string}) => getNoteChats(userId,noteId)
 );
 
-interface ChatHistoryState {
-  chatHistory: MessageType[];
+type ChatState = {
+  chatHistory: chatHistoryType | null|undefined;
   loading: boolean;
   error: string | null;
-}
+};
 
-const initialState: ChatHistoryState = {
-  chatHistory: [],
+
+const chatState :ChatState= {
+  chatHistory: null,
   loading: false,
   error: null,
 };
 
+
 const chatHistorySlice = createSlice({
-  name: "chatHistory",
-  initialState,
+  name: 'chatHistory',
+  initialState: {
+ 
+    ...chatState
+  },
   reducers: {
-    addMessage: (state, action: PayloadAction<MessageType>) => {
-      state.chatHistory.push(action.payload);
+   
+
+
+    addMessageInChatHistory: (state,action) => {
+
+      if(state.chatHistory){
+       state.chatHistory?.chatHistory?.push(action.payload)
+      }
+   
     },
-    clearChatHistory: (state) => {
-      state.chatHistory = [];
-    },
+
+
   },
   extraReducers: (builder) => {
-    builder
-      .addCase(fetchChats.pending, (state) => {
+    builder .addCase(fetchChats.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
-      .addCase(fetchChats.fulfilled, (state, action) => {
+      .addCase(fetchChats.fulfilled, (state, action: PayloadAction<chatHistoryType | undefined>) => {
+        state.chatHistory = action.payload;
         state.loading = false;
-        state.chatHistory = action.payload?.chatHistory ?? [];
       })
       .addCase(fetchChats.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.error.message ?? "Failed to fetch chats";
+        state.error = action.error.message || "Failed to fetch notes";
       });
+      
   },
-});
+})
 
-export const { addMessage, clearChatHistory } = chatHistorySlice.actions;
-export default chatHistorySlice.reducer;
+export const { addMessageInChatHistory} = chatHistorySlice.actions
+
+
+
+export default chatHistorySlice.reducer

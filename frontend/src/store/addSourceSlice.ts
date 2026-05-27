@@ -1,29 +1,21 @@
-import { createSlice } from "@reduxjs/toolkit";
+import { createSlice, configureStore } from '@reduxjs/toolkit'
 
-interface AddSourceState {
-  modal: boolean;
-}
-
-const initialState: AddSourceState = {
-  modal: false,
-};
-
-const addSourceSlice = createSlice({
-  name: "addSource",
-  initialState,
-  reducers: {
-    toggleAddSourceNoteModal: (state) => {
-      state.modal = !state.modal;
+export const addSourceSlice= createSlice({
+    name: 'noteCreation',
+    initialState: {
+        modal: false,
     },
-    openAddSourceModal: (state) => {
-      state.modal = true;
-    },
-    closeAddSourceModal: (state) => {
-      state.modal = false;
-    },
-  },
-});
+    reducers: {
+        toggleAddSourceNoteModal: state => {
 
-export const { toggleAddSourceNoteModal, openAddSourceModal, closeAddSourceModal } =
-  addSourceSlice.actions;
-export default addSourceSlice.reducer;
+            state.modal=!state.modal
+        },
+       
+
+    }
+})
+
+export const { toggleAddSourceNoteModal } = addSourceSlice.actions
+
+
+export default addSourceSlice.reducer

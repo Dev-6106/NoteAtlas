@@ -1,250 +1,233 @@
-import { memo } from "react";
+import type { AppDispatch, RootState } from "@/store";
 import {
-  FileText, NotepadText, PanelLeftClose, PanelLeft, Plus,
-  Search, Youtube, Link as LinkIcon,
+  addExtraWidth,
+  reduceExtraWidth,
+  toggleLeftPanel,
+} from "@/store/chatSlice";
+import { useDispatch, useSelector } from "react-redux";
+import { Button } from "../ui/button";
+import {
+  FileText,
+  NotepadText,
+  PanelLeft,
+  Plus,
+  Search,
+  Youtube,
+  
 } from "lucide-react";
-
-import { useAppDispatch, useAppSelector } from "@/hooks/useTypedStore";
-import { toggleLeftPanel } from "@/store/chatSlice";
 import { toggleAddSourceNoteModal } from "@/store/addSourceSlice";
-import { toggleDiscoveryModal } from "@/store/discoveryModalSlice";
-import { setDocIds } from "@/store/rightPanelSlice";
 import type { NoteType } from "@/types/note-types";
 import { Checkbox } from "../ui/checkbox";
-import PdfIcon from "@/assets/pdf.png";
+import { toggleDiscoveryModal } from "@/store/discoveryModalSlice";
+import { useState } from "react";
+import { addDocIds } from "@/store/rightPanelSlice";
+// import PdfIcon from '@/assets/pdf-1512.svg'
+import PdfIcon from '@/assets/pdf.png'
 
 type LeftPanelProps = {
   note: NoteType;
-  loading: boolean;
+  loading: boolean
 };
 
-export default function LeftPanel({ note, loading }: LeftPanelProps) {
-  const dispatch = useAppDispatch();
-  const { leftPanelOpen } = useAppSelector((state) => state.chat);
-  const { docIds: selectedDocs } = useAppSelector((state) => state.rightPanel);
+const LeftPanel = ({ note, loading }: LeftPanelProps) => {
+  const dispatch = useDispatch<AppDispatch>();
+  const { leftPanelOpen } = useSelector((state: RootState) => state.chat);
 
   function togglePanel() {
-    dispatch(toggleLeftPanel());
-  }
-
-  function handleDocSelect(docId: string) {
-    if (selectedDocs.includes(docId)) {
-      dispatch(setDocIds(selectedDocs.filter((id) => id !== docId)));
+    if (leftPanelOpen) {
+      dispatch(addExtraWidth());
+      dispatch(toggleLeftPanel());
     } else {
-      dispatch(setDocIds([...selectedDocs, docId]));
+      dispatch(reduceExtraWidth());
+      dispatch(toggleLeftPanel());
     }
   }
 
-  const allSelected =
-    note?.docs?.length > 0 && selectedDocs.length === note.docs.length;
+  // State to track selected doc IDs
+  const [selectedDocs, setSelectedDocs] = useState<string[]>([]);
 
-  function handleSelectAll() {
-    if (allSelected) {
-      dispatch(setDocIds([]));
-    } else {
-      dispatch(setDocIds(note?.docs?.map((d) => d._id) || []));
-    }
-  }
 
-  if (!leftPanelOpen) {
-    return (
-      <div className="h-full w-12 flex flex-col items-center py-4 border-r border-border/40 bg-background/50">
-        <button
-          onClick={togglePanel}
-          className="p-2 mb-4 rounded-lg text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors"
-          aria-label="Expand sources panel"
-        >
-          <PanelLeft className="w-4 h-4" />
-        </button>
+ function handleDocSelect(docId: string) {
+  setSelectedDocs((prev: string[]) =>
+    prev.includes(docId)
+      ? prev.filter((id) => id !== docId) // remove if exists
+      : [...prev, docId] // add if not exists
+  );
 
-        <div className="flex flex-col gap-2">
-          <button
-            onClick={() => {
-              togglePanel();
-              dispatch(toggleAddSourceNoteModal());
-            }}
-            className="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center hover:bg-primary/20 transition-colors"
-            aria-label="Add source"
-          >
-            <Plus className="w-4 h-4" />
-          </button>
+  dispatch(addDocIds(docId)); 
+}
 
-          <div className="w-6 h-px bg-border/40 my-1 mx-auto" />
 
-          {note?.docs?.slice(0, 5).map((doc) => (
-            <div
-              key={doc._id}
-              className="w-8 h-8 flex items-center justify-center rounded-lg bg-secondary/50 border border-border/40 text-muted-foreground"
-              title={doc.title}
-            >
-              <SourceIcon type={doc.source_type} />
-            </div>
-          ))}
-          {(note?.docs?.length || 0) > 5 && (
-            <span className="text-[10px] text-muted-foreground text-center">
-              +{note.docs.length - 5}
-            </span>
-          )}
-        </div>
-      </div>
-    );
-  }
+
 
   return (
-    <div className="h-full w-72 flex flex-col bg-background/50 p-4 border-r border-border/40">
+    <div
+      className={`bg-white shadow-sm h-full transition-all duration-300 flex flex-col ${leftPanelOpen
+        ? "w-[25%] p-4 rounded-md"
+        : "w-16 p-2 rounded-r-2xl rounded-l-2xl"
+        }`}
+    >
       {/* Header */}
-      <div className="flex justify-between items-center mb-5 shrink-0">
-        <h2 className="text-sm font-semibold tracking-tight text-foreground">Sources</h2>
-        <button
-          onClick={togglePanel}
-          className="p-1.5 rounded-lg text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors"
-          aria-label="Collapse sources panel"
+      <div className="flex justify-between items-center mb-2 flex-shrink-0">
+        {leftPanelOpen && <p className="text-base text-gray-800">Sources</p>}
+        <Button
+          variant="link"
+          size="icon"
+          className="size-8 hover:bg-slate-100 cursor-pointer"
+          onClick={() => togglePanel()}
         >
-          <PanelLeftClose className="w-4 h-4" />
-        </button>
+          <PanelLeft size={35} />
+        </Button>
       </div>
 
-      {/* Actions */}
-      <div className="flex gap-2 mb-5 shrink-0">
-        <button
-          onClick={() => dispatch(toggleAddSourceNoteModal())}
-          className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-primary/10 text-primary text-sm font-medium rounded-xl hover:bg-primary/20 transition-colors border border-primary/15"
-          aria-label="Add new source"
-        >
-          <Plus className="w-3.5 h-3.5" />
-          Add
-        </button>
-        <button
-          onClick={() => dispatch(toggleDiscoveryModal())}
-          className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-secondary text-secondary-foreground text-sm font-medium rounded-xl hover:bg-muted transition-colors border border-border/60"
-          aria-label="Discover sources on the web"
-        >
-          <Search className="w-3.5 h-3.5" />
-          Discover
-        </button>
-      </div>
+      {leftPanelOpen && <hr className="mb-2" />}
 
-      {/* Document List */}
-      <div className="flex-1 overflow-y-auto custom-scrollbar">
-        {loading ? (
-          <div className="space-y-2.5">
-            {[1, 2, 3, 4].map((i) => (
-              <div
-                key={i}
-                className="flex items-center gap-3 p-3 rounded-xl border border-border/40 animate-pulse"
-              >
-                <div className="w-8 h-8 bg-secondary rounded-lg shrink-0" />
-                <div className="h-3.5 bg-secondary rounded flex-1" />
-                <div className="w-4 h-4 bg-secondary rounded shrink-0" />
-              </div>
-            ))}
-          </div>
-        ) : note?.docs?.length > 0 ? (
-          <div className="space-y-1.5">
-            <div className="flex items-center gap-3 p-2 mb-2 sticky top-0 bg-background/95 backdrop-blur-sm z-10 rounded-lg">
-              <Checkbox
-                checked={allSelected}
-                onCheckedChange={handleSelectAll}
-                className="rounded border-border data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground"
-                aria-label="Select all sources"
-              />
-              <span className="text-xs font-medium text-muted-foreground">
-                Select all ({note.docs.length})
-              </span>
-            </div>
+      {/* Buttons */}
 
-            <div className="space-y-1.5">
-              {note.docs.map((doc) => (
-                <SourceItem
-                  key={doc._id}
-                  id={doc._id}
-                  title={doc.title}
-                  sourceType={doc.source_type}
-                  isSelected={selectedDocs.includes(doc._id)}
-                  onSelect={handleDocSelect}
-                />
-              ))}
-            </div>
+      <div className="flex-shrink-0">
+        {leftPanelOpen ? (
+          <div className="flex mt-3 justify-between">
+            <Button
+              onClick={() => dispatch(toggleAddSourceNoteModal())}
+              variant="outline"
+              className="rounded-3xl px-5 py-4 w-35"
+            >
+              <Plus size={18} /> Add
+            </Button>
+            <Button
+              onClick={() => dispatch(toggleDiscoveryModal())}
+              variant="outline"
+              className="rounded-3xl px-5 py-3 w-35"
+            >
+              <Search size={18} /> Discover
+            </Button>
           </div>
         ) : (
-          <div className="flex flex-col items-center justify-center h-full text-center fade-in px-4">
-            <div className="w-14 h-14 rounded-2xl bg-secondary flex items-center justify-center mb-4 border border-border/60">
-              <NotepadText className="w-7 h-7 text-muted-foreground" />
-            </div>
-            <p className="text-sm text-muted-foreground leading-relaxed">
-              Add sources to start chatting.
-              <br />
-              Click <strong>Add</strong> above to upload files or paste links.
-            </p>
+          <div className="flex flex-col items-center mt-6 gap-4">
+            <Button variant="outline" size="icon">
+              <Plus size={18} />
+            </Button>
+            <Button variant="outline" size="icon">
+              <Search size={18} />
+            </Button>
+          </div>
+        )}
+      </div>
+
+      {/* Body */}
+      <div className="flex-1 overflow-y-auto mt-4 pr-2">
+
+        {leftPanelOpen ? (
+
+          loading ? <DocRowSkeleton count={12} /> :
+
+            note?.docs?.length ? (
+
+              <div className="space-y-3">
+                <div className="flex items-center gap-2 mb-2">
+                  <Checkbox checked={false} />
+                  <span className="text-sm font-medium">Select all sources</span>
+                </div>
+                {/* <DocRowSkeleton count={10} /> */}
+                {note?.docs?.map((doc) => (
+                  <div
+                    key={doc._id}
+                    className="flex items-center gap-2 hover:bg-gray-50 p-2 rounded-md"
+                  >
+                    <SourceIcon type={doc?.source_type} />
+                    <span className="flex-1 text-base text-gray-600 truncate"> {doc?.title}  </span>
+                    <Checkbox
+                      className="cursor-pointer"
+                      checked={selectedDocs.includes(doc._id)}
+                      onCheckedChange={() => handleDocSelect(doc._id)}
+                    />
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center h-full text-center">
+                <NotepadText className="text-gray-500 mx-auto" size={60} />
+                <p className="text-sm text-gray-400 font-semibold mt-4 px-3">
+                  Saved sources will appear here. Click Add source above to add
+                  PDFs, websites, text, videos, or audio files. Or import a file
+                  directly from Google Drive.
+                </p>
+              </div>
+            )
+          // end
+        ) : (
+          <div className="flex flex-col items-center mt-6  pl-3  gap-4">
+            {note?.docs?.map((doc) => (
+              <Button key={doc._id} variant="outline" size="icon">
+                <FileText className="text-blue-500" size={20} />
+              </Button>
+            ))}
           </div>
         )}
       </div>
     </div>
   );
-}
+};
 
-// ─── Memoized source item ─────────────────────────────────
 
-const SourceItem = memo(function SourceItem({
-  id,
-  title,
-  sourceType,
-  isSelected,
-  onSelect,
-}: {
-  id: string;
-  title: string;
-  sourceType: string;
-  isSelected: boolean;
-  onSelect: (id: string) => void;
-}) {
+
+
+type DocRowSkeletonProps = {
+  count?: number; // number of rows to render
+};
+
+const DocRowSkeleton: React.FC<DocRowSkeletonProps> = ({ count = 5 }) => {
   return (
-    <div
-      className={`flex items-center gap-3 p-2.5 rounded-xl border transition-all cursor-pointer group ${
-        isSelected
-          ? "bg-primary/10 border-primary/30 text-foreground"
-          : "bg-transparent border-border/40 hover:bg-secondary/50 text-muted-foreground hover:text-foreground"
-      }`}
-      onClick={() => onSelect(id)}
-      role="checkbox"
-      aria-checked={isSelected}
-      tabIndex={0}
-      onKeyDown={(e) => {
-        if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault();
-          onSelect(id);
-        }
-      }}
-    >
-      <div className="shrink-0 w-7 h-7 rounded-lg bg-secondary/80 flex items-center justify-center">
-        <SourceIcon type={sourceType} />
-      </div>
-      <span className="flex-1 text-sm font-medium truncate">{title}</span>
-      <Checkbox
-        checked={isSelected}
-        onCheckedChange={() => onSelect(id)}
-        className="rounded border-border data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground"
-        onClick={(e) => e.stopPropagation()}
-        aria-hidden="true"
-        tabIndex={-1}
-      />
+    <div className="space-y-3">
+      {Array.from({ length: count }).map((_, idx) => (
+        <div
+          key={idx}
+          className="flex items-center gap-2 p-2 rounded-md animate-pulse bg-gray-100"
+        >
+          {/* Icon placeholder */}
+          <div className="w-5 h-5 bg-gray-300 rounded" />
+          {/* Title placeholder */}
+          <div className="flex-1 h-4 bg-gray-300 rounded" />
+          {/* Checkbox placeholder */}
+          <div className="w-5 h-5 bg-gray-300 rounded" />
+        </div>
+      ))}
     </div>
   );
-});
+};
 
-function SourceIcon({ type = "" }: { type?: string }) {
+
+
+interface SourceIconProps {
+  type?: string;
+}
+
+ function SourceIcon({ type = "" }: SourceIconProps) {
   const normalized = type.toLowerCase();
 
   if (normalized.includes("youtube")) {
-    return <Youtube className="w-3.5 h-3.5 text-red-400" />;
+    return <Youtube className="text-red-500" />;
   }
+
   if (normalized.includes("pdf")) {
-    return (
-      <img src={PdfIcon} alt="PDF" className="w-3.5 h-3.5 rounded-sm opacity-80" />
-    );
+    return   <img
+        src={PdfIcon}
+        alt="PDF Icon"
+        width={24}
+        height={24}
+        className="rounded"
+      />
   }
-  if (normalized.includes("web") || normalized.includes("http")) {
-    return <LinkIcon className="w-3.5 h-3.5 text-green-400" />;
-  }
-  return <FileText className="w-3.5 h-3.5 text-blue-400" />;
+
+
+  // if (normalized.includes("mindmap")) {
+  //   return <GitBranch className="text-orange-500" size={20} />;
+  // }
+
+
+
+  return   <FileText className="text-blue-500" size={20} />
 }
+
+
+export default LeftPanel;

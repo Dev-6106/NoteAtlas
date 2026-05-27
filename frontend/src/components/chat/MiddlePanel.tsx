@@ -1,367 +1,415 @@
-import { memo, useEffect, useRef, useState, type ReactNode } from "react";
-import {
-  Copy, GitBranch, Loader2, Music2, NotebookTabs,
-  SendHorizonal, ArrowDown, Check, Sparkles,
-} from "lucide-react";
+// MiddlePannel.jsx
+import { useDispatch, useSelector } from "react-redux";
+import type { AppDispatch, RootState } from "@/stores";
+import { Copy, GitBranch, Loader2, Music2, NotebookTabs, SendHorizonal, Sparkles, ArrowDown } from "lucide-react";
+import { memo, useEffect, useRef, useState } from "react";
+import { Button } from "../ui/button";
+import { createBriefingDoc, createMindMap, createSummary, sendChatMessage, type chatHistoryType, type messageType, type questionAndDocOverviewType } from "@/api/notes";
+import { addMessageInChatHistory } from "@/store/chatHistorySlice";
+import type { NoteType } from "@/types/note-types";
+import { showError } from "@/util/toast-notification";
+import { fetchNoteSourceResult } from "@/store/rightPanelSlice";
+
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-
-import { useAppDispatch, useAppSelector } from "@/hooks/useTypedStore";
-import { createBriefingDoc, createMindMap, createSummary, sendChatMessage } from "@/api/notes";
-import { addMessage } from "@/store/chatHistorySlice";
-import { fetchNoteSourceResult } from "@/store/rightPanelSlice";
-import { showError } from "@/util/toast-notification";
-import type { NoteType } from "@/types/note-types";
-import type { MessageType, QuestionAndDocOverviewType } from "@/api/notes";
-
 import { SuggestedInput } from "./SuggestedInput";
 import { ChatInput } from "./ChatInput";
 
-interface Props {
-  chatHistory: MessageType[];
-  userId: string;
-  note: NoteType;
-  aiResult: QuestionAndDocOverviewType;
-}
 
-export default function MiddlePanel({ chatHistory, userId, note, aiResult }: Props) {
-  const { _id: noteId } = note;
-  const dispatch = useAppDispatch();
-  const { docIds } = useAppSelector((state) => state.rightPanel);
+const MiddlePannel = ({ chatHistory, userId, note, aiResult }: { chatHistory: chatHistoryType, userId: string, note: NoteType, aiResult: questionAndDocOverviewType }) => {
+    const { _id: noteId } = note
+    const dispatch = useDispatch<AppDispatch>();
+    const { middlePanelDefaultWidth } = useSelector((state: RootState) => state.chat);
 
-  const [inputValue, setInputValue] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [showScrollButton, setShowScrollButton] = useState(false);
+    const { docIds } = useSelector((state: RootState) => state.rightPanel);
 
-  const chatContainerRef = useRef<HTMLDivElement>(null);
+    const [inputValue, setInputValue] = useState("");
+    const [loading, setLoading] = useState(false);
 
-  const scrollToBottom = () => {
-    if (chatContainerRef.current) {
-      chatContainerRef.current.scrollTo({
-        top: chatContainerRef.current.scrollHeight,
-        behavior: "smooth",
-      });
+    const chatContainerRef = useRef<HTMLElement>(null);
+    const [showScrollButton, setShowScrollButton] = useState(false);
+
+
+
+    async function sendUserMessage({ newMessage }: { newMessage: messageType }) {
+        setLoading(true)
+        dispatch(addMessageInChatHistory(newMessage))
+
+
+        const data = await sendChatMessage({ userId, noteId, query: inputValue || newMessage?.content })
+        setLoading(false)
+        setTimeout(scrollToBottom, 100);
+        dispatch(addMessageInChatHistory(data?.message))
+        
     }
-  };
 
-  useEffect(() => {
-    const container = chatContainerRef.current;
-    if (!container) return;
-    const handleScroll = () => {
-      const isAtBottom =
-        container.scrollHeight - container.scrollTop <= container.clientHeight + 50;
-      setShowScrollButton(!isAtBottom);
+    const sendMessage = async () => {
+        if (!inputValue.trim()) return;
+
+        const newMessage: messageType = {
+            role: "user",
+            content: inputValue,
+            userId, noteId
+        };
+
+        await sendUserMessage({ newMessage })
+       
     };
-    container.addEventListener("scroll", handleScroll);
-    return () => container.removeEventListener("scroll", handleScroll);
-  }, []);
 
-  // Auto scroll on new messages
-  useEffect(() => {
-    setTimeout(scrollToBottom, 100);
-  }, [chatHistory.length]);
 
-  const sendUserMessage = async (content: string) => {
-    if (!content.trim() || !userId || !noteId) return;
+    async function selectQuestion(question: string) {
+        const newMessage: messageType = {
+            role: "user",
+            content: question,
+            userId, noteId
+        };
 
-    const newMessage: MessageType = { role: "user", content, userId, noteId };
-    dispatch(addMessage(newMessage));
-    setInputValue("");
-    setLoading(true);
 
-    try {
-      const data = await sendChatMessage({ userId, noteId, query: content });
-      if (data?.message) {
-        dispatch(addMessage(data.message));
-      }
-    } catch (err) {
-      showError("Failed to send message. Please try again.");
-    } finally {
-      setLoading(false);
-      setTimeout(scrollToBottom, 100);
+        await sendUserMessage({ newMessage })
+
     }
-  };
 
-  const hasChatHistory = chatHistory.length > 0;
 
-  return (
-    <div className="h-full flex flex-col relative bg-background/30">
-      {/* Messages Area */}
-      <div
-        ref={chatContainerRef}
-        className="flex-1 overflow-y-auto custom-scrollbar"
-        role="log"
-        aria-live="polite"
-        aria-label="Chat messages"
-      >
-        <div className="max-w-3xl mx-auto px-4 py-6 space-y-6">
-          <MiddlePanelHeader aiResult={aiResult} note={note} docIds={docIds} />
+    const onKeyDownMessage = async (e) => {
+        if (e.key === "Enter" && !e.shiftKey) {
+            e.preventDefault();
 
-          {hasChatHistory && (
-            <>
-              <div className="flex items-center gap-4 text-muted-foreground/40">
-                <div className="h-px flex-1 bg-border/40" />
-                <span className="text-[11px] font-semibold uppercase tracking-widest">
-                  Conversation
-                </span>
-                <div className="h-px flex-1 bg-border/40" />
-              </div>
+            const newMessage: messageType = {
+                role: "user",
+                content: inputValue,
+                userId, noteId
+            };
+            setInputValue("");
+            await sendUserMessage({ newMessage })
+            
 
-              <div className="space-y-5">
-                {chatHistory.map((msg, index) => (
-                  <ChatMessage key={`${msg.role}-${index}`} msg={msg} />
-                ))}
-                {loading && <TypingIndicator />}
-              </div>
-            </>
-          )}
+        }
+    };
 
-          {!hasChatHistory && !loading && (
-            <div className="flex flex-col items-center justify-center py-12 text-center fade-in">
-              <div className="w-14 h-14 rounded-2xl bg-secondary flex items-center justify-center mb-4 border border-border/60">
-                <Sparkles className="w-6 h-6 text-muted-foreground" />
-              </div>
-              <p className="text-muted-foreground text-sm max-w-xs leading-relaxed">
-                Ask a question about your sources, or try one of the suggestions below.
-              </p>
-            </div>
-          )}
-        </div>
-      </div>
 
-      {/* Jump to bottom */}
-      {showScrollButton && (
-        <div className="absolute bottom-32 left-1/2 -translate-x-1/2 z-10">
-          <button
-            onClick={scrollToBottom}
-            className="px-3.5 py-1.5 bg-secondary/90 text-foreground backdrop-blur-md shadow-lg rounded-full flex items-center gap-2 text-xs font-medium hover:bg-secondary border border-border/60 transition-all scale-in"
-            aria-label="Scroll to latest message"
-          >
-            <ArrowDown className="w-3.5 h-3.5" />
-            New messages
-          </button>
-        </div>
-      )}
+    const scrollToBottom = () => {
+        const container = chatContainerRef.current;
+        if (container) {
+            container.scrollTo({
+                top: container.scrollHeight,
+                behavior: "smooth",
+            });
+        }
+    };
 
-      {/* Input Area */}
-      <div className="shrink-0 border-t border-border/30 bg-background/50 backdrop-blur-md">
-        <div className="max-w-3xl mx-auto px-4 py-3 space-y-2">
-          <SuggestedInput
-            selectQuestion={(q) => sendUserMessage(q)}
-            questions={aiResult?.aiResult?.questions || []}
-          />
 
-          <div className="relative p-1 bg-card rounded-2xl flex items-end gap-2 shadow-sm border border-border/60 focus-within:border-muted-foreground/40 focus-within:ring-1 focus-within:ring-muted-foreground/20 transition-all">
-            <ChatInput
-              inputValue={inputValue}
-              setInputValue={setInputValue}
-              onSend={() => sendUserMessage(inputValue)}
-            />
+    useEffect(() => {
+        const container = chatContainerRef.current;
+        if (!container) return;
 
-            <div className="shrink-0 flex items-center gap-2.5 pr-2 pb-2">
-              <span className="text-[11px] font-medium text-muted-foreground bg-secondary/60 px-2 py-0.5 rounded-md tabular-nums">
-                {docIds?.length || 0} sources
-              </span>
-              <button
-                onClick={() => sendUserMessage(inputValue)}
-                disabled={loading || !inputValue.trim()}
-                className="w-8 h-8 rounded-xl flex items-center justify-center bg-primary text-primary-foreground disabled:opacity-30 disabled:bg-secondary disabled:text-muted-foreground hover:opacity-90 transition-all shadow-sm active:scale-95"
-                aria-label="Send message"
-              >
-                <SendHorizonal className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
+        const handleScroll = () => {
+            const isAtBottom = container.scrollHeight - container.scrollTop <= container.clientHeight + 50;
+            setShowScrollButton(!isAtBottom);
+        };
 
-// ─── Sub-components ───────────────────────────────────────
+        container.addEventListener("scroll", handleScroll);
+        return () => container.removeEventListener("scroll", handleScroll);
+    }, []);
 
-function MiddlePanelHeader({
-  note,
-  docIds,
-  aiResult,
-}: {
-  note: NoteType;
-  docIds: string[];
-  aiResult: QuestionAndDocOverviewType;
-}) {
-  const dispatch = useAppDispatch();
-  const [loadingType, setLoadingType] = useState<"summary" | "mindmap" | "audio" | null>(null);
-  const [copiedOverview, setCopiedOverview] = useState(false);
 
-  const handleAction = async (
-    type: "summary" | "mindmap" | "audio",
-    actionFn: () => Promise<void>
-  ) => {
-    if (!docIds || docIds.length === 0) {
-      showError("Please select at least one source document.");
-      return;
-    }
-    setLoadingType(type);
-    try {
-      await actionFn();
-      dispatch(fetchNoteSourceResult(note._id));
-    } catch (err) {
-      showError(`Failed to generate ${type}. Please try again.`);
-    } finally {
-      setLoadingType(null);
-    }
-  };
 
-  const copyOverview = async () => {
-    const text = aiResult?.aiResult?.doc_overview;
-    if (!text) return;
-    try {
-      await navigator.clipboard.writeText(text);
-      setCopiedOverview(true);
-      setTimeout(() => setCopiedOverview(false), 2000);
-    } catch {
-      showError("Failed to copy to clipboard.");
-    }
-  };
-
-  return (
-    <div className="mb-6 fade-in">
-      <div className="flex items-center gap-4 mb-5">
-        <div className="w-14 h-14 rounded-2xl bg-gradient-primary flex items-center justify-center text-2xl shadow-glow shrink-0">
-          {note?.image && !note.image.includes("uploads") ? note.image : "📓"}
-        </div>
-        <div className="min-w-0">
-          <h1 className="text-2xl font-bold tracking-tight text-foreground truncate">
-            {note?.title}
-          </h1>
-          <p className="text-muted-foreground text-sm mt-0.5">
-            {docIds?.length || 0} active sources
-          </p>
-        </div>
-      </div>
-
-      {aiResult?.aiResult?.doc_overview && (
-        <div className="p-4 surface rounded-xl border-primary/10 bg-primary/[0.03] text-foreground text-sm leading-relaxed mb-5 relative group">
-          <p className="pr-8">{aiResult.aiResult.doc_overview}</p>
-          <button
-            onClick={copyOverview}
-            className="absolute top-3 right-3 p-1.5 rounded-lg bg-background/60 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-secondary text-muted-foreground hover:text-foreground"
-            aria-label="Copy overview"
-          >
-            {copiedOverview ? (
-              <Check className="w-3.5 h-3.5 text-emerald-500" />
-            ) : (
-              <Copy className="w-3.5 h-3.5" />
-            )}
-          </button>
-        </div>
-      )}
-
-      <div className="grid grid-cols-3 gap-2.5">
-        <ActionButton
-          icon={<NotebookTabs className="w-5 h-5 text-amber-400" />}
-          label="Summary"
-          loading={loadingType === "summary"}
-          onClick={() =>
-            handleAction("summary", () => createSummary(note._id, docIds))
-          }
-        />
-        <ActionButton
-          icon={<GitBranch className="w-5 h-5 text-indigo-400" />}
-          label="Mind Map"
-          loading={loadingType === "mindmap"}
-          onClick={() =>
-            handleAction("mindmap", () => createMindMap(note._id, docIds))
-          }
-        />
-        <ActionButton
-          icon={<Music2 className="w-5 h-5 text-emerald-400" />}
-          label="Audio Brief"
-          loading={loadingType === "audio"}
-          onClick={() =>
-            handleAction("audio", () =>
-              createBriefingDoc(note._id, docIds, "audio")
-            )
-          }
-        />
-      </div>
-    </div>
-  );
-}
-
-interface ActionButtonProps {
-  icon: ReactNode;
-  label: string;
-  loading: boolean;
-  onClick: () => void;
-}
-
-function ActionButton({ icon, label, loading, onClick }: ActionButtonProps) {
-  return (
-    <button
-      disabled={loading}
-      onClick={onClick}
-      className="flex flex-col items-center justify-center gap-1.5 p-3.5 surface surface-hover rounded-xl disabled:opacity-50 disabled:pointer-events-none group"
-      aria-label={label}
-    >
-      {loading ? (
-        <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
-      ) : (
-        <div className="group-hover:scale-110 transition-transform">{icon}</div>
-      )}
-      <span className="text-[11px] font-medium text-muted-foreground group-hover:text-foreground transition-colors">
-        {label}
-      </span>
-    </button>
-  );
-}
-
-function TypingIndicator() {
-  return (
-    <div className="flex justify-start fade-in">
-      <div className="bg-secondary/60 rounded-2xl rounded-tl-none px-5 py-3.5 flex items-center gap-1.5 border border-border/40">
-        <div className="w-2 h-2 rounded-full bg-muted-foreground/60 typing-dot" />
-        <div className="w-2 h-2 rounded-full bg-muted-foreground/60 typing-dot" />
-        <div className="w-2 h-2 rounded-full bg-muted-foreground/60 typing-dot" />
-      </div>
-    </div>
-  );
-}
-
-const ChatMessage = memo(({ msg }: { msg: MessageType }) => {
-  const isUser = msg.role === "user";
-  return (
-    <div className={`flex w-full ${isUser ? "justify-end" : "justify-start"}`}>
-      <div
-        className={`max-w-[85%] px-4 py-3 text-[14.5px] leading-relaxed fade-in ${
-          isUser
-            ? "bg-primary text-primary-foreground rounded-2xl rounded-tr-sm"
-            : "bg-secondary/50 text-foreground rounded-2xl rounded-tl-sm border border-border/40"
-        }`}
-      >
+    return (
         <div
-          className={`
-            break-words whitespace-pre-wrap
-            [&_a]:underline [&_a]:text-blue-400 [&_a:hover]:text-blue-300
-            [&_pre]:my-3 [&_pre]:p-3.5 [&_pre]:rounded-lg [&_pre]:bg-background/50 [&_pre]:border [&_pre]:border-border/50 [&_pre]:overflow-x-auto [&_pre]:text-sm
-            [&_code]:font-mono [&_code]:text-[13px] [&_code]:bg-background/40 [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:rounded
-            [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:my-2
-            [&_ol]:list-decimal [&_ol]:pl-5 [&_ol]:my-2
-            [&_p]:mb-2 last:[&_p]:mb-0
-            [&_h1]:text-lg [&_h1]:font-bold [&_h1]:mt-4 [&_h1]:mb-2
-            [&_h2]:text-base [&_h2]:font-bold [&_h2]:mt-3 [&_h2]:mb-2
-            [&_h3]:text-sm [&_h3]:font-bold [&_h3]:mt-3 [&_h3]:mb-1
-            [&_strong]:text-foreground [&_strong]:font-semibold
-            [&_blockquote]:border-l-2 [&_blockquote]:border-border [&_blockquote]:pl-3 [&_blockquote]:text-muted-foreground [&_blockquote]:my-2
-          `}
+            style={{
+                width: `${middlePanelDefaultWidth}%`,
+            }}
+            className={`bg-white transition-all duration-300 shadow-sm rounded-md h-full p-4 flex flex-col`}
         >
-          <ReactMarkdown remarkPlugins={[remarkGfm]}>
-            {msg.content}
-          </ReactMarkdown>
-        </div>
-      </div>
-    </div>
-  );
-});
+            {/* chat section */}
+            <div
+                ref={chatContainerRef}
+                className="relative flex-1 overflow-y-auto mb-4 space-y-3 pr-2"
+            >
+                <div className="flex justify-between items-center mb-4 flex-shrink-0">
+                    <p className="text-base text-gray-800">Chat</p>
+                </div>
 
-ChatMessage.displayName = "ChatMessage";
+                <hr className="mb-2" />
+
+                <MiddlePanelHeader aiResult={aiResult} note={note} docIds={docIds} />
+
+                {/* messages */}
+                {/* {chatHistory?.chatHistory?.map((msg, index) => ChatMessage({ msg }))} */}
+
+
+{/* performance optimization */}
+                {chatHistory?.chatHistory?.map((msg, index) => (
+                    <ChatMessage key={index} msg={msg} />
+                ))}
+
+            </div>
+
+            {/* jump-to-bottom button */}
+            {showScrollButton && (
+                <div className="flex justify-center mb-3">
+                    <button
+                        onClick={scrollToBottom}
+                        className="bg-indigo-500 hover:bg-indigo-600 text-white shadow-md rounded-full px-4 py-1.5 flex items-center gap-2 transition-all"
+                    >
+                        <ArrowDown />
+                        <span className="text-sm font-medium">Jump to bottom</span>
+
+                    </button>
+                </div>
+            )}
+
+            {/* bordered chat-input card */}
+            <div className="relative border border-gray-200 rounded-2xl p-3 bg-white">
+                {/* main input row */}
+                <div className="flex items-center gap-3">
+                   
+                    <ChatInput
+                        inputValue={inputValue}
+                        setInputValue={setInputValue}
+                        onKeyDownMessage={onKeyDownMessage}
+                    />
+
+
+                    <div className="text-xs text-gray-500 whitespace-nowrap">
+                        {docIds?.length} sources
+                    </div>
+
+                    <button
+                        onClick={sendMessage}
+                        disabled={loading}
+                        aria-label="Send"
+                        className={`w-10 h-10 rounded-full flex items-center justify-center shadow-md transition 
+            ${loading
+                                ? "bg-indigo-400 cursor-not-allowed"
+                                : "bg-indigo-500 hover:bg-indigo-600"
+                            }`}
+                        title="Send"
+                    >
+                        {loading ? (
+                            <Loader2 className="animate-spin text-white" size={18} />
+                        ) : (
+                            <SendHorizonal className="text-white" size={16} />
+                        )}
+                    </button>
+                </div>
+
+            </div>
+            <SuggestedInput selectQuestion={selectQuestion} questions={aiResult?.aiResult?.questions} />
+        </div>
+    );
+
+};
+
+
+
+
+
+
+
+const MiddlePanelHeader = ({ note, docIds, aiResult }: { note: NoteType, docIds: string[], aiResult: questionAndDocOverviewType }) => {
+
+    const [audioLoading, setAudioLoading] = useState(false);
+    const [summaryLoading, setSummaryLoading] = useState(false);
+    const [mindMapLoading, setMindMapLoading] = useState(false);
+
+
+
+
+    const dispatch = useDispatch<AppDispatch>();
+    async function generateSummary() {
+        if (docIds.length > 0) {
+            setSummaryLoading(true)
+            await createSummary(note?._id, docIds);
+            setSummaryLoading(false)
+
+        } else {
+            showError("Please select a source");
+        }
+
+    }
+    async function generateMindMap() {
+
+        if (docIds.length > 0) {
+            setMindMapLoading(true)
+            await createMindMap(note?._id, docIds)
+            setMindMapLoading(false)
+            dispatch(fetchNoteSourceResult(note?._id))
+
+        } else {
+            showError("Please select a source");
+        }
+
+    }
+
+    async function generateAudio() {
+        if (docIds.length > 0) {
+            try {
+                setAudioLoading(true);
+
+
+                await createBriefingDoc(note?._id, docIds, 'audio')
+                dispatch(fetchNoteSourceResult(note?._id))
+
+                setAudioLoading(false);
+
+            } catch (error) {
+                setAudioLoading(false);
+
+            }
+        } else {
+            showError("Please select a source");
+        }
+    }
+
+    return (<div className="mb-3">
+        <div>
+            <span style={{ fontSize: "4rem" }}>
+                {note?.image}
+            </span>
+
+        </div>
+        <div className="mb-4">
+            <p className="text-3xl mb-2">{note?.title}</p>
+            <p className="text-sm">{docIds?.length} sources</p>
+            <p className="py-2 text-sm  bg-gray-10 text-gray-800 mb-4  ">
+                {aiResult?.aiResult?.doc_overview}
+            </p>
+            <p>
+                <Button
+                    variant="outline"
+                >
+                    <Copy size={18} />
+
+                </Button>
+            </p>
+
+        </div>
+
+        <div className="flex gap-4 mb-6 justify-between">
+            <div>
+                <Button
+                    disabled={summaryLoading}
+                    onClick={generateSummary}
+                    variant="outline"
+                    className="rounded-3xl px-5 py-4 w-45 text-gray-500 "
+                >
+
+                    {summaryLoading ? (
+                        <Loader2 className="animate-spin" size={18} />
+                    ) : (
+                        <NotebookTabs className="text-yellow-500" size={18} />
+                    )}
+                    <span className="text-sm">Summary</span>
+                </Button>
+            </div>
+            <div>
+                <Button
+                    disabled={mindMapLoading}
+                    onClick={generateMindMap}
+                    variant="outline"
+                    className="rounded-3xl px-5 py-4 w-45 text-gray-500 "
+                >
+
+
+                    {mindMapLoading ? (
+                        <Loader2 className="animate-spin" size={18} />
+                    ) : (
+                        <GitBranch className="text-indigo-500" />
+
+                    )}
+
+                    <span className="text-sm">MindMap</span>
+                </Button>
+            </div>
+            <div>
+                <Button
+                    disabled={audioLoading}
+                    onClick={generateAudio}
+                    variant="outline"
+                    className="rounded-3xl px-5 py-4 w-45 text-gray-500 "
+                >
+                    {audioLoading ? (
+                        <Loader2 className="animate-spin" size={18} />
+                    ) : (
+
+                        <Music2 size={18} className=" text-green-400" />
+
+
+                    )}
+
+
+                    <span className="text-sm">Audio Overview</span>
+                </Button>
+            </div>
+
+
+
+        </div>
+
+    </div>);
+}
+
+
+
+
+
+type Msg = { role: "ai" | "user"; content: string };
+
+const  ChatMessage=memo(({ msg }: { msg: Msg }) =>{
+    return (
+        <div className={`flex ${msg?.role === "ai" ? "justify-start" : "justify-end"}`}>
+            <div
+                className={`
+          max-w-[90%] px-4 text-sm
+          ${msg.role === "ai"
+                        ? "text-gray-800 py-2"
+                        : "bg-indigo-100 text-gray-900 py-4 rounded-br-none shadow rounded-2xl"}
+        `}
+            >
+                <div
+                    className="
+            break-words whitespace-pre-wrap
+            overflow-x-hidden
+            leading-normal
+           
+            [&_a]:underline [&_a]:text-blue-600
+            [&_pre]:my-1 [&_pre]:p-1 [&_pre]:rounded [&_pre]:bg-gray-100 [&_pre]:overflow-x-auto [&_code]:font-mono
+          "
+                >
+                    <ReactMarkdown
+                        remarkPlugins={[remarkGfm]}
+                        components={{
+                            a: ({ node, ...props }) => <a {...props} />,
+                            ul: ({ node, ...props }) => (
+                                <ul className="list-disc list-inside space-y-0" {...props} />
+                            ),
+                            ol: ({ node, ...props }) => (
+                                <ol {...props} />
+                            ),
+                            li: ({ node, ...props }) => (
+                                <li style={{ marginBottom: '-16px' }} {...props} />
+                            ),
+                            p: ({ node, ...props }) => (
+                                <p style={{ marginBottom: msg.role === "ai" ? '0px' : '' }} {...props} />
+                            ),
+
+                            h1: ({ node, ...props }) => <h1 style={{ marginBottom: '-20px' }} className="text-2xl  font-bold text-gray-800 my-" {...props} />,
+                            h2: ({ node, ...props }) => <h2 style={{ marginBottom: '-20px' }} className="text-xl font-semibold text-gray-700 my-" {...props} />,
+                            h3: ({ node, ...props }) => <h2 style={{ marginBottom: '-20px' }} className="text-xl font-semibold text-gray-700 my-" {...props} />,
+
+                            strong: ({ node, ...props }) => <strong className="font-bold text-gray-700" {...props} />,
+
+                        }}
+                    >
+                        {msg.content}
+                    </ReactMarkdown>
+                </div>
+            </div>
+        </div>
+    );
+})
+
+
+
+
+export default MiddlePannel;

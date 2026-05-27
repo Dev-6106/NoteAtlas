@@ -25,6 +25,7 @@ export class UserRepository {
     };
 
     let user = await User.findOne({ email });
+    let updatedUser;
 
     if (!user) {
       // New user — create
@@ -36,20 +37,23 @@ export class UserRepository {
         googleRefreshToken: token?.refreshToken,
         googleId: id,
       }).save();
+      updatedUser = user.toObject();
     } else {
       // Existing user — update Google tokens on each login
-      user.googleAccessToken = token?.accessToken;
-      if (token?.refreshToken) {
-        user.googleRefreshToken = token.refreshToken;
-      }
-      await user.save();
+      user = await User.findByIdAndUpdate(user._id,
+        {
+          googleAccessToken: token?.accessToken,
+          googleRefreshToken: token?.refreshToken,
+        }, { new: true, runValidators: true }
+      );
+      updatedUser = user?.toObject();
     }
 
     const { accessToken, refreshToken } = await generateToken(user._id);
 
     return {
       authData: {
-        ...user.toObject(),
+        ...updatedUser,
         token: { accessToken, refreshToken },
       },
     };

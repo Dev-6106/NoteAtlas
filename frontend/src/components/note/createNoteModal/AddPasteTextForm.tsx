@@ -1,100 +1,83 @@
-import { useState } from "react";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Loader2, MoveLeft } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2, Type } from "lucide-react";
-
-import { useAppDispatch } from "@/hooks/useTypedStore";
-import { sendTextData } from "@/api/notes";
-import { fetchSingleNote } from "@/store/chatSlice";
-import { showError, showSuccess } from "@/util/toast-notification";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
+import { sendTextData } from "@/api/notes";
+import { useDispatch, useSelector } from "react-redux";
+import type { AppDispatch, RootState } from "@/store";
+import { fetchSingleNote } from "@/store/chatSlice";
 
 const pasteTextSchema = z.object({
-  text: z
-    .string()
-    .min(50, "Text must be at least 50 characters for AI to extract meaningful context.")
-    .max(50000, "Text is too long. Please paste a shorter excerpt."),
+    text: z
+        .string()
+        .min(50, "Text must be at least 50 characters")
+        .max(5000, "Text is too long"),
 });
 
 type PasteTextFormValues = z.infer<typeof pasteTextSchema>;
 
-export default function AddPasteTextForm({
-  onComplete,
-  noteId,
-}: {
-  onComplete?: () => void;
-  noteId?: string;
-}) {
-  const dispatch = useAppDispatch();
-  const [loading, setLoading] = useState(false);
+export const AddPasteTextForm = ({ hidePasteTextForm, noteId }: { hidePasteTextForm: () => void, noteId?: string }) => {
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-    reset,
-  } = useForm<PasteTextFormValues>({
-    resolver: zodResolver(pasteTextSchema),
-  });
 
-  const onSubmit = async (data: PasteTextFormValues) => {
-    if (!noteId) {
-      showError("Notebook ID is missing");
-      return;
-    }
+      const dispatch = useDispatch<AppDispatch>();
 
-    setLoading(true);
-    try {
-      await sendTextData(data.text, noteId);
-      dispatch(fetchSingleNote(noteId));
-      showSuccess("Text successfully added to notebook.");
-      reset();
-      onComplete?.();
-    } catch (err) {
-      showError("Failed to add text source. Please try again.");
-    } finally {
-      setLoading(false);
-    }
-  };
+  
+    const {
+        register,
+        handleSubmit,
+        reset,
+        formState: { errors, isSubmitting },
+    } = useForm<PasteTextFormValues>({
+        resolver: zodResolver(pasteTextSchema),
+    });
 
-  return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
-      <div className="space-y-1.5">
-        <label htmlFor="pasted-text" className="text-sm font-medium text-foreground flex items-center gap-2">
-          <Type className="w-4 h-4 text-foreground" />
-          Copied Text
-        </label>
-        <p className="text-xs text-muted-foreground">
-          Paste any text directly into the notebook. Good for quick notes, code snippets, or short articles.
-        </p>
-      </div>
+    const onSubmit = async (data: PasteTextFormValues) => {
 
-      <div className="space-y-2">
-        <Textarea
-          id="pasted-text"
-          {...register("text")}
-          className="resize-none min-h-[160px] bg-background border-border/60 focus:border-primary/50 text-sm custom-scrollbar"
-          placeholder="Paste your text here..."
-        />
-        {errors.text && (
-          <p className="text-destructive text-xs">{errors.text.message}</p>
-        )}
-      </div>
+        await sendTextData(data?.text, noteId)
+         dispatch(fetchSingleNote(noteId as string))
+        reset()
+        console.log("✅ Submitted Paste Text:", data);
 
-      <div className="flex justify-end pt-2">
-        <Button
-          type="submit"
-          disabled={loading}
-          className="w-full sm:w-auto"
-        >
-          {loading ? (
-            <Loader2 className="w-4 h-4 animate-spin mr-2" />
-          ) : null}
-          {loading ? "Processing..." : "Add Source"}
-        </Button>
-      </div>
-    </form>
-  );
+        // hidePasteTextForm();
+    };
+
+    return (
+        <form onSubmit={handleSubmit(onSubmit)} className="p-1 mb-4 mt-4 space-y-3">
+            <div className="flex gap-2 items-center">
+                <button type="button" className="cursor-pointer" onClick={hidePasteTextForm}>
+                    <MoveLeft />
+                </button>
+                <Label htmlFor="text" className="text-sm font-semibold">
+                    Paste a Text
+                </Label>
+            </div>
+
+            <Textarea
+                id="text"
+                {...register("text")}
+                className="resize-y min-h-[100px] mt-2 text-sm placeholder:text-sm"
+                placeholder="Paste text here"
+            />
+            {errors.text && <p className="text-red-500 text-xs mt-1">{errors.text.message}</p>}
+            <div className="flex">
+                <div></div>
+                <div></div>
+                <div className="ml-auto">
+                    <Button type="submit" className="w-full" disabled={isSubmitting}>
+                        {isSubmitting ? (
+                            <>
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                Submitting...
+                            </>
+                        ) : (
+                            "Submit"
+                        )}
+                    </Button>
+                </div>
+            </div>
+        </form>
+    );
 }

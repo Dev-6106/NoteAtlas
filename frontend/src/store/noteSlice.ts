@@ -1,48 +1,53 @@
-import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
-import { getNotes } from "@/api/notes";
-import type { NoteType, PaginationType } from "@/types/note-types";
 
-interface NoteState {
-  notes: NoteType[];
+
+
+import { getNotes } from "@/api/notes";
+import type { NoteServerData } from "@/types/note-types";
+import { createSlice, createAsyncThunk, type PayloadAction, } from "@reduxjs/toolkit";
+
+
+// Wrap API call in an async thunk
+export const fetchNotes = createAsyncThunk(
+  "notes/fetchNotes",
+
+  async ({ page = 1, search = "" }: { page: number, search: string }) => getNotes(page, search)
+);
+
+interface NotesState extends NoteServerData {
+
   loading: boolean;
   error: string | null;
-  pagination: PaginationType | null;
 }
 
-const initialState: NoteState = {
+const initialState: NotesState = {
   notes: [],
   loading: false,
   error: null,
-  pagination: null,
 };
 
-export const fetchNotes = createAsyncThunk(
-  "notes/fetchNotes",
-  async ({ page, search, userId }: { page: number; search: string; userId?: string }) => {
-    return await getNotes(page, search, userId);
-  }
-);
-
-const noteSlice = createSlice({
-  name: "notes",
+const notesSlice = createSlice({
+  name: "note",
   initialState,
-  reducers: {},
+  reducers: {
+
+
+  },
   extraReducers: (builder) => {
     builder
       .addCase(fetchNotes.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
-      .addCase(fetchNotes.fulfilled, (state, action) => {
+      .addCase(fetchNotes.fulfilled, (state, action: PayloadAction<NoteServerData>) => {
+        state.notes = action.payload?.notes;
+        state.pagination = action.payload.pagination;
         state.loading = false;
-        state.notes = action.payload.notes;
-        state.pagination = action.payload.pagination ?? null;
       })
       .addCase(fetchNotes.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.error.message ?? "Failed to fetch notes";
+        state.error = action.error.message || "Failed to fetch notes";
       });
   },
 });
 
-export default noteSlice.reducer;
+export default notesSlice.reducer

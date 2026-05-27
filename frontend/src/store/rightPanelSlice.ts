@@ -1,142 +1,112 @@
-import { getSourceResults } from "@/api/notes";
-import type { SourceResultType } from "@/types/note-types";
-import { createSlice, createAsyncThunk, type PayloadAction } from "@reduxjs/toolkit";
+import { getSourceResults } from '@/api/notes';
+import { createSlice, configureStore, createAsyncThunk, type PayloadAction } from '@reduxjs/toolkit'
+
+
 
 export const fetchNoteSourceResult = createAsyncThunk(
-  "rightPanel/fetchSourceResults",
-  async (noteId: string) => getSourceResults(noteId)
+    "notes/sources/result",
+    async (noteId: string) => getSourceResults(noteId)
 );
 
-interface SourceModalState {
-  modal: boolean;
-  title: string;
-  content: string;
-  source_type: string;
-}
 
-interface AudioCardState {
-  show: boolean;
-  content: string;
-  title: string;
-}
 
-interface MindMapModalState {
-  modal: boolean;
-  content: string;
-  title: string;
-}
-
-interface RightPanelState {
-  sources: SourceResultType[];
-  loading: boolean;
-  error: string | null;
-  docIds: string[];
-  sourceModal: SourceModalState;
-  audioCard: AudioCardState;
-  mindMapModal: MindMapModalState;
-}
-
-const initialState: RightPanelState = {
-  sources: [],
-  loading: false,
-  error: null,
-  docIds: [],
-  sourceModal: { modal: false, title: "", content: "", source_type: "" },
-  audioCard: { show: false, content: "", title: "" },
-  mindMapModal: { modal: false, content: "", title: "" },
+const sourceNoteResultState = {
+    sources: {} as Array<{ total_source: number, content: string, noteId: string, userId: string }>,
+    loading: false,
+    error: null,
+    sourceModal: { modal: false, title: "", content: "", source_type: "" },
+    mindMapModal: { modal: false, title: "", content: "", source_type: "" },
+    audioCard: { show: false, title: "", content: "", source_type: "",sourceSectionHeight:100 }
 };
 
-const rightPanelSlice = createSlice({
-  name: "rightPanel",
-  initialState,
-  reducers: {
-    setDocIds: (state, action: PayloadAction<string[]>) => {
-      state.docIds = action.payload;
-    },
-    addDocIds: (state, action: PayloadAction<string>) => {
-      if (!state.docIds.includes(action.payload)) {
-        state.docIds.push(action.payload);
-      }
-    },
-    removeDocId: (state, action: PayloadAction<string>) => {
-      state.docIds = state.docIds.filter((id) => id !== action.payload);
-    },
-    showSourceModalContent: (state, action: PayloadAction<SourceResultType>) => {
-      const { title, content, source_type } = action.payload;
 
-      if (source_type?.toLowerCase().includes("mindmap")) {
-        state.mindMapModal = {
-          modal: true,
-          title: title,
-          content: content,
-        };
-      } else {
-        state.sourceModal = {
-          modal: true,
-          title: title,
-          content: content,
-          source_type: source_type,
-        };
-      }
-    },
-    closeSourceModal: (state) => {
-      state.sourceModal.modal = false;
-    },
-    closeMindMap: (state) => {
-      state.mindMapModal.modal = false;
-    },
-    showAudioCard: (
-      state,
-      action: PayloadAction<{ content: string; title: string }>
-    ) => {
-      state.audioCard = {
-        show: true,
-        content: action.payload.content,
-        title: action.payload.title,
-      };
-    },
-    closeAudioCard: (state) => {
-      state.audioCard.show = false;
-    },
-  },
-  extraReducers: (builder) => {
-    builder
-      .addCase(fetchNoteSourceResult.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
-      .addCase(fetchNoteSourceResult.fulfilled, (state, action) => {
-        state.loading = false;
-        state.sources = action.payload as SourceResultType[];
 
-        const audioSource = (action.payload as SourceResultType[])?.find(
-          (s) =>
-            s.source_type === "audio_briefing" || s.source_type === "audio"
-        );
-        if (audioSource) {
-          state.audioCard = {
-            show: true,
-            content: audioSource.content,
-            title: audioSource.title,
-          };
+export const rightPanelSlice = createSlice({
+    name: 'rightPanel',
+    initialState: {
+        docIds: [] as string[],
+        ...sourceNoteResultState
+
+
+    },
+    reducers: {
+
+
+        closeMindMap: (state) => {
+            state.mindMapModal.modal = false
+
+        },
+
+        closeSourceModal: (state) => {
+            state.sourceModal.modal = false
+            state.sourceModal.title = ''
+            state.sourceModal.content = ''
+        },
+
+        closeAudioCard: (state) => {
+             state.audioCard.sourceSectionHeight+=40
+            state.audioCard.show = false
+            state.audioCard.title = ''
+            state.audioCard.content = ''
+           
+        },
+
+
+        showSourceModalContent: (state, action: PayloadAction<{ title: string, content: string, source_type: string }>) => {
+
+            if (action.payload.source_type.includes('mindMap')) {
+
+                state.mindMapModal.content = action.payload?.content
+                state.mindMapModal.modal = true
+            }
+            else if (action.payload.source_type.includes('audio')) {
+                 state.audioCard.sourceSectionHeight-=40
+                state.audioCard.show = true
+                state.audioCard.title = action.payload?.title
+                state.audioCard.content = action.payload?.content
+                
+
+            }
+
+            else {
+                state.sourceModal.modal = true
+                state.sourceModal.title = action.payload?.title
+                state.sourceModal.content = action.payload?.content
+                state.sourceModal.source_type = action.payload?.source_type
+            }
+
+
+        },
+        addDocIds: (state, action: PayloadAction<string>) => {
+            const exist = state.docIds.includes(action.payload)
+            if (exist) {
+                const newArray = state.docIds.filter((pushId: string) => pushId !== action.payload)
+                state.docIds = newArray
+
+            } else {
+                state.docIds.push(action.payload)
+            }
+
         }
-      })
-      .addCase(fetchNoteSourceResult.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.error.message ?? "Failed to fetch sources";
-      });
-  },
-});
+    },
+    extraReducers: (builder) => {
+        builder
+            .addCase(fetchNoteSourceResult.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+            })
+            .addCase(fetchNoteSourceResult.fulfilled, (state, action) => {
+                state.sources = action.payload.sources;
+                state.loading = false;
+            })
+            .addCase(fetchNoteSourceResult.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.error.message || "Failed to fetch sources";
+            });
+    },
+})
 
-export const {
-  setDocIds,
-  addDocIds,
-  removeDocId,
-  showSourceModalContent,
-  closeSourceModal,
-  closeMindMap,
-  showAudioCard,
-  closeAudioCard,
-} = rightPanelSlice.actions;
+export const { addDocIds, showSourceModalContent, closeAudioCard, closeSourceModal, closeMindMap } = rightPanelSlice.actions
 
-export default rightPanelSlice.reducer;
+
+export default rightPanelSlice.reducer

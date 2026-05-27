@@ -1,71 +1,81 @@
-import {
-  getQuestionsAndDocOverview,
-  getSingleNote,
-  type QuestionAndDocOverviewType,
-} from "@/api/notes";
-import type { NoteType } from "@/types/note-types";
-import { createSlice, createAsyncThunk, type PayloadAction } from "@reduxjs/toolkit";
+import { getNoteChats, getQuestionsAndDocOverview, getSingleNote, type chatHistoryType, type questionAndDocOverviewType } from '@/api/notes';
+import type { NoteType } from '@/types/note-types';
+import { createSlice, configureStore, createAsyncThunk, type PayloadAction } from '@reduxjs/toolkit'
 
-// ─── Async Thunks ─────────────────────────────────────────
 
 export const fetchSingleNote = createAsyncThunk(
-  "chat/fetchSingleNote",
+  "notes/singleNote",
   async (id: string) => getSingleNote(id)
 );
 
+
+
 export const fetchDocOverviewAndQuestions = createAsyncThunk(
-  "chat/fetchDocOverview",
+  "doc/overview",
   async (noteId: string) => getQuestionsAndDocOverview(noteId)
 );
 
-// ─── State ────────────────────────────────────────────────
 
-interface ChatState {
-  note: NoteType;
-  loading: boolean;
-  error: string | null;
-  aiResult: QuestionAndDocOverviewType;
-  leftPanelOpen: boolean;
-  rightPanelOpen: boolean;
-  middlePanelDefaultWidth: number;
-  payment: { modal: boolean };
-}
 
-const initialState: ChatState = {
+
+const singleNoteState = {
   note: {} as NoteType,
   loading: false,
   error: null,
-  aiResult: {} as QuestionAndDocOverviewType,
-  leftPanelOpen: true,
-  rightPanelOpen: true,
-  middlePanelDefaultWidth: 50,
-  payment: { modal: false },
 };
 
-// ─── Slice ────────────────────────────────────────────────
+
+const  docOverviewAndQuestionsState= {
+  aiResult: {} as questionAndDocOverviewType,
+  
+};
+
 
 const chatSlice = createSlice({
-  name: "chat",
-  initialState,
+  name: 'chat',
+  initialState: {
+    leftPanelOpen: true,
+    rightPanelOpen: true,
+    middlePanelDefaultWidth: 50,
+    ...singleNoteState,
+    ...docOverviewAndQuestionsState,
+
+    payment:{
+      modal:false
+    }
+  },
   reducers: {
-    attribNoteVal: (state, action: PayloadAction<NoteType>) => {
-      state.note = action.payload;
+
+      attribNoteVal: (state ,action)=> {
+
+            state.note=action.payload
+        },
+    
+    togglePaymentModal: state => {
+
+      state.payment.modal = !state.payment.modal
     },
-    togglePaymentModal: (state) => {
-      state.payment.modal = !state.payment.modal;
+
+    addExtraWidth: state => {
+
+      state.middlePanelDefaultWidth += 21
     },
-    addExtraWidth: (state) => {
-      state.middlePanelDefaultWidth += 21;
+    reduceExtraWidth: state => {
+
+      state.middlePanelDefaultWidth -= 21
     },
-    reduceExtraWidth: (state) => {
-      state.middlePanelDefaultWidth -= 21;
+
+    toggleLeftPanel: state => {
+
+      state.leftPanelOpen = !state.leftPanelOpen
     },
-    toggleLeftPanel: (state) => {
-      state.leftPanelOpen = !state.leftPanelOpen;
+
+
+    toggleRightPanel: state => {
+
+      state.rightPanelOpen = !state.rightPanelOpen
     },
-    toggleRightPanel: (state) => {
-      state.rightPanelOpen = !state.rightPanelOpen;
-    },
+
   },
   extraReducers: (builder) => {
     builder
@@ -73,36 +83,39 @@ const chatSlice = createSlice({
         state.loading = true;
         state.error = null;
       })
-      .addCase(fetchSingleNote.fulfilled, (state, action) => {
+      .addCase(fetchSingleNote.fulfilled, (state, action: PayloadAction<{ note: NoteType }>) => {
         state.note = action.payload.note;
         state.loading = false;
       })
       .addCase(fetchSingleNote.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.error.message ?? "Failed to fetch note";
+        state.error = action.error.message || "Failed to fetch notes";
       })
+
+
+
+      // doc overview and questions
+
+        builder
       .addCase(fetchDocOverviewAndQuestions.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
-      .addCase(fetchDocOverviewAndQuestions.fulfilled, (state, action) => {
+      .addCase(fetchDocOverviewAndQuestions.fulfilled, (state, action: PayloadAction<questionAndDocOverviewType >) => {
         state.aiResult = action.payload;
         state.loading = false;
       })
       .addCase(fetchDocOverviewAndQuestions.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.error.message ?? "Failed to fetch doc overview";
-      });
+        state.error = action.error.message || "Failed to fetch notes";
+      })
+
+
   },
-});
+})
 
-export const {
-  addExtraWidth,
-  attribNoteVal,
-  toggleLeftPanel,
-  toggleRightPanel,
-  reduceExtraWidth,
-  togglePaymentModal,
-} = chatSlice.actions;
+export const { addExtraWidth,attribNoteVal, toggleLeftPanel, toggleRightPanel, reduceExtraWidth,togglePaymentModal } = chatSlice.actions
 
-export default chatSlice.reducer;
+
+
+export default chatSlice.reducer

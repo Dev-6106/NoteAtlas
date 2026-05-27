@@ -1,28 +1,30 @@
+// src/lib/toast.ts
 import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
-/** Success toast */
+// ✅ Success toast
 export const showSuccess = (message?: string) => {
-  toast.success(message || "Success", {
-    position: "bottom-right",
+  toast.success(message, {
+    position: "top-right",
     autoClose: 3000,
-    theme: "dark",
+    theme: "colored",
   });
 };
 
-/** Error toast */
+// ✅ Error toast
 export const showError = (message: string) => {
   toast.error(message, {
     position: "bottom-right",
-    autoClose: 8000,
-    theme: "dark",
+    autoClose: 10000,
+    theme: "colored",
   });
 };
 
-/** Info toast */
+// ✅ Info toast
 export const showInfo = (message: string) => {
   toast.info(message, {
-    position: "bottom-right",
+    position: "top-right",
     autoClose: 3000,
-    theme: "dark",
+    theme: "light",
   });
 };

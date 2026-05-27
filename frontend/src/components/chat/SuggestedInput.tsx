@@ -1,12 +1,14 @@
-import { useEffect, useRef, useState } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+"use client";
 
-interface SuggestedInputProps {
+import { useEffect, useRef, useState } from "react";
+
+export function SuggestedInput({
+  questions,
+  selectQuestion,
+}: {
   questions: string[];
   selectQuestion: (question: string) => void;
-}
-
-export function SuggestedInput({ questions, selectQuestion }: SuggestedInputProps) {
+}) {
   const chipsRef = useRef<HTMLDivElement | null>(null);
   const [showArrows, setShowArrows] = useState(false);
 
@@ -37,29 +39,26 @@ export function SuggestedInput({ questions, selectQuestion }: SuggestedInputProp
     });
   };
 
-  if (!questions || questions.length === 0) return null;
-
   return (
-    <div className="relative">
+    <div className="relative px-4 py-2">
       {showArrows && (
         <button
           onClick={() => scroll(-1)}
-          className="absolute left-0 top-1/2 -translate-y-1/2 z-10 h-7 w-7 rounded-full bg-secondary border border-border shadow-sm flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-          aria-label="Scroll suggestions left"
+          className="absolute left-1 top-1/2 -translate-y-1/2 z-10 h-8 w-8 rounded-full bg-white shadow flex items-center justify-center"
         >
-          <ChevronLeft className="w-4 h-4" />
+          <ArrowLeft />
         </button>
       )}
 
       <div
         ref={chipsRef}
-        className="flex gap-2 overflow-x-auto scrollbar-none px-2"
+        className="flex gap-2 overflow-x-auto scrollbar-none px-6"
       >
-        {questions.map((q, i) => (
+        {questions?.map((q, i) => (
           <button
             key={i}
             onClick={() => selectQuestion(q)}
-            className="whitespace-nowrap shrink-0 rounded-full bg-secondary border border-border/60 px-3.5 py-1.5 text-sm text-secondary-foreground hover:bg-muted hover:text-foreground hover:border-muted-foreground/30 transition-all active:scale-[0.97]"
+            className="whitespace-nowrap rounded-full bg-slate-100 px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-200 transition"
           >
             {q}
           </button>
@@ -69,12 +68,35 @@ export function SuggestedInput({ questions, selectQuestion }: SuggestedInputProp
       {showArrows && (
         <button
           onClick={() => scroll(1)}
-          className="absolute right-0 top-1/2 -translate-y-1/2 z-10 h-7 w-7 rounded-full bg-secondary border border-border shadow-sm flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-          aria-label="Scroll suggestions right"
+          className="absolute right-1 top-1/2 -translate-y-1/2 z-10 h-8 w-8 rounded-full bg-white shadow flex items-center justify-center"
         >
-          <ChevronRight className="w-4 h-4" />
+          <ArrowRight />
         </button>
       )}
     </div>
   );
 }
+
+const ArrowLeft = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24">
+    <path
+      d="M15 18l-6-6 6-6"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+);
+
+const ArrowRight = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24">
+    <path
+      d="M9 6l6 6-6 6"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+);

@@ -90,7 +90,7 @@ export function expressServer(app: Express, PORT: number) {
     passport.authenticate("google", {
       failureRedirect: `${env.FRONTEND_URL}/auth/login`,
       successRedirect: `${env.FRONTEND_URL}/auth/callback`,
-    })
+    }) 
   );
 
   app.get("/auth/me", (req: Request, res: Response) => {
@@ -108,7 +108,13 @@ export function expressServer(app: Express, PORT: number) {
         return;
       }
       req.session.destroy(() => {
-        res.json({ message: "Logged out successfully" });
+        res.clearCookie("connect.sid",{
+          path:"/",
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: "lax"
+        })
+        return res.json({ message: "Logged out successfully" });
       });
     });
   });

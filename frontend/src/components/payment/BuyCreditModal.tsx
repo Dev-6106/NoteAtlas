@@ -1,12 +1,70 @@
-import { useState } from "react";
+import React, { useMemo, useState } from "react";
+
 import { Loader2, Star, Check } from "lucide-react";
-import { useAppDispatch, useAppSelector } from "@/hooks/useTypedStore";
+import { Button } from "@/components/ui/button";
+import { BaseModal } from "../base/BaseModal";
+import { useDispatch, useSelector } from "react-redux";
+import type { AppDispatch, RootState } from "@/store";
 import { togglePaymentModal } from "@/store/chatSlice";
 import { buyCredit } from "@/api/payment";
 import { getUserData } from "@/helper/getUserData";
 import { showError, showSuccess } from "@/util/toast-notification";
 import { fetchUserCreditAndPayment } from "@/store/creditMenuSlice";
-import { BaseModal } from "@/components/base/BaseModal";
+
+
+export const BuyCreditModal = () => {
+  const dispatch = useDispatch<AppDispatch>();
+  const { payment } = useSelector((state: RootState) => state.chat);
+  const [loading, setLoading] = useState(false);
+
+
+  const onSubmit = async (amount: number) => {
+    try {
+      const userData = getUserData();
+      setLoading(true)
+      const res = await buyCredit({
+        userId: userData?._id as string,
+        amount: amount,
+        email: userData?.email,
+      });
+      showSuccess(res?.message);
+      dispatch(togglePaymentModal());
+      dispatch(fetchUserCreditAndPayment(userData?._id))
+
+
+      setLoading(false)
+
+    } catch (err) {
+      setLoading(false)
+      console.error(err);
+      showError("❌ Failed to purchase credit.");
+    }
+  };
+
+  return (
+    <BaseModal
+      open={payment.modal}
+      onOpenChange={() => dispatch(togglePaymentModal())}
+      title="Buy Credits"
+      width={900}
+      height={700}
+
+
+    >
+      <form
+        id="buy-credit-form"
+
+        className="space-y-8 mt-4 p-4"
+      >
+
+
+        <PricingPlan onSubmit={onSubmit} loading={loading} />
+
+      </form>
+    </BaseModal>
+  );
+};
+
 
 const perks = {
   free: [
@@ -31,145 +89,149 @@ const perks = {
   ],
 };
 
-export default function BuyCreditModal() {
-  const dispatch = useAppDispatch();
-  const { payment } = useAppSelector((state) => state.chat);
-  const [loading, setLoading] = useState(false);
-
-  const onSubmit = async (amount: number) => {
-    try {
-      const userData = getUserData();
-      if (!userData?._id) throw new Error("No user data");
-      
-      setLoading(true);
-      const res = await buyCredit({
-        userId: userData._id,
-        amount,
-        email: userData.email || "",
-      });
-      
-      if (res?.message) showSuccess(res.message);
-      dispatch(fetchUserCreditAndPayment(userData._id));
-      dispatch(togglePaymentModal());
-    } catch (err) {
-      console.error(err);
-      showError("Failed to purchase credit.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  if (!payment.modal) return null;
-
+const PricingPlan = ({ onSubmit, loading }: { onSubmit: (amount: number) => void, loading: boolean }) => {
   return (
-    <BaseModal
-      open={payment.modal}
-      onOpenChange={(isOpen) => !isOpen && dispatch(togglePaymentModal())}
-      title="Upgrade Plan"
-      width={900}
-      height={750}
-      footer={null}
-    >
-      <div className="p-4 sm:p-6 text-foreground">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold tracking-tight mb-2 text-foreground">Choose Your Plan</h1>
-          <p className="text-muted-foreground text-sm">
-            Unlock more AI-powered research and note capabilities.
+    <section className="w-full py-1">
+      <div className="text-center mb-8">
+        <h1 className="text-3xl font-bold text-gray-900">Choose Your Plan</h1>
+        <p className="text-gray-500 mt-2">
+          Unlock more AI-powered research and note capabilities.
+        </p>
+      </div>
+
+      {/* Tiers */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-6xl mx-auto">
+        {/* Free Tier */}
+        <div className="rounded-2xl border p-6 bg-white shadow-sm hover:shadow-md transition-all flex flex-col">
+          <div className="flex flex-col mb-4">
+            <h3 className="font-semibold text-gray-700">Free</h3>
+            <p className="text-3xl font-bold mt-1">$0</p>
+            <p className="text-sm text-gray-500">Forever free</p>
+          </div>
+
+          <p className="text-sm text-gray-500 mb-4">
+            For individuals exploring AI notebooks.
           </p>
+
+          <ul className="text-sm space-y-2 mb-6">
+            {perks.free.map((perk, i) => (
+              <li key={i} className="flex items-start gap-2">
+                <Check className="w-4 h-4 text-green-600 mt-[2px]" />
+                <span>{perk}</span>
+              </li>
+            ))}
+          </ul>
+
+          <Button disabled className="mt-auto opacity-70">
+            Current Plan
+          </Button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
-          {/* Free Tier */}
-          <div className="rounded-2xl border border-border/50 bg-secondary/30 p-6 flex flex-col hover:bg-secondary/50 transition-colors">
-            <div className="mb-4">
-              <h3 className="font-semibold text-muted-foreground">Free</h3>
-              <p className="text-3xl font-bold mt-1 text-foreground">$0</p>
-              <p className="text-xs text-muted-foreground">Forever free</p>
-            </div>
-            <p className="text-sm text-muted-foreground mb-6">For individuals exploring AI notebooks.</p>
-            <ul className="text-sm space-y-3 mb-8 flex-1">
-              {perks.free.map((perk, i) => (
-                <li key={i} className="flex items-start gap-2">
-                  <Check className="w-4 h-4 text-emerald-500 mt-0.5 shrink-0" />
-                  <span className="text-muted-foreground">{perk}</span>
-                </li>
-              ))}
-            </ul>
-            <button disabled className="w-full py-2.5 rounded-xl bg-secondary text-muted-foreground font-medium cursor-not-allowed">
-              Current Plan
-            </button>
+        {/* Starter Tier */}
+        <div className="rounded-2xl border p-6 bg-white shadow-sm hover:shadow-md transition-all flex flex-col">
+          <div className="flex flex-col mb-4">
+            <h3 className="font-semibold text-gray-700">Starter</h3>
+            <p className="text-3xl font-bold mt-1">$5</p>
+            <p className="text-sm text-gray-500">per month</p>
           </div>
 
-          {/* Starter Tier */}
-          <div className="rounded-2xl border border-border bg-background p-6 flex flex-col hover:border-primary/50 transition-colors shadow-sm">
-            <div className="mb-4">
-              <h3 className="font-semibold text-foreground">Starter</h3>
-              <p className="text-3xl font-bold mt-1 text-foreground">$5</p>
-              <p className="text-xs text-muted-foreground">per month</p>
-            </div>
-            <p className="text-sm text-muted-foreground mb-6">For hobbyists organizing research or projects.</p>
-            <ul className="text-sm space-y-3 mb-8 flex-1">
-              {perks.starter.map((perk, i) => (
-                <li key={i} className="flex items-start gap-2">
-                  <Check className="w-4 h-4 text-emerald-500 mt-0.5 shrink-0" />
-                  <span className="text-foreground">{perk}</span>
-                </li>
-              ))}
-            </ul>
-            <button 
-              onClick={() => onSubmit(5)} 
-              disabled={loading} 
-              className="w-full py-2.5 rounded-xl border border-border hover:bg-secondary text-foreground font-medium transition-colors disabled:opacity-50 flex justify-center items-center gap-2"
-            >
-              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Subscribe"}
-            </button>
-          </div>
+          <p className="text-sm text-gray-500 mb-4">
+            For hobbyists organizing research or projects.
+          </p>
 
-          {/* Creator Tier */}
-          <div className="relative rounded-2xl border-2 border-primary bg-primary/5 p-6 flex flex-col shadow-glow group">
-            <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-primary text-primary-foreground text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full flex items-center gap-1 shadow-sm">
-              <Star className="w-3 h-3 fill-current" /> Most Popular
-            </div>
-            <div className="mb-4 mt-2">
-              <h3 className="font-semibold text-primary">Creator</h3>
-              <div className="flex items-end gap-2 mt-1">
-                <span className="text-muted-foreground line-through text-sm">$22</span>
-                <p className="text-3xl font-bold text-foreground">$20</p>
-              </div>
-              <p className="text-xs text-emerald-500 font-semibold mt-1">50 credits bonus</p>
-            </div>
-            <p className="text-sm text-muted-foreground mb-6">For creators making premium knowledge content.</p>
-            <ul className="text-sm space-y-3 mb-8 flex-1">
-              {perks.creator.map((perk, i) => (
-                <li key={i} className="flex items-start gap-2">
-                  <Check className="w-4 h-4 text-emerald-500 mt-0.5 shrink-0" />
-                  <span className="text-foreground">{perk}</span>
-                </li>
-              ))}
-            </ul>
-            <button 
-              onClick={() => onSubmit(20)} 
-              disabled={loading} 
-              className="w-full py-2.5 rounded-xl bg-gradient-primary text-white font-medium hover:opacity-90 transition-opacity disabled:opacity-50 flex justify-center items-center gap-2 shadow-sm"
-            >
-              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Subscribe"}
-            </button>
-          </div>
+          <ul className="text-sm space-y-2 mb-6">
+            {perks.starter.map((perk, i) => (
+              <li key={i} className="flex items-start gap-2">
+                <Check className="w-4 h-4 text-green-600 mt-[2px]" />
+                <span>{perk}</span>
+              </li>
+            ))}
+          </ul>
+
+          <Button onClick={() => onSubmit(5)} disabled={loading} variant="outline" className="mt-auto">
+            Subscribe
+          </Button>
         </div>
-        
-        {/* Credit Info */}
-        <div className="max-w-2xl mx-auto mt-8 surface p-4 rounded-xl border border-primary/20 flex items-center gap-4">
-          <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-            <span className="text-xl">💳</span>
+
+        {/* Creator Tier (Most Popular) */}
+        <div className="relative rounded-2xl border-2 border-indigo-500 p-6 bg-gradient-to-b from-white to-indigo-50 shadow-md flex flex-col">
+          <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-indigo-500 text-white text-xs font-semibold px-3 py-1 rounded-full flex items-center gap-1">
+            <Star size={12} /> Most Popular
           </div>
-          <div>
-            <h4 className="font-semibold text-foreground text-sm">Credit Conversion</h4>
-            <p className="text-sm text-muted-foreground">
-              <span className="text-primary font-medium">1 USD = 10 Credits.</span> Credits are used for AI reasoning, uploading massive documents, and generating premium mind maps and audio briefs.
-            </p>
+
+          <div className="flex flex-col mb-4">
+            <h3 className="font-semibold text-gray-700">Creator</h3>
+            <div className="flex items-end gap-2">
+              <span className="text-gray-400 line-through text-sm">$22</span>
+              <p className="text-3xl font-bold text-indigo-600">$20</p>
+              <span className="text-xs text-green-600 font-semibold">
+                50 credits bonus
+              </span>
+            </div>
+            {/* <p className="text-sm text-gray-500">per month</p> */}
           </div>
+
+          <p className="text-sm text-gray-500 mb-4">
+            For creators making premium knowledge content.
+          </p>
+
+          <ul className="text-sm space-y-2 mb-6">
+            {perks.creator.map((perk, i) => (
+              <li key={i} className="flex items-start gap-2">
+                <Check className="w-4 h-4 text-green-600 mt-[2px]" />
+                <span>{perk}</span>
+              </li>
+            ))}
+          </ul>
+
+          <Button disabled={loading} onClick={() => onSubmit(20)} className="bg-indigo-600 hover:bg-indigo-700 text-white mt-auto">
+            Subscribe
+          </Button>
         </div>
       </div>
-    </BaseModal>
+      <div align="center" className="mb-2 pt-2">
+        {loading ? (
+          <>
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            Processing payment...
+          </>
+        ) : (
+          ""
+        )}
+      </div>
+
+      {/* Credit Info */}
+      <CreditInfoCard />
+
+    </section>
   );
-}
+};
+
+
+
+
+const CreditInfoCard = () => (
+  <div className="max-w-3xl mx-auto mt-10">
+    <div className="rounded-2xl border border-gray-200 bg-gradient-to-br from-white to-gray-50 shadow-sm p-6 text-center">
+      <div className="flex justify-center items-center gap-2 mb-2">
+        <div className="w-8 h-8 flex items-center justify-center bg-indigo-100 text-indigo-600 rounded-full text-sm font-bold">
+          💳
+        </div>
+        <h3 className="text-lg font-semibold text-gray-800">Credit Conversion</h3>
+      </div>
+
+      <p className="text-gray-600 text-sm">
+        <span className="text-indigo-600 font-semibold">1 USD = 10 Credits</span>
+      </p>
+
+      <p className="text-gray-500 text-sm mt-2">
+        Credits are used for AI reasoning, doc uploads, and advanced features.
+        Upgrade to unlock higher credit limits, longer PDF uploads, and
+        multi-document analysis.
+      </p>
+    </div>
+  </div>
+);
+
+
+export default BuyCreditModal;

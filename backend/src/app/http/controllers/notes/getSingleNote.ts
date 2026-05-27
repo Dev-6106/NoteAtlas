@@ -7,18 +7,14 @@ export async function getSingleNote(
   next: NextFunction
 ) {
   try {
-    const noteId = req.params.id;
+    const noteId = req.params?.id as string;
     if (!noteId) {
-      return res.status(400).send("Note ID is required");
+      return res.status(422).send("Note ID is required");
     }
 
     const NoteRepo = NoteRepository.getInstance();
-    const note = await NoteRepo.findById(noteId);
-
-    return res.status(200).send({
-      note
-    });
-
+    const note = await NoteRepo.getSingleNote(noteId);
+    return res.status(200).send({note});
   } catch (error) {
     next(error);
   }
