@@ -1,4 +1,3 @@
-import { apiUrl } from "@/config/get-env";
 import { getUserData } from "@/helper/getUserData";
 import { makeHttpReq } from "@/helper/makeHttpReq";
 import type { NoteServerData, NoteType } from "@/types/note-types";
@@ -31,11 +30,14 @@ const downloadFileInDrive = async (fileId: string, noteId?: string) => {
         const userId = userData?._id
 
         const data = await makeHttpReq('POST', `notes/drive-files`,
-            { fileId, userId, noteId }) as NoteServerData
+            { fileId, userId, noteId }) as any
         console.log(data)
+        return data
 
     } catch (error) {
         console.log('error : ', error)
+        showError('Failed to upload drive file')
+        return null
     }
 
 };
@@ -43,13 +45,17 @@ const downloadFileInDrive = async (fileId: string, noteId?: string) => {
 
 export const uploadPickedFiles = async (docs: any[], noteId: string) => {
     if (Array.isArray(docs)) {
-
+        const results = []
         for (const doc of docs) {
-            await downloadFileInDrive(doc.id, noteId);
-
+            const result = await downloadFileInDrive(doc.id, noteId);
+            results.push(result)
         }
-
+        if (results.some(r => r !== null)) {
+            showSuccess('Drive file(s) uploaded successfully')
+        }
+        return results
     }
+    return []
 };
 
 

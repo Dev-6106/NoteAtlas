@@ -12,6 +12,7 @@ export async function getUserDriveFiles(req: Request, res: Response, next: NextF
     const oauth2client = new google.auth.OAuth2({
       clientSecret: env.GOOGLE_CLIENT_SECRET,
       clientId: env.GOOGLE_CLIENT_ID,
+      redirectUri: env.CALLBACK_URL,
     });
 
     oauth2client.setCredentials({
@@ -27,7 +28,14 @@ export async function getUserDriveFiles(req: Request, res: Response, next: NextF
     });
 
     res.json(response.data.files);
-  } catch (error) {
+  } catch (error: any) {
+    const googleStatus = error?.response?.status || error?.code;
+    if (googleStatus === 403 || googleStatus === 401) {
+      return res.status(googleStatus).json({
+        message: "Google Drive access denied. Your access token may have expired. Please log out and log back in to refresh your Google permissions.",
+        error: error?.response?.data?.error || error.message,
+      });
+    }
     next(error);
   }
 }

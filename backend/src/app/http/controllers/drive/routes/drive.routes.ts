@@ -1,10 +1,9 @@
 import { Router } from "express";
 import { getUserDriveFiles } from "../getUserDriveFiles";
-import { storeDriveFiles } from "../storeDriveFiles";
+import { storeDriveFiles } from "../../add-sources/storeDriveFiles";
 
 
 export function driveRoutes(router: Router){
     router.get('/users/files',getUserDriveFiles);
-    router.post('/notes/drive-files',storeDriveFiles);
     return router; 
 }

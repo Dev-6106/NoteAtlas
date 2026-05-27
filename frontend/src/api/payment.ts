@@ -5,12 +5,12 @@ export async function addPaymentMethod({ userId, email }: { userId: string, emai
 
     try {
 
-        const data = await makeHttpReq('POST', `create-setup-session`, { userId, email }) as { url: string }
+        const data = await makeHttpReq('POST', `notes/payment/create-setup-session`, { userId, email }) as { url: string }
         window.open(data?.url)
 
-    } catch (error) {
+    } catch (error: any) {
         console.log('error :', error?.message)
-
+        throw error;
     }
 }
 
@@ -20,11 +20,11 @@ export async function buyCredit({ userId, email, amount }: { userId: string, ema
 
     try {
 
-        const data = await makeHttpReq('POST', `charge-customer`, { userId, email, amount }) as { message: string }
+        const data = await makeHttpReq('POST', `notes/payment/charge-customer`, { userId, email, amount }) as { message: string }
         return data
-    } catch (error) {
+    } catch (error: any) {
         showError(error?.message)
-
+        throw error;
     }
 }
 
@@ -32,10 +32,11 @@ export async function buyCredit({ userId, email, amount }: { userId: string, ema
 export const getUserCreditAndPaymentMethod = async (userId: string) => {
     try {
 
-        const data = await makeHttpReq('GET', `user-credits?userId=${userId}`)
+        const data = await makeHttpReq('GET', `notes/payment/user-credits?userId=${userId}`)
         return data
-    } catch (error) {
-        showError(error?.error?.message)
+    } catch (error: any) {
+        showError(error?.error?.message || error?.message)
+        throw error;
     }
 
 };

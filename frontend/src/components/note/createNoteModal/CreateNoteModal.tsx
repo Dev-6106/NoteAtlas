@@ -5,6 +5,7 @@ import { ClipboardMinus, HardDrive, Link2, Loader2, MoveLeft, Newspaper, Search,
 import type { AppDispatch, RootState } from "@/store";
 import { useDispatch, useSelector } from "react-redux";
 import { toggleAddSourceNoteModal } from "@/store/addSourceSlice";
+import { fetchSingleNote } from "@/store/chatSlice";
 import useDrivePicker from 'react-google-drive-picker'
 import { apiUrl, developerKey, googleClientId } from "@/config/get-env";
 import { getUserData } from "@/helper/getUserData";
@@ -28,7 +29,7 @@ const CreateNoteModal = ({ noteId }: { noteId?: string }) => {
 
 
 
-    const [openPicker, data, authResponse] = useDrivePicker();
+    const [openPicker] = useDrivePicker();
     const handleOpenPicker = async () => {
 
         openPicker({
@@ -40,6 +41,15 @@ const CreateNoteModal = ({ noteId }: { noteId?: string }) => {
             showUploadFolders: true,
             supportDrives: true,
             multiselect: true,
+            callbackFunction: async (data: any) => {
+                if (data.action === 'picked') {
+                    await uploadPickedFiles(data?.docs, noteId);
+                    // Refresh note data to show newly uploaded docs in the sources panel
+                    if (noteId) {
+                        dispatch(fetchSingleNote(noteId));
+                    }
+                }
+            }
         })
 
         dispatch(toggleAddSourceNoteModal())
@@ -97,11 +107,7 @@ const CreateNoteModal = ({ noteId }: { noteId?: string }) => {
     //paste text form
 
 
-    useEffect(() => {
-
-        uploadPickedFiles(data?.docs, noteId)
-
-    }, [data])
+    // Removed useEffect for data since it's handled in callbackFunction
 
 
     return (
