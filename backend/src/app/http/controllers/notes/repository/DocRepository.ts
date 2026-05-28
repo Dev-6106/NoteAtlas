@@ -62,6 +62,24 @@ export class DocRepository {
     return row;
   }
 
+  async updateFaq2(props: { docId: any, userId: any, noteId: any, faq: any }) {
+    const { userId, noteId, docId } = props;
+    const row = await Doc.findOneAndUpdate({_id: docId, userId, noteId},{
+      $set: {FAQ: props.faq}
+    },{new: true,runValidators: true})
+    if(!row) throw new Error("No doc found");
+    return row;
+  }
+
+  async updateStudyGuide2(props: { docId: any, userId: any, noteId: any, studyGuide: any }) {
+    const { userId, noteId, docId } = props;
+    const row = await Doc.findOneAndUpdate({_id: docId, userId, noteId},{
+      $set: {studyGuide: props.studyGuide}
+    },{new: true,runValidators: true})
+    if(!row) throw new Error("No doc found");
+    return row;
+  }
+
   async updateSummary(props: DocFieldUpdate & { summary: string }) {
     return this.updateField(props, { summary: props.summary }, "summary");
   }

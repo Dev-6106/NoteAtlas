@@ -7,14 +7,14 @@ import { loadDocument } from "../loader/loaders";
 import { LLM } from "@/app/llm/llm";
 import { generateFAQ } from "@/pipelines/generate-faq";
 
-export async function updateOrCreateFAQ(req: Request, res: Response, next: NextFunction,) {
+export async function updateOrCreateFAQ(_id: string, userId: string, noteId: string) {
 
     try {
         const llm = LLM.getInstance();
-        const { userId, noteId }: Record<string, any> = req.body;
         const docRepo = DocRepository.getInstance();
-        const doc = await docRepo.getSingleDoc({ userId, noteId });
-        if (!doc) throw new Error("No documnet found");
+        const doc = await docRepo.getSingleDoc2({ _id, userId, noteId });
+        if (!doc) throw new Error("No document found");
+        
         const currDir = cwd();
         const uploadsDir = path.join(currDir, "public", "uploads");
         const docFullPath = `${uploadsDir}/${doc?.fileName}`;
@@ -22,10 +22,11 @@ export async function updateOrCreateFAQ(req: Request, res: Response, next: NextF
         const splittingDoc = await loadDocument(docFullPath);
         const faq = await generateFAQ(llm, splittingDoc);
 
-        await docRepo.updateFaq({ userId, noteId, faq });
+        await docRepo.updateFaq2({ docId: _id, userId, noteId, faq });
 
-        return res.status(200).send({ message: "FAQ generated succesfully", faq });
+        console.log("Finished generating FAQ");
     } catch (error) {
-        next(error);
+        console.log("Error generating FAQ: ", error);
+        throw error;
     }
 }

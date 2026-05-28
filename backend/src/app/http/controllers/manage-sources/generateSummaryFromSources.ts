@@ -11,7 +11,7 @@ export async function generateSummarySources(req: Request, res: Response, next: 
     try {
         const { userId, noteId, docIds } = req.body as { userId: string, noteId: string, docIds: string[] };
 
-        if (docIds.length === 0) return res.json(400).json({ message: "Select a source" });
+        if (docIds.length === 0) return res.status(400).json({ message: "Select a source" });
 
         const llm = LLM.getInstance();
         const sourceRepo = SourceRepository.getInstance();
@@ -22,10 +22,14 @@ export async function generateSummarySources(req: Request, res: Response, next: 
         for (const docId of docIds) {
             const doc = await docRepo.getSingleDoc2({ _id: docId, userId, noteId });
             if (doc) {
-                summaries.push({ title: doc?.title, summary: doc?.summary });
+                if (!doc.summary) {
+                    return res.status(500).json({ message: `Summary for document '${doc.title}' was not generated successfully. Please try again.` });
+                }
+                summaries.push({ title: doc.title, summary: doc.summary });
             }
         }
 
+        console.log("Sources: ",summaries);
         if (summaries.length > 0) {
             if (summaries.length === 1) {
                 const title = await generateTitle(llm, [new Document({ pageContent: summaries[0]?.summary as string })]);
@@ -33,18 +37,20 @@ export async function generateSummarySources(req: Request, res: Response, next: 
                 await sourceRepo.createSource({
                     userId, noteId, title, source_type: 'summary', content: summaries[0]?.summary as string, total_sources: 1
                 });
+                console.log("Finished summary... \n\n Title: ", title, "\n\n Summary: ", summaries);
                 return res.status(200).send({ message: "Finished creating summary" });
             } else {
                 const countSource = summaries.length;
                 const summaryToStr = formatSummaries(summaries);
-
+                
                 const llmFinalSummary = await mergeSummary({ countSource, llm, summaryToStr }) as string;
                 const title = await generateTitle(llm, [new Document({ pageContent: summaryToStr as string })]);
-
+                
                 await sourceRepo.createSource({
                     userId, noteId, title, source_type: 'summary', content: llmFinalSummary, total_sources: countSource
                 });
-                return res.json(200).send({ message: "Finished creating summaries" });
+                console.log("Finished summary... \n\n Title: ", title, "\n\n Summary: ", llmFinalSummary);
+                return res.status(200).json({ message: "Finished creating summaries" }); 
             }
         }
 
@@ -59,7 +65,7 @@ type SummaryItem = {
 };
 
 function formatSummaries(summaries: SummaryItem[]): string {
-    return summaries.map((item) => `title: $ { item.title ?? ""} \n\n, summary: ${item.summary ?? ""}`).join("----=====|====----");
+    return summaries.map((item) => `title: ${item.title ?? ""} \n\n, summary: ${item.summary ?? ""}`).join("----=====|====----");
 }
 
 async function mergeSummary(props: { llm: ChatFireworks, countSource: number, summaryToStr: string }) {
@@ -101,5 +107,6 @@ Output requirements:
     const prompt = await mapPrompt.invoke({context: summaryToStr});
     const response = await llm.invoke(prompt);
     const llmFinalSummary = response?.content;
+    console.log("Merged summaries....")
     return llmFinalSummary;
 }

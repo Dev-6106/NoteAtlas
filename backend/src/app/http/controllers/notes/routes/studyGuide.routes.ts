@@ -3,7 +3,7 @@ import { getStudyGuide } from "../studyguide/getStudyGuide";
 import { updateOrCreateStudyGuide } from "../studyguide/updateOrCreateStudyGuide";
 
 export function studyGuideRoutes(router: Router) {
-    router.get('/notes/study-guide',  getStudyGuide);
-    router.put('/notes/study-guide', updateOrCreateStudyGuide);
+    router.post('/notes/studyguide',  getStudyGuide);
+    router.put('/notes/studyguide', updateOrCreateStudyGuide);
     return router;
 }

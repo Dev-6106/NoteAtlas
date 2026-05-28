@@ -32,5 +32,6 @@ export async function updateOrCreateSummary(_id: string,userId: string, noteId: 
         console.log("Finished generating summary");
     } catch (error) {
         console.log("Error generating summary: ",error);
+        throw error;
     }
 }

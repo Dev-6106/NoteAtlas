@@ -43,20 +43,20 @@ export function mockRoutes(router: Router) {
     const mockReady = (req: any, res: any) => res.json({ status: "ready_to_generate_source" });
     const mockSuccess = (req: any, res: any) => res.json({ message: "Sources added successfully (mock)" });
 
-    router.post("/notes/summary", mockReady);
-    router.post("/notes/add/sources", mockSuccess);
+    // router.post("/notes/summary", mockReady);
+    // router.post("/notes/add/sources", mockSuccess);
 
-    router.post("/notes/faq", mockReady);
-    router.post("/notes/add/faq/sources", mockSuccess);
+    // router.post("/notes/faq", mockReady);
+    // router.post("/notes/add/faq/sources", mockSuccess);
 
-    router.post("/notes/studyguide", mockReady);
-    router.post("/notes/add/studyguide/sources", mockSuccess);
+    // router.post("/notes/studyguide", mockReady);
+    // router.post("/notes/add/studyguide/sources", mockSuccess);
 
-    router.post("/notes/briefingdoc", mockReady);
-    router.post("/notes/add/briefingdoc/sources", mockSuccess);
+    // router.post("/notes/briefingdoc", mockReady);
+    // router.post("/notes/add/briefingdoc/sources", mockSuccess);
 
-    router.post("/notes/mindmap", mockReady);
-    router.post("/notes/add/mindmap/sources", mockSuccess);
+    // router.post("/notes/mindmap", mockReady);
+    // router.post("/notes/add/mindmap/sources", mockSuccess);
 
     // Mocks for missing chat POST route
     router.post("/chats", (req, res) => {

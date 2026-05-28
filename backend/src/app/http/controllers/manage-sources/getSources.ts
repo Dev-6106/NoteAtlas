@@ -12,6 +12,7 @@ export async function getSourceResults(req: Request, res: Response, next: NextFu
 
         const sourceRepo = SourceRepository.getInstance();
         const sources = await sourceRepo.getAllSources({userId,noteId});
+        return res.status(200).json({ sources });
     } catch (error) {
         next(error);
     }

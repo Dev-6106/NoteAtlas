@@ -7,14 +7,14 @@ import { loadDocument } from "../loader/loaders";
 import { LLM } from "@/app/llm/llm";
 import { generateStudyGuide } from "@/pipelines/study-guide";
 
-export async function updateOrCreateStudyGuide(req: Request, res: Response, next: NextFunction,) {
+export async function updateOrCreateStudyGuide(_id: string, userId: string, noteId: string) {
 
     try {
         const llm = LLM.getInstance();
-        const { userId, noteId }: Record<string, any> = req.body;
         const docRepo = DocRepository.getInstance();
-        const doc = await docRepo.getSingleDoc({ userId, noteId });
-        if (!doc) throw new Error("No documnet found");
+        const doc = await docRepo.getSingleDoc2({ _id, userId, noteId });
+        if (!doc) throw new Error("No document found");
+        
         const currDir = cwd();
         const uploadsDir = path.join(currDir, "public", "uploads");
         const docFullPath = `${uploadsDir}/${doc?.fileName}`;
@@ -22,10 +22,11 @@ export async function updateOrCreateStudyGuide(req: Request, res: Response, next
         const splittingDoc = await loadDocument(docFullPath);
         const studyGuide = await generateStudyGuide(llm, splittingDoc);
 
-        await docRepo.updateStudyGuide({ userId, noteId, studyGuide });
+        await docRepo.updateStudyGuide2({ docId: _id, userId, noteId, studyGuide });
 
-        return res.status(200).send({ message: "Study guide generated succesfully", studyGuide });
+        console.log("Finished generating Study Guide");
     } catch (error) {
-        next(error);
+        console.log("Error generating Study Guide: ", error);
+        throw error;
     }
 }
