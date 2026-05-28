@@ -26,7 +26,7 @@ export class DocRepository {
   }) {
     const doc = new Doc({ ...docProps });
     const newDoc = await doc.save();
-    await Note.findByIdAndUpdate(docProps.noteId, {$push: {docs: newDoc._id}});
+    await Note.findByIdAndUpdate(docProps.noteId, { $push: { docs: newDoc._id } });
     return newDoc.toObject();
   }
 
@@ -51,6 +51,15 @@ export class DocRepository {
     }
 
     return result;
+  }
+
+  async updateSummary2(props: { docId: any, userId: any, noteId: any, summary: any }) {
+    const { userId, noteId, docId } = props;
+    const row = await Doc.findOneAndUpdate({_id: docId, userId, noteId},{
+      $set: {summary: props.summary}
+    },{new: true,runValidators: true})
+    if(!row) throw new Error("No doc found");
+    return row;
   }
 
   async updateSummary(props: DocFieldUpdate & { summary: string }) {
@@ -82,6 +91,10 @@ export class DocRepository {
   }
 
   async getSingleDoc(props: { userId: string; noteId: string }) {
+    return Doc.findOne(props).lean();
+  }
+
+  async getSingleDoc2(props: { _id: string, userId: string, noteId: string }) {
     return Doc.findOne(props).lean();
   }
 

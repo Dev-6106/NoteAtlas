@@ -17,8 +17,7 @@ Title:
 `);
 
 export async function generateTitle<T extends Runnable>(
-  llm: T,
-  docs: Document<Record<string, any>>[],
+  llm: T, docs: Document<Record<string, any>>[],
 ) {
   const docToString = docs.map(doc => doc.pageContent).join('\n\n');
 

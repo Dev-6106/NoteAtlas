@@ -1,16 +1,46 @@
 import { Request, Response, NextFunction, } from "express";
 import { DocRepository } from "../repository/DocRepository";
+import { updateOrCreateSummary } from "./updateOrCreateSummary";
 
+
+// export async function getDocSummary(req: Request, res: Response, next: NextFunction,) {
+
+//     try {
+
+//         const { userId, noteId }: Record<string, any> = req.query;
+//         const docRepo = DocRepository.getInstance();
+//         const doc = await docRepo.getSingleDoc({ userId, noteId })
+//         if (!doc) throw new Error("No documnet found");
+//         return res.status(200).send({ summary: doc?.summary });
+//     } catch (error) {
+//         next(error);
+//     }
+// }
 
 export async function getDocSummary(req: Request, res: Response, next: NextFunction,) {
-
     try {
-
-        const { userId, noteId }: Record<string, any> = req.query;
+        const {userId,noteId, docIds} = req.body as {userId: string, noteId: string, docIds: string[]};
+        
         const docRepo = DocRepository.getInstance();
-        const doc = await docRepo.getSingleDoc({ userId, noteId })
-        if (!doc) throw new Error("No documnet found");
-        return res.status(200).send({ summary: doc?.summary });
+        const docWithoutSummary = [] as any;
+
+        for(const docId of docIds){
+            const doc = await docRepo.getSingleDoc2({_id: docId, userId, noteId});
+
+            if(!doc?.summary){
+                docWithoutSummary.push({
+                    noteId: doc?.noteId,
+                    userId: doc?.userId,
+                    docId: doc?._id
+                })
+            }
+        };
+
+        for(const docW of docWithoutSummary){
+            await updateOrCreateSummary(docW?.docId,docW?.userId,docW?.noteId);
+        }
+
+        return res.status(200).send({status:'ready_to_generate_source'});
     } catch (error) {
         next(error);
     }

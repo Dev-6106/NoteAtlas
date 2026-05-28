@@ -9,7 +9,7 @@ import { faqRoutes } from "../http/controllers/notes/routes/faq.routes";
 import { studyGuideRoutes } from "../http/controllers/notes/routes/studyGuide.routes";
 import { mindMapRoutes } from "../http/controllers/notes/routes/mindMap.routes";
 import { mockRoutes } from "./mock.routes";
-import { addSourceRoutes } from "../http/controllers/add-sources/addSources.routes";
+import { addSourceRoutes } from "../http/controllers/add-sources/routes/addSources.routes";
 
 export function apiV1(app: Express, router: Router) {
     const driveRouter = driveRoutes(router);

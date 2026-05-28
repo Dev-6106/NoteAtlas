@@ -8,7 +8,7 @@ import { loadDocument } from "../loader/loaders";
 import { generateSummary } from "@/pipelines/summary";
 import { LLM } from "@/app/llm/llm";
 
-export async function updateOrCreateSummary(req: Request, res: Response, next: NextFunction,) {
+export async function updateOrCreateSummary(_id: string,userId: string, noteId: string) {
 
     try {
         // - getFileName
@@ -16,9 +16,9 @@ export async function updateOrCreateSummary(req: Request, res: Response, next: N
         // - call generateSummary
         // - storeSummaryInDB
         const llm = LLM.getInstance();
-        const { userId, noteId }: Record<string, any> = req.body;
+        
         const docRepo = DocRepository.getInstance();
-        const doc = await docRepo.getSingleDoc({ userId, noteId });
+        const doc = await docRepo.getSingleDoc2({_id:_id,userId,noteId});
         if (!doc) throw new Error("No documnet found");
         const currDir = cwd();
         const uploadsDir = path.join(currDir, "public", "uploads");
@@ -27,10 +27,10 @@ export async function updateOrCreateSummary(req: Request, res: Response, next: N
         const splittingDoc = await loadDocument(docFullPath);
         const summary = await generateSummary(llm, splittingDoc);
 
-        await docRepo.updateSummary({ userId, noteId, summary });
+        await docRepo.updateSummary2({docId: _id, userId, noteId, summary });
 
-        return res.status(200).send({ message: "Summary generated succesfully", summary });
+        console.log("Finished generating summary");
     } catch (error) {
-        next(error);
+        console.log("Error generating summary: ",error);
     }
 }
