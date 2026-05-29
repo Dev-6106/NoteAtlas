@@ -19,7 +19,7 @@ const MindElixirNode = z.object({
             z.object({
               id: z.string(),
               topic: z.string(),
-              children: z.array(z.any()).optional(),
+              children: z.array(z.any()).nullable(),
             }),
           ),
         }),

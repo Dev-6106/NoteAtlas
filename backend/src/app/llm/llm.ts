@@ -11,6 +11,8 @@ export class LLM {
         model: "accounts/fireworks/models/deepseek-v4-pro",
         temperature: 0.7,
         apiKey: env.CHATFIREWORK_API_KEY,
+        maxRetries: 3,
+        timeout: 300000, // 5 minutes timeout to prevent timeouts on large document generation
       });
     }
     return LLM.instance;

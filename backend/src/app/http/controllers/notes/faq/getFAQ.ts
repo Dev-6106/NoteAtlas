@@ -23,9 +23,9 @@ export async function getFAQ(req: Request, res: Response, next: NextFunction,) {
             }
         };
 
-        for(const docW of docWithoutFAQ){
-            await updateOrCreateFAQ(docW?.docId, docW?.userId, docW?.noteId);
-        }
+        await Promise.all(
+            docWithoutFAQ.map((docW: any) => updateOrCreateFAQ(docW?.docId, docW?.userId, docW?.noteId))
+        );
         console.log("FAQ Summary retured: (getFAQ)" );
         return res.status(200).send({status:'ready_to_generate_source'});
     } catch (error) {

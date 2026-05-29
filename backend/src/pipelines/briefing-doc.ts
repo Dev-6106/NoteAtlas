@@ -8,13 +8,11 @@ import { RecursiveCharacterTextSplitter } from "@langchain/textsplitters";
 import { CheerioWebBaseLoader } from "@langchain/community/document_loaders/web/cheerio";
 import { ChatFireworks } from "@langchain/community/chat_models/fireworks";
 import { Runnable } from "@langchain/core/runnables";
+import { invokeWithRetry } from "@/util/invokeWithRetry";
 
 
 // -------------------- LOAD DOCS --------------------
 
-const loader = new CheerioWebBaseLoader(
-  "https://en.wikipedia.org/wiki/Ramayana"
-);
 
 // const docs = await loader.load();
 
@@ -39,40 +37,12 @@ const loader = new CheerioWebBaseLoader(
 
 // -------------------- RETRY UTILITY --------------------
 export async function generateBriefingDoc<T extends Runnable>(llm: T, splitDocs: Document[]) {
-  async function invokeWithRetry<T>(
-    fn: () => Promise<T>,
-    retries = 5
-  ): Promise<T> {
-    for (let i = 0; i < retries; i++) {
-      try {
-        return await fn();
-      } catch (err: any) {
-        if (
-          err?.status === 429 ||
-          err?.code === "RATE_LIMIT_EXCEEDED"
-        ) {
-          const wait = Math.pow(2, i) * 1000;
 
-          console.log(
-            `Rate limited. Retrying in ${wait}ms...`
-          );
-
-          await new Promise((resolve) =>
-            setTimeout(resolve, wait)
-          );
-        } else {
-          throw err;
-        }
-      }
-    }
-
-    throw new Error("Max retries exceeded");
-  }
 
 
   // -------------------- TOKEN UTILS --------------------
 
-  const MAX_TOKENS = 1000;
+  const MAX_TOKENS = 10000;
 
   function approximateTokens(text: string): number {
     return Math.ceil(text.length / 4);
@@ -151,8 +121,7 @@ export async function generateBriefingDoc<T extends Runnable>(llm: T, splitDocs:
     }),
 
     collapsedBriefings: Annotation<Document[]>({
-      reducer: (state, update) =>
-        state.concat(update),
+      reducer: (_, update) => update,
       default: () => [],
     }),
 
@@ -412,7 +381,7 @@ CONTENT:
       ),
     },
     {
-      recursionLimit: 10,
+      recursionLimit: 100,
 
       configurable: {
         maxConcurrency: 2,

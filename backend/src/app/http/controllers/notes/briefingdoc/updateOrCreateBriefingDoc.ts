@@ -9,14 +9,15 @@ import { generateSummary } from "@/pipelines/summary";
 import { LLM } from "@/app/llm/llm";
 import { generateBriefingDoc } from "@/pipelines/briefing-doc";
 
-export async function updateOrCreateBriefingDoc(req: Request, res: Response, next: NextFunction,) {
+export async function updateOrCreateBriefingDoc(_id: string, userId: string, noteId: string) {
 
     try {
         const llm = LLM.getInstance();
-        const { userId, noteId }: Record<string, any> = req.body;
+        
         const docRepo = DocRepository.getInstance();
-        const doc = await docRepo.getSingleDoc({ userId, noteId });
+        const doc = await docRepo.getSingleDoc2({_id, userId, noteId});
         if (!doc) throw new Error("No documnet found");
+        
         const currDir = cwd();
         const uploadsDir = path.join(currDir, "public", "uploads");
         const docFullPath = `${uploadsDir}/${doc?.fileName}`;
@@ -24,10 +25,11 @@ export async function updateOrCreateBriefingDoc(req: Request, res: Response, nex
         const splittingDoc = await loadDocument(docFullPath);
         const briefingDoc = await generateBriefingDoc(llm, splittingDoc);
 
-        await docRepo.updateBriefingDoc({ userId, noteId, briefingDoc });
+        await docRepo.updateBriefingDoc2({ docId: _id, userId, noteId, briefingDoc });
 
-        return res.status(200).send({ message: "Briefing doc generated succesfully", briefingDoc });
+        console.log("Finished generating Briefing Doc");
     } catch (error) {
-        next(error);
+        console.log("Error generating Briefing Doc: ", error);
+        throw error;
     }
 }

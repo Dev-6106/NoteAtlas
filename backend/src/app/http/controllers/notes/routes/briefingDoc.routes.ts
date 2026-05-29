@@ -3,7 +3,7 @@ import { getBriefingDoc } from "../briefingdoc/getBriefingDoc";
 import { updateOrCreateBriefingDoc } from "../briefingdoc/updateOrCreateBriefingDoc";
 
 export function briefingRoutes(router: Router) {
-    router.get('/notes/briefing-doc',  getBriefingDoc);
-    router.put('/notes/briefing-doc', updateOrCreateBriefingDoc);
+    router.post('/notes/briefingdoc',  getBriefingDoc);
+    router.put('/notes/briefingdoc', updateOrCreateBriefingDoc as any);
     return router;
 }

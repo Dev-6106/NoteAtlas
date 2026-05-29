@@ -2,25 +2,34 @@ import { Request, Response, NextFunction, } from "express";
 import { DocRepository } from "../repository/DocRepository";
 import { generateMindMap } from "@/pipelines/mind-map";
 import { LLM } from "@/app/llm/llm";
+import { updateOrCreateStudyGuide } from "../studyguide/updateOrCreateStudyGuide";
 
-
-export async function createOrUpdateMindMap(req: Request, res: Response, next: NextFunction,) {
+export async function createOrUpdateMindMap(_id: string, userId: string, noteId: string) {
 
     try {
-
-        const { userId, noteId }: Record<string, any> = req.query;
         const docRepo = DocRepository.getInstance();
         const llm = LLM.getInstance();
-        const doc = await docRepo.getSingleDoc({ userId, noteId })
-        if (!doc) throw new Error("No documnet found");
+        const doc = await docRepo.getSingleDoc2({ _id, userId, noteId })
+        if (!doc) throw new Error("No document found");
 
-        const studyguide = doc?.studyGuide;
+        let studyguide = doc?.studyGuide;
 
-        if(!studyguide) throw new Error("Study Guide Not Found");
+        if(!studyguide) {
+            console.log(`Study Guide not found for doc ${_id}. Generating Study Guide first...`);
+            await updateOrCreateStudyGuide(_id, userId, noteId);
+            
+            const updatedDoc = await docRepo.getSingleDoc2({ _id, userId, noteId });
+            studyguide = updatedDoc?.studyGuide;
+            if(!studyguide) throw new Error("Failed to generate Study Guide required for Mind Map");
+        }
+        
         const mindMap = await generateMindMap(llm, studyguide);
-        const storedMindMap = await docRepo.updateMindMap({userId, noteId, mindMap});
-        return res.status(200).send({ mindMap: storedMindMap });
+        
+        // We will need updateMindMap2 in DocRepository, which I should add
+        await docRepo.updateMindMap2({docId: _id, userId, noteId, mindMap});
+        console.log("Finished generating Mind Map");
     } catch (error) {
-        next(error);
+        console.log("Error generating Mind Map: ", error);
+        throw error;
     }
 }

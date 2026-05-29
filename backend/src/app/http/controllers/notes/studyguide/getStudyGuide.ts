@@ -22,9 +22,9 @@ export async function getStudyGuide(req: Request, res: Response, next: NextFunct
             }
         };
 
-        for(const docW of docWithoutStudyGuide){
-            await updateOrCreateStudyGuide(docW?.docId, docW?.userId, docW?.noteId);
-        }
+        await Promise.all(
+            docWithoutStudyGuide.map((docW: any) => updateOrCreateStudyGuide(docW?.docId, docW?.userId, docW?.noteId))
+        );
         console.log("Study Guide Summary retured: (getStudyGuide)" );
         return res.status(200).send({status:'ready_to_generate_source'});
     } catch (error) {

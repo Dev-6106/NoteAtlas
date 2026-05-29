@@ -80,6 +80,15 @@ export class DocRepository {
     return row;
   }
 
+  async updateBriefingDoc2(props: { docId: any, userId: any, noteId: any, briefingDoc: any }) {
+    const { userId, noteId, docId } = props;
+    const row = await Doc.findOneAndUpdate({_id: docId, userId, noteId},{
+      $set: {briefingDoc: props.briefingDoc}
+    },{new: true,runValidators: true})
+    if(!row) throw new Error("No doc found");
+    return row;
+  }
+
   async updateSummary(props: DocFieldUpdate & { summary: string }) {
     return this.updateField(props, { summary: props.summary }, "summary");
   }
@@ -106,6 +115,15 @@ export class DocRepository {
 
   async updateMindMap(props: DocFieldUpdate & { mindMap: string }) {
     return this.updateField(props, { mindMap: props.mindMap }, "mindMap");
+  }
+
+  async updateMindMap2(props: { docId: any, userId: any, noteId: any, mindMap: any }) {
+    const { userId, noteId, docId } = props;
+    const row = await Doc.findOneAndUpdate({_id: docId, userId, noteId},{
+      $set: {mindMap: props.mindMap}
+    },{new: true,runValidators: true})
+    if(!row) throw new Error("No doc found");
+    return row;
   }
 
   async getSingleDoc(props: { userId: string; noteId: string }) {

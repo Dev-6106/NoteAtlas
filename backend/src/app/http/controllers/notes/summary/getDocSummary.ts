@@ -36,9 +36,9 @@ export async function getDocSummary(req: Request, res: Response, next: NextFunct
             }
         };
 
-        for(const docW of docWithoutSummary){
-            await updateOrCreateSummary(docW?.docId,docW?.userId,docW?.noteId);
-        }
+        await Promise.all(
+            docWithoutSummary.map((docW: any) => updateOrCreateSummary(docW?.docId, docW?.userId, docW?.noteId))
+        );
         console.log("Doc Summary retured: (getDocSummary)" );
         return res.status(200).send({status:'ready_to_generate_source'});
     } catch (error) {
