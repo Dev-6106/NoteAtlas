@@ -1,4 +1,6 @@
 import express from "express";
+import dns from "node:dns";
+dns.setDefaultResultOrder('ipv4first');
 import "dotenv/config";
 import { env } from "./config/env";
 import { bootStrapApp } from "./app/bootstrap/index";

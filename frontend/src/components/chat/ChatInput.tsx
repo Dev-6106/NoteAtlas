@@ -13,7 +13,16 @@ export const ChatInput = memo(({ inputValue, setInputValue, onKeyDownMessage }: 
         onChange={(e) => setInputValue(e.target.value)}
         onKeyDown={onKeyDownMessage}
         placeholder="Start typing..."
-        className="flex-1 bg-transparent outline-none text-sm placeholder:text-gray-400 px-2 py-2"
+        style={{
+            flex: 1,
+            background: "transparent",
+            outline: "none",
+            border: "none",
+            fontSize: 14,
+            color: "#e2e8f0",
+            padding: "8px",
+            fontFamily: "'DM Sans', system-ui, sans-serif",
+        }}
         aria-label="Message input"
     />
 ));

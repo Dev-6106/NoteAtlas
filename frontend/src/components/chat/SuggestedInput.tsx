@@ -40,11 +40,23 @@ export function SuggestedInput({
   };
 
   return (
-    <div className="relative px-4 py-2">
+    <div style={{ position: "relative", padding: "8px 16px" }}>
+      <style>{`
+        .suggested-scroll::-webkit-scrollbar { display: none; }
+      `}</style>
+
       {showArrows && (
         <button
           onClick={() => scroll(-1)}
-          className="absolute left-1 top-1/2 -translate-y-1/2 z-10 h-8 w-8 rounded-full bg-white shadow flex items-center justify-center"
+          style={{
+            position: "absolute", left: 4, top: "50%", transform: "translateY(-50%)",
+            zIndex: 10, width: 28, height: 28, borderRadius: "50%",
+            background: "rgba(99,102,241,0.15)",
+            border: "1px solid rgba(99,102,241,0.3)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            color: "#818cf8", cursor: "pointer", transition: "all 0.2s",
+            backdropFilter: "blur(8px)",
+          }}
         >
           <ArrowLeft />
         </button>
@@ -52,13 +64,35 @@ export function SuggestedInput({
 
       <div
         ref={chipsRef}
-        className="flex gap-2 overflow-x-auto scrollbar-none px-6"
+        className="suggested-scroll"
+        style={{
+          display: "flex", gap: 8,
+          overflowX: "auto", padding: "0 24px",
+        }}
       >
         {questions?.map((q, i) => (
           <button
             key={i}
             onClick={() => selectQuestion(q)}
-            className="whitespace-nowrap rounded-full bg-slate-100 px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-200 transition"
+            style={{
+              whiteSpace: "nowrap", borderRadius: 999,
+              padding: "7px 14px", fontSize: 13, fontWeight: 500,
+              background: "rgba(255,255,255,0.05)",
+              border: "1px solid rgba(255,255,255,0.08)",
+              color: "#94a3b8", cursor: "pointer",
+              transition: "all 0.2s",
+              fontFamily: "'DM Sans', system-ui, sans-serif",
+            }}
+            onMouseEnter={e => {
+              (e.currentTarget as HTMLButtonElement).style.background = "rgba(99,102,241,0.12)";
+              (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(99,102,241,0.35)";
+              (e.currentTarget as HTMLButtonElement).style.color = "#c7d2fe";
+            }}
+            onMouseLeave={e => {
+              (e.currentTarget as HTMLButtonElement).style.background = "rgba(255,255,255,0.05)";
+              (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(255,255,255,0.08)";
+              (e.currentTarget as HTMLButtonElement).style.color = "#94a3b8";
+            }}
           >
             {q}
           </button>
@@ -68,7 +102,15 @@ export function SuggestedInput({
       {showArrows && (
         <button
           onClick={() => scroll(1)}
-          className="absolute right-1 top-1/2 -translate-y-1/2 z-10 h-8 w-8 rounded-full bg-white shadow flex items-center justify-center"
+          style={{
+            position: "absolute", right: 4, top: "50%", transform: "translateY(-50%)",
+            zIndex: 10, width: 28, height: 28, borderRadius: "50%",
+            background: "rgba(99,102,241,0.15)",
+            border: "1px solid rgba(99,102,241,0.3)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            color: "#818cf8", cursor: "pointer", transition: "all 0.2s",
+            backdropFilter: "blur(8px)",
+          }}
         >
           <ArrowRight />
         </button>
@@ -78,7 +120,7 @@ export function SuggestedInput({
 }
 
 const ArrowLeft = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24">
+  <svg width="14" height="14" viewBox="0 0 24 24">
     <path
       d="M15 18l-6-6 6-6"
       stroke="currentColor"
@@ -90,7 +132,7 @@ const ArrowLeft = () => (
 );
 
 const ArrowRight = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24">
+  <svg width="14" height="14" viewBox="0 0 24 24">
     <path
       d="M9 6l6 6-6 6"
       stroke="currentColor"

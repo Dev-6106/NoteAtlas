@@ -9,4 +9,7 @@ const sourceSchema = new mongoose.Schema({
     userId: {type: mongoose.Schema.Types.ObjectId, ref: "User",required: true},
 }, {timestamps: true});
 
+sourceSchema.index({ userId: 1 });
+sourceSchema.index({ noteId: 1 });
+
 export const Source = mongoose.model("Source",sourceSchema);

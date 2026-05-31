@@ -2,10 +2,10 @@ import fs from "fs";
 import fetch from "node-fetch";
 import { env } from "@/config/env";
 import { logger } from "@/lib/logger";
+import { uploadToStorage } from "@/services/storage/upload.service";
 
 export const generateImage = async (
   prompt: string,
-  path: string,
   fileName: string,
   cb: (fileName: string) => void
 ): Promise<void> => {
@@ -37,15 +37,10 @@ export const generateImage = async (
     const arrayBuffer = await response.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 
-    if (!fs.existsSync(path)) {
-      fs.mkdirSync(path, { recursive: true });
-    }
+    const storageKey = await uploadToStorage(buffer, `cover-${Date.now()}.png`, "image/png", "covers");
 
-    const finalPath = `${path}/${fileName}.png`;
-    fs.writeFileSync(finalPath, buffer);
-
-    logger.info(`Image saved at ${finalPath}`);
-    cb(`${fileName}.png`);
+    logger.info(`Image saved at Supabase key: ${storageKey}`);
+    cb(storageKey);
   } catch (error) {
     logger.error("Error generating image", error);
   }

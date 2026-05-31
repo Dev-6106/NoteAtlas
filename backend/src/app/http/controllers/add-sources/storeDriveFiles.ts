@@ -11,6 +11,9 @@ import { generateTitle } from "../notes/helpers/TitleGeneration";
 import { DocRepository } from "../notes/repository/DocRepository";
 import { LLM } from "@/app/llm/llm";
 import { getDocChunk } from "@/util/getDocChunk";
+import { webFileEmbedding } from "@/pipelines/ingestion-pipeline";
+import agenda from "@/app/bootstrap/agenda/agenda";
+import { uploadToStorage } from "@/services/storage/upload.service";
 
 // Google Workspace mimeTypes that need export instead of direct download
 const GOOGLE_EXPORT_MAP: Record<string, { mimeType: string; ext: string }> = {
@@ -106,25 +109,34 @@ export async function storeDriveFiles(req: Request, res: Response, next: NextFun
             : originalName;
 
         const currDir = cwd();
-        const uploadsDir = path.join(currDir, "public", "uploads");
         const newFileName = generateFileName(finalName);
-        const destPath = path.join(uploadsDir, newFileName);
+        const randomName = Date.now() + "-" + Math.round(Math.random() * 1e9);
+        const tempPath = path.join(currDir, "tmp", randomName + "-" + newFileName);
+        
+        if (!fs.existsSync(path.join(cwd(), "tmp"))) fs.mkdirSync(path.join(cwd(), "tmp"));
 
         // Stream the file to disk (awaitable, won't crash on error)
-        await streamToFile(stream as NodeJS.ReadableStream, destPath);
-        console.log(`File saved: ${uploadsDir} - ${finalName}`);
+        await streamToFile(stream as NodeJS.ReadableStream, tempPath);
+        
+        const fileBuffer = fs.readFileSync(tempPath);
+        const storageKey = await uploadToStorage(fileBuffer, newFileName, fileMimeType, `users/${userId}/notes`);
 
         // Process the saved file
         const llm = LLM.getInstance();
-        const docSplit = await loadDocument(destPath);
+        const docSplit = await loadDocument(tempPath);
         const firstChunk = getDocChunk(docSplit);
         const title = await generateTitle(llm, firstChunk);
+        
+        fs.unlinkSync(tempPath);
 
         const docRepo = DocRepository.getInstance();
         const noteObjectId = new Types.ObjectId(noteId);
-        const newDoc = await docRepo.createDoc({ fileName: newFileName, userId, noteId: noteObjectId, title });
+        const newDoc = await docRepo.createDoc({ fileName: storageKey, userId, noteId: noteObjectId, title });
 
-        res.status(200).json({ message: "Store file to disk", doc: newDoc });
+        agenda.now('docEmbedding',
+            {noteId, userId, filePath: storageKey}
+        )
+        res.status(200).json({ message: "Store file to Supabase", doc: newDoc });
     } catch (error: any) {
         console.error("storeDriveFiles error:", error?.message || error);
 

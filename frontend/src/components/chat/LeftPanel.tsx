@@ -5,15 +5,12 @@ import {
   toggleLeftPanel,
 } from "@/store/chatSlice";
 import { useDispatch, useSelector } from "react-redux";
-import { Button } from "../ui/button";
 import {
   FileText,
   NotepadText,
   PanelLeft,
   Plus,
   Search,
-  Youtube,
-  
 } from "lucide-react";
 import { toggleAddSourceNoteModal } from "@/store/addSourceSlice";
 import type { NoteType } from "@/types/note-types";
@@ -21,12 +18,11 @@ import { Checkbox } from "../ui/checkbox";
 import { toggleDiscoveryModal } from "@/store/discoveryModalSlice";
 import { useState } from "react";
 import { addDocIds } from "@/store/rightPanelSlice";
-// import PdfIcon from '@/assets/pdf-1512.svg'
-import PdfIcon from '@/assets/pdf.png'
+import PdfIcon from '@/assets/pdf.png';
 
 type LeftPanelProps = {
   note: NoteType;
-  loading: boolean
+  loading: boolean;
 };
 
 const LeftPanel = ({ note, loading }: LeftPanelProps) => {
@@ -43,124 +39,257 @@ const LeftPanel = ({ note, loading }: LeftPanelProps) => {
     }
   }
 
-  // State to track selected doc IDs
   const [selectedDocs, setSelectedDocs] = useState<string[]>([]);
 
-
- function handleDocSelect(docId: string) {
-  setSelectedDocs((prev: string[]) =>
-    prev.includes(docId)
-      ? prev.filter((id) => id !== docId) // remove if exists
-      : [...prev, docId] // add if not exists
-  );
-
-  dispatch(addDocIds(docId)); 
-}
-
-
-
+  function handleDocSelect(docId: string) {
+    setSelectedDocs((prev: string[]) =>
+      prev.includes(docId)
+        ? prev.filter((id) => id !== docId)
+        : [...prev, docId]
+    );
+    dispatch(addDocIds(docId));
+  }
 
   return (
     <div
-      className={`bg-white shadow-sm h-full transition-all duration-300 flex flex-col ${leftPanelOpen
-        ? "w-[25%] p-4 rounded-md"
-        : "w-16 p-2 rounded-r-2xl rounded-l-2xl"
-        }`}
+      style={{
+        height: "100%",
+        display: "flex",
+        flexDirection: "column",
+        padding: leftPanelOpen ? 16 : 8,
+        width: leftPanelOpen ? "25%" : 64,
+        transition: "all 0.3s ease",
+        fontFamily: "'DM Sans', system-ui, sans-serif",
+      }}
     >
       {/* Header */}
-      <div className="flex justify-between items-center mb-2 flex-shrink-0">
-        {leftPanelOpen && <p className="text-base text-gray-800">Sources</p>}
-        <Button
-          variant="link"
-          size="icon"
-          className="size-8 hover:bg-slate-100 cursor-pointer"
+      <div style={{
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        marginBottom: 8,
+        flexShrink: 0,
+      }}>
+        {leftPanelOpen && (
+          <p style={{ fontSize: 14, fontWeight: 600, color: "#f1f5f9", letterSpacing: "-0.2px" }}>
+            Sources
+          </p>
+        )}
+        <button
           onClick={() => togglePanel()}
+          style={{
+            width: 32, height: 32, borderRadius: 8,
+            display: "flex", alignItems: "center", justifyContent: "center",
+            background: "rgba(255,255,255,0.05)",
+            border: "1px solid rgba(255,255,255,0.08)",
+            color: "#64748b", cursor: "pointer",
+            transition: "all 0.2s",
+          }}
+          onMouseEnter={e => {
+            (e.currentTarget as HTMLButtonElement).style.background = "rgba(99,102,241,0.12)";
+            (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(99,102,241,0.35)";
+            (e.currentTarget as HTMLButtonElement).style.color = "#a5b4fc";
+          }}
+          onMouseLeave={e => {
+            (e.currentTarget as HTMLButtonElement).style.background = "rgba(255,255,255,0.05)";
+            (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(255,255,255,0.08)";
+            (e.currentTarget as HTMLButtonElement).style.color = "#64748b";
+          }}
         >
-          <PanelLeft size={35} />
-        </Button>
+          <PanelLeft size={16} />
+        </button>
       </div>
 
-      {leftPanelOpen && <hr className="mb-2" />}
+      {leftPanelOpen && (
+        <div style={{ height: 1, background: "rgba(255,255,255,0.06)", marginBottom: 8 }} />
+      )}
 
       {/* Buttons */}
-
-      <div className="flex-shrink-0">
+      <div style={{ flexShrink: 0 }}>
         {leftPanelOpen ? (
-          <div className="flex mt-3 justify-between">
-            <Button
+          <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
+            <button
               onClick={() => dispatch(toggleAddSourceNoteModal())}
-              variant="outline"
-              className="rounded-3xl px-5 py-4 w-35"
+              style={{
+                flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+                padding: "9px 16px", borderRadius: 999,
+                background: "rgba(255,255,255,0.05)",
+                border: "1px solid rgba(255,255,255,0.1)",
+                color: "#94a3b8", fontSize: 13, fontWeight: 600,
+                cursor: "pointer", transition: "all 0.2s",
+              }}
+              onMouseEnter={e => {
+                (e.currentTarget as HTMLButtonElement).style.background = "rgba(99,102,241,0.12)";
+                (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(99,102,241,0.35)";
+                (e.currentTarget as HTMLButtonElement).style.color = "#c7d2fe";
+              }}
+              onMouseLeave={e => {
+                (e.currentTarget as HTMLButtonElement).style.background = "rgba(255,255,255,0.05)";
+                (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(255,255,255,0.1)";
+                (e.currentTarget as HTMLButtonElement).style.color = "#94a3b8";
+              }}
             >
-              <Plus size={18} /> Add
-            </Button>
-            <Button
+              <Plus size={15} /> Add
+            </button>
+            <button
               onClick={() => dispatch(toggleDiscoveryModal())}
-              variant="outline"
-              className="rounded-3xl px-5 py-3 w-35"
+              style={{
+                flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+                padding: "9px 16px", borderRadius: 999,
+                background: "rgba(255,255,255,0.05)",
+                border: "1px solid rgba(255,255,255,0.1)",
+                color: "#94a3b8", fontSize: 13, fontWeight: 600,
+                cursor: "pointer", transition: "all 0.2s",
+              }}
+              onMouseEnter={e => {
+                (e.currentTarget as HTMLButtonElement).style.background = "rgba(99,102,241,0.12)";
+                (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(99,102,241,0.35)";
+                (e.currentTarget as HTMLButtonElement).style.color = "#c7d2fe";
+              }}
+              onMouseLeave={e => {
+                (e.currentTarget as HTMLButtonElement).style.background = "rgba(255,255,255,0.05)";
+                (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(255,255,255,0.1)";
+                (e.currentTarget as HTMLButtonElement).style.color = "#94a3b8";
+              }}
             >
-              <Search size={18} /> Discover
-            </Button>
+              <Search size={15} /> Discover
+            </button>
           </div>
         ) : (
-          <div className="flex flex-col items-center mt-6 gap-4">
-            <Button variant="outline" size="icon">
-              <Plus size={18} />
-            </Button>
-            <Button variant="outline" size="icon">
-              <Search size={18} />
-            </Button>
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginTop: 24, gap: 16 }}>
+            <button
+              onClick={() => dispatch(toggleAddSourceNoteModal())}
+              style={{
+                width: 36, height: 36, borderRadius: 10,
+                display: "flex", alignItems: "center", justifyContent: "center",
+                background: "rgba(255,255,255,0.05)",
+                border: "1px solid rgba(255,255,255,0.1)",
+                color: "#818cf8", cursor: "pointer", transition: "all 0.2s",
+              }}
+              onMouseEnter={e => {
+                (e.currentTarget as HTMLButtonElement).style.background = "rgba(99,102,241,0.15)";
+                (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(99,102,241,0.35)";
+              }}
+              onMouseLeave={e => {
+                (e.currentTarget as HTMLButtonElement).style.background = "rgba(255,255,255,0.05)";
+                (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(255,255,255,0.1)";
+              }}
+            >
+              <Plus size={16} />
+            </button>
+            <button
+              onClick={() => dispatch(toggleDiscoveryModal())}
+              style={{
+                width: 36, height: 36, borderRadius: 10,
+                display: "flex", alignItems: "center", justifyContent: "center",
+                background: "rgba(255,255,255,0.05)",
+                border: "1px solid rgba(255,255,255,0.1)",
+                color: "#818cf8", cursor: "pointer", transition: "all 0.2s",
+              }}
+              onMouseEnter={e => {
+                (e.currentTarget as HTMLButtonElement).style.background = "rgba(99,102,241,0.15)";
+                (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(99,102,241,0.35)";
+              }}
+              onMouseLeave={e => {
+                (e.currentTarget as HTMLButtonElement).style.background = "rgba(255,255,255,0.05)";
+                (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(255,255,255,0.1)";
+              }}
+            >
+              <Search size={16} />
+            </button>
           </div>
         )}
       </div>
 
       {/* Body */}
-      <div className="flex-1 overflow-y-auto mt-4 pr-2">
+      <div className="left-panel-scroll" style={{ flex: 1, overflowY: "auto", marginTop: 16, paddingRight: 4 }}>
+        <style>{`
+          .left-panel-scroll::-webkit-scrollbar { width: 5px; }
+          .left-panel-scroll::-webkit-scrollbar-track { background: transparent; }
+          .left-panel-scroll::-webkit-scrollbar-thumb { background: #312e81; border-radius: 4px; }
+        `}</style>
 
         {leftPanelOpen ? (
-
-          loading ? <DocRowSkeleton count={12} /> :
-
-            note?.docs?.length ? (
-
-              <div className="space-y-3">
-                <div className="flex items-center gap-2 mb-2">
-                  <Checkbox checked={false} />
-                  <span className="text-sm font-medium">Select all sources</span>
+          loading ? (
+            <DocRowSkeleton count={12} />
+          ) : note?.docs?.length ? (
+            <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+              <div style={{
+                display: "flex", alignItems: "center", gap: 8,
+                marginBottom: 8, padding: "4px 0",
+              }}>
+                <Checkbox checked={false} />
+                <span style={{ fontSize: 13, fontWeight: 500, color: "#94a3b8" }}>
+                  Select all sources
+                </span>
+              </div>
+              {note?.docs?.map((doc) => (
+                <div
+                  key={doc._id}
+                  style={{
+                    display: "flex", alignItems: "center", gap: 8,
+                    padding: "8px 8px", borderRadius: 10,
+                    transition: "all 0.15s", cursor: "pointer",
+                  }}
+                  onMouseEnter={e => {
+                    (e.currentTarget as HTMLDivElement).style.background = "rgba(99,102,241,0.08)";
+                  }}
+                  onMouseLeave={e => {
+                    (e.currentTarget as HTMLDivElement).style.background = "transparent";
+                  }}
+                >
+                  <SourceIcon type={doc?.source_type} />
+                  <span style={{
+                    flex: 1, fontSize: 13, color: "#cbd5e1",
+                    overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+                  }}>
+                    {doc?.title}
+                  </span>
+                  <Checkbox
+                    className="cursor-pointer"
+                    checked={selectedDocs.includes(doc._id)}
+                    onCheckedChange={() => handleDocSelect(doc._id)}
+                  />
                 </div>
-                {/* <DocRowSkeleton count={10} /> */}
-                {note?.docs?.map((doc) => (
-                  <div
-                    key={doc._id}
-                    className="flex items-center gap-2 hover:bg-gray-50 p-2 rounded-md"
-                  >
-                    <SourceIcon type={doc?.source_type} />
-                    <span className="flex-1 text-base text-gray-600 truncate"> {doc?.title}  </span>
-                    <Checkbox
-                      className="cursor-pointer"
-                      checked={selectedDocs.includes(doc._id)}
-                      onCheckedChange={() => handleDocSelect(doc._id)}
-                    />
-                  </div>
-                ))}
+              ))}
+            </div>
+          ) : (
+            <div style={{
+              display: "flex", flexDirection: "column",
+              alignItems: "center", justifyContent: "center",
+              height: "100%", textAlign: "center", padding: "0 12px",
+            }}>
+              <div style={{
+                width: 56, height: 56, borderRadius: 14,
+                background: "rgba(99,102,241,0.1)",
+                border: "1px solid rgba(99,102,241,0.2)",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                marginBottom: 16,
+              }}>
+                <NotepadText size={28} style={{ color: "#818cf8" }} />
               </div>
-            ) : (
-              <div className="flex flex-col items-center justify-center h-full text-center">
-                <NotepadText className="text-gray-500 mx-auto" size={60} />
-                <p className="text-sm text-gray-400 font-semibold mt-4 px-3">
-                  Saved sources will appear here. Click Add source above to add
-                  PDFs, websites, text, videos, or audio files. Or import a file
-                  directly from Google Drive.
-                </p>
-              </div>
-            )
-          // end
+              <p style={{
+                fontSize: 13, color: "#475569", fontWeight: 500, lineHeight: 1.6,
+              }}>
+                Saved sources will appear here. Click Add source above to add PDFs, websites, or text. Or import a file directly from Google Drive.
+              </p>
+            </div>
+          )
         ) : (
-          <div className="flex flex-col items-center mt-6  pl-3  gap-4">
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginTop: 24, gap: 16 }}>
             {note?.docs?.map((doc) => (
-              <Button key={doc._id} variant="outline" size="icon">
-                <FileText className="text-blue-500" size={20} />
-              </Button>
+              <button
+                key={doc._id}
+                style={{
+                  width: 36, height: 36, borderRadius: 10,
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  background: "rgba(255,255,255,0.05)",
+                  border: "1px solid rgba(255,255,255,0.1)",
+                  color: "#818cf8", cursor: "pointer", transition: "all 0.2s",
+                }}
+              >
+                <FileText size={16} />
+              </button>
             ))}
           </div>
         )}
@@ -170,63 +299,74 @@ const LeftPanel = ({ note, loading }: LeftPanelProps) => {
 };
 
 
-
-
 type DocRowSkeletonProps = {
-  count?: number; // number of rows to render
+  count?: number;
 };
 
 const DocRowSkeleton: React.FC<DocRowSkeletonProps> = ({ count = 5 }) => {
   return (
-    <div className="space-y-3">
-      {Array.from({ length: count }).map((_, idx) => (
-        <div
-          key={idx}
-          className="flex items-center gap-2 p-2 rounded-md animate-pulse bg-gray-100"
-        >
-          {/* Icon placeholder */}
-          <div className="w-5 h-5 bg-gray-300 rounded" />
-          {/* Title placeholder */}
-          <div className="flex-1 h-4 bg-gray-300 rounded" />
-          {/* Checkbox placeholder */}
-          <div className="w-5 h-5 bg-gray-300 rounded" />
-        </div>
-      ))}
-    </div>
+    <>
+      <style>{`
+        @keyframes darkShimmer {
+          0% { background-position: -200px 0; }
+          100% { background-position: 200px 0; }
+        }
+      `}</style>
+      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        {Array.from({ length: count }).map((_, idx) => (
+          <div
+            key={idx}
+            style={{
+              display: "flex", alignItems: "center", gap: 8,
+              padding: 8, borderRadius: 10,
+            }}
+          >
+            <div style={{
+              width: 20, height: 20, borderRadius: 4,
+              background: "linear-gradient(90deg, rgba(255,255,255,0.04) 25%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.04) 75%)",
+              backgroundSize: "400px 100%",
+              animation: "darkShimmer 1.5s infinite linear",
+            }} />
+            <div style={{
+              flex: 1, height: 14, borderRadius: 4,
+              background: "linear-gradient(90deg, rgba(255,255,255,0.04) 25%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.04) 75%)",
+              backgroundSize: "400px 100%",
+              animation: "darkShimmer 1.5s infinite linear",
+            }} />
+            <div style={{
+              width: 20, height: 20, borderRadius: 4,
+              background: "linear-gradient(90deg, rgba(255,255,255,0.04) 25%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.04) 75%)",
+              backgroundSize: "400px 100%",
+              animation: "darkShimmer 1.5s infinite linear",
+            }} />
+          </div>
+        ))}
+      </div>
+    </>
   );
 };
-
 
 
 interface SourceIconProps {
   type?: string;
 }
 
- function SourceIcon({ type = "" }: SourceIconProps) {
+function SourceIcon({ type = "" }: SourceIconProps) {
   const normalized = type.toLowerCase();
 
-  if (normalized.includes("youtube")) {
-    return <Youtube className="text-red-500" />;
-  }
-
   if (normalized.includes("pdf")) {
-    return   <img
+    return (
+      <img
         src={PdfIcon}
         alt="PDF Icon"
-        width={24}
-        height={24}
-        className="rounded"
+        width={20}
+        height={20}
+        style={{ borderRadius: 4 }}
       />
+    );
   }
 
-
-  // if (normalized.includes("mindmap")) {
-  //   return <GitBranch className="text-orange-500" size={20} />;
-  // }
-
-
-
-  return   <FileText className="text-blue-500" size={20} />
+  return <FileText size={18} style={{ color: "#818cf8", flexShrink: 0 }} />;
 }
 
 

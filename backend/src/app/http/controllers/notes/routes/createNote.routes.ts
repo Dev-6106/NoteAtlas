@@ -1,34 +1,12 @@
 import multer, { FileFilterCallback } from "multer";
-import path from "path";
-import fs from "fs";
 import { Router } from "express";
-import { cwd } from "process";
 import { createNote } from "../createNote";
 import { createBlankNote } from "../createBlankNote";
 import { uploadFiles } from "../uploadFiles";
 
-const currDir = cwd();
-
-const uploadsDir = path.join(currDir, "public", "uploads");
-
-if (!fs.existsSync(uploadsDir)) {
-    fs.mkdirSync(uploadsDir, { recursive: true });
-}
+const storage = multer.memoryStorage();
     
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        cb(null, uploadsDir);
-    },
 
-    filename: (req, file, cb) => {
-        const uniqueSuffix =
-            Date.now() + "-" + Math.round(Math.random() * 1e9);
-
-        const ext = path.extname(file.originalname);
-
-        cb(null, uniqueSuffix + ext);
-    }
-});
 
 const documentFileFilter = (req: any, file: any, cb: FileFilterCallback) => {
     const allowedTypes = /pdf|doc|docx|html|csv|txt/;
@@ -45,7 +23,7 @@ const documentFileFilter = (req: any, file: any, cb: FileFilterCallback) => {
 const upload = multer({ 
     storage,
     fileFilter: documentFileFilter,
-    limits: {fileSize: 2 * 1024 * 1024} //2 MB 
+    limits: {fileSize: 10 * 1024 * 1024} // 10 MB 
 });
 
 export const createNoteRouter = (router: Router) => {

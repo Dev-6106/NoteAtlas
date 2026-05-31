@@ -1,7 +1,5 @@
-import React, { useMemo, useState } from "react";
-
-import { Loader2, Star, Check } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import React, { useState } from "react";
+import { Loader2, Star, Check, Zap, CheckCircle2 } from "lucide-react";
 import { BaseModal } from "../base/BaseModal";
 import { useDispatch, useSelector } from "react-redux";
 import type { AppDispatch, RootState } from "@/store";
@@ -17,11 +15,10 @@ export const BuyCreditModal = () => {
   const { payment } = useSelector((state: RootState) => state.chat);
   const [loading, setLoading] = useState(false);
 
-
   const onSubmit = async (amount: number) => {
     try {
       const userData = getUserData();
-      setLoading(true)
+      setLoading(true);
       const res = await buyCredit({
         userId: userData?._id as string,
         amount: amount,
@@ -29,13 +26,10 @@ export const BuyCreditModal = () => {
       });
       showSuccess(res?.message);
       dispatch(togglePaymentModal());
-      dispatch(fetchUserCreditAndPayment(userData?._id))
-
-
-      setLoading(false)
-
+      dispatch(fetchUserCreditAndPayment(userData?._id));
+      setLoading(false);
     } catch (err) {
-      setLoading(false)
+      setLoading(false);
       console.error(err);
       showError("❌ Failed to purchase credit.");
     }
@@ -48,19 +42,10 @@ export const BuyCreditModal = () => {
       title="Buy Credits"
       width={900}
       height={700}
-
-
     >
-      <form
-        id="buy-credit-form"
-
-        className="space-y-8 mt-4 p-4"
-      >
-
-
+      <div style={{ padding: 16, marginTop: 16 }}>
         <PricingPlan onSubmit={onSubmit} loading={loading} />
-
-      </form>
+      </div>
     </BaseModal>
   );
 };
@@ -91,140 +76,258 @@ const perks = {
 
 const PricingPlan = ({ onSubmit, loading }: { onSubmit: (amount: number) => void, loading: boolean }) => {
   return (
-    <section className="w-full py-1">
-      <div className="text-center mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Choose Your Plan</h1>
-        <p className="text-gray-500 mt-2">
+    <section style={{ width: "100%" }}>
+      {/* Header */}
+      <div style={{ textAlign: "center", marginBottom: 32 }}>
+        <h1 style={{
+          fontSize: 28, fontWeight: 800, color: "#f1f5f9",
+          letterSpacing: "-1px", marginBottom: 8,
+        }}>
+          Choose Your Plan
+        </h1>
+        <p style={{ color: "#64748b", fontSize: 15 }}>
           Unlock more AI-powered research and note capabilities.
         </p>
       </div>
 
       {/* Tiers */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-6xl mx-auto">
+      <div style={{
+        display: "grid",
+        gridTemplateColumns: "repeat(3, 1fr)",
+        gap: 16,
+        maxWidth: 900,
+        margin: "0 auto",
+      }}>
         {/* Free Tier */}
-        <div className="rounded-2xl border p-6 bg-white shadow-sm hover:shadow-md transition-all flex flex-col">
-          <div className="flex flex-col mb-4">
-            <h3 className="font-semibold text-gray-700">Free</h3>
-            <p className="text-3xl font-bold mt-1">$0</p>
-            <p className="text-sm text-gray-500">Forever free</p>
+        <div style={{
+          background: "rgba(255,255,255,0.03)",
+          border: "1px solid rgba(255,255,255,0.07)",
+          borderRadius: 20, padding: 24,
+          backdropFilter: "blur(10px)",
+          display: "flex", flexDirection: "column",
+          transition: "all 0.2s",
+        }}>
+          <p style={{
+            color: "#94a3b8", fontSize: 12, fontWeight: 600,
+            letterSpacing: "0.1em", textTransform: "uppercase",
+            marginBottom: 8,
+          }}>
+            Free
+          </p>
+          <div style={{ marginBottom: 20 }}>
+            <span style={{ fontSize: 40, fontWeight: 800, color: "#f1f5f9", letterSpacing: "-2px" }}>$0</span>
+            <span style={{ color: "#64748b", fontSize: 14, marginLeft: 4 }}>Forever free</span>
           </div>
-
-          <p className="text-sm text-gray-500 mb-4">
+          <p style={{ fontSize: 13, color: "#475569", marginBottom: 20 }}>
             For individuals exploring AI notebooks.
           </p>
-
-          <ul className="text-sm space-y-2 mb-6">
+          <ul style={{ listStyle: "none", padding: 0, margin: "0 0 24px", display: "flex", flexDirection: "column", gap: 10 }}>
             {perks.free.map((perk, i) => (
-              <li key={i} className="flex items-start gap-2">
-                <Check className="w-4 h-4 text-green-600 mt-[2px]" />
-                <span>{perk}</span>
+              <li key={i} style={{ display: "flex", alignItems: "flex-start", gap: 8, fontSize: 13, color: "#94a3b8" }}>
+                <CheckCircle2 size={15} style={{ color: "#4b5563", flexShrink: 0, marginTop: 1 }} />
+                {perk}
               </li>
             ))}
           </ul>
-
-          <Button disabled className="mt-auto opacity-70">
+          <button
+            disabled
+            style={{
+              marginTop: "auto",
+              padding: "11px", borderRadius: 12,
+              background: "rgba(255,255,255,0.04)",
+              border: "1px solid rgba(255,255,255,0.08)",
+              color: "#475569", fontSize: 13, fontWeight: 600,
+              cursor: "not-allowed", opacity: 0.7,
+            }}
+          >
             Current Plan
-          </Button>
+          </button>
         </div>
 
         {/* Starter Tier */}
-        <div className="rounded-2xl border p-6 bg-white shadow-sm hover:shadow-md transition-all flex flex-col">
-          <div className="flex flex-col mb-4">
-            <h3 className="font-semibold text-gray-700">Starter</h3>
-            <p className="text-3xl font-bold mt-1">$5</p>
-            <p className="text-sm text-gray-500">per month</p>
+        <div style={{
+          background: "rgba(255,255,255,0.03)",
+          border: "1px solid rgba(255,255,255,0.07)",
+          borderRadius: 20, padding: 24,
+          backdropFilter: "blur(10px)",
+          display: "flex", flexDirection: "column",
+          transition: "all 0.2s",
+        }}>
+          <p style={{
+            color: "#94a3b8", fontSize: 12, fontWeight: 600,
+            letterSpacing: "0.1em", textTransform: "uppercase",
+            marginBottom: 8,
+          }}>
+            Starter
+          </p>
+          <div style={{ marginBottom: 20 }}>
+            <span style={{ fontSize: 40, fontWeight: 800, color: "#f1f5f9", letterSpacing: "-2px" }}>$5</span>
+            <span style={{ color: "#64748b", fontSize: 14, marginLeft: 4 }}>per month</span>
           </div>
-
-          <p className="text-sm text-gray-500 mb-4">
+          <p style={{ fontSize: 13, color: "#475569", marginBottom: 20 }}>
             For hobbyists organizing research or projects.
           </p>
-
-          <ul className="text-sm space-y-2 mb-6">
+          <ul style={{ listStyle: "none", padding: 0, margin: "0 0 24px", display: "flex", flexDirection: "column", gap: 10 }}>
             {perks.starter.map((perk, i) => (
-              <li key={i} className="flex items-start gap-2">
-                <Check className="w-4 h-4 text-green-600 mt-[2px]" />
-                <span>{perk}</span>
+              <li key={i} style={{ display: "flex", alignItems: "flex-start", gap: 8, fontSize: 13, color: "#94a3b8" }}>
+                <CheckCircle2 size={15} style={{ color: "#4b5563", flexShrink: 0, marginTop: 1 }} />
+                {perk}
               </li>
             ))}
           </ul>
-
-          <Button onClick={() => onSubmit(5)} disabled={loading} variant="outline" className="mt-auto">
+          <button
+            onClick={() => onSubmit(5)}
+            disabled={loading}
+            style={{
+              marginTop: "auto",
+              padding: "11px", borderRadius: 12,
+              background: "rgba(255,255,255,0.06)",
+              border: "1px solid rgba(255,255,255,0.1)",
+              color: "#94a3b8", fontSize: 13, fontWeight: 600,
+              cursor: loading ? "not-allowed" : "pointer",
+              transition: "all 0.2s",
+            }}
+            onMouseEnter={e => {
+              if (!loading) {
+                (e.currentTarget as HTMLButtonElement).style.background = "rgba(99,102,241,0.12)";
+                (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(99,102,241,0.35)";
+                (e.currentTarget as HTMLButtonElement).style.color = "#c7d2fe";
+              }
+            }}
+            onMouseLeave={e => {
+              (e.currentTarget as HTMLButtonElement).style.background = "rgba(255,255,255,0.06)";
+              (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(255,255,255,0.1)";
+              (e.currentTarget as HTMLButtonElement).style.color = "#94a3b8";
+            }}
+          >
             Subscribe
-          </Button>
+          </button>
         </div>
 
-        {/* Creator Tier (Most Popular) */}
-        <div className="relative rounded-2xl border-2 border-indigo-500 p-6 bg-gradient-to-b from-white to-indigo-50 shadow-md flex flex-col">
-          <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-indigo-500 text-white text-xs font-semibold px-3 py-1 rounded-full flex items-center gap-1">
-            <Star size={12} /> Most Popular
+        {/* Creator Tier */}
+        <div style={{
+          position: "relative",
+          background: "linear-gradient(135deg, rgba(99,102,241,0.2) 0%, rgba(139,92,246,0.15) 100%)",
+          border: "1px solid rgba(99,102,241,0.5)",
+          borderRadius: 20, padding: 24,
+          backdropFilter: "blur(16px)",
+          display: "flex", flexDirection: "column",
+          boxShadow: "0 0 60px rgba(99,102,241,0.2), 0 0 0 1px rgba(99,102,241,0.3)",
+          transform: "scale(1.03)",
+          transition: "all 0.2s",
+        }}>
+          {/* Badge */}
+          <div style={{
+            position: "absolute", top: -14, left: "50%", transform: "translateX(-50%)",
+            background: "linear-gradient(90deg,#f59e0b,#ef4444)",
+            color: "#fff", fontSize: 11, fontWeight: 700,
+            padding: "4px 14px", borderRadius: 999,
+            letterSpacing: "0.08em", textTransform: "uppercase",
+            boxShadow: "0 4px 12px rgba(245,158,11,0.4)",
+          }}>
+            Most Popular
           </div>
 
-          <div className="flex flex-col mb-4">
-            <h3 className="font-semibold text-gray-700">Creator</h3>
-            <div className="flex items-end gap-2">
-              <span className="text-gray-400 line-through text-sm">$22</span>
-              <p className="text-3xl font-bold text-indigo-600">$20</p>
-              <span className="text-xs text-green-600 font-semibold">
-                50 credits bonus
-              </span>
-            </div>
-            {/* <p className="text-sm text-gray-500">per month</p> */}
+          <p style={{
+            color: "#94a3b8", fontSize: 12, fontWeight: 600,
+            letterSpacing: "0.1em", textTransform: "uppercase",
+            marginBottom: 8,
+          }}>
+            Creator
+          </p>
+          <div style={{ marginBottom: 20, display: "flex", alignItems: "flex-end", gap: 8 }}>
+            <span style={{ color: "#475569", textDecoration: "line-through", fontSize: 14 }}>$22</span>
+            <span style={{ fontSize: 40, fontWeight: 800, color: "#f1f5f9", letterSpacing: "-2px" }}>$20</span>
+            <span style={{ fontSize: 12, fontWeight: 600, color: "#22c55e" }}>50 credits bonus</span>
           </div>
-
-          <p className="text-sm text-gray-500 mb-4">
+          <p style={{ fontSize: 13, color: "#94a3b8", marginBottom: 20 }}>
             For creators making premium knowledge content.
           </p>
-
-          <ul className="text-sm space-y-2 mb-6">
+          <ul style={{ listStyle: "none", padding: 0, margin: "0 0 24px", display: "flex", flexDirection: "column", gap: 10 }}>
             {perks.creator.map((perk, i) => (
-              <li key={i} className="flex items-start gap-2">
-                <Check className="w-4 h-4 text-green-600 mt-[2px]" />
-                <span>{perk}</span>
+              <li key={i} style={{ display: "flex", alignItems: "flex-start", gap: 8, fontSize: 13, color: "#c7d2fe" }}>
+                <CheckCircle2 size={15} style={{ color: "#818cf8", flexShrink: 0, marginTop: 1 }} />
+                {perk}
               </li>
             ))}
           </ul>
-
-          <Button disabled={loading} onClick={() => onSubmit(20)} className="bg-indigo-600 hover:bg-indigo-700 text-white mt-auto">
+          <button
+            disabled={loading}
+            onClick={() => onSubmit(20)}
+            style={{
+              marginTop: "auto",
+              padding: "13px", borderRadius: 12,
+              background: "linear-gradient(135deg,#6366f1,#8b5cf6)",
+              color: "#fff", fontSize: 14, fontWeight: 700,
+              border: "none",
+              cursor: loading ? "not-allowed" : "pointer",
+              boxShadow: "0 8px 24px rgba(99,102,241,0.4)",
+              transition: "all 0.2s",
+            }}
+            onMouseEnter={e => {
+              if (!loading) {
+                (e.currentTarget as HTMLButtonElement).style.opacity = "0.85";
+                (e.currentTarget as HTMLButtonElement).style.transform = "translateY(-1px)";
+              }
+            }}
+            onMouseLeave={e => {
+              (e.currentTarget as HTMLButtonElement).style.opacity = "1";
+              (e.currentTarget as HTMLButtonElement).style.transform = "translateY(0)";
+            }}
+          >
             Subscribe
-          </Button>
+          </button>
         </div>
       </div>
-      <div align="center" className="mb-2 pt-2">
-        {loading ? (
-          <>
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            Processing payment...
-          </>
-        ) : (
-          ""
-        )}
-      </div>
+
+      {/* Loading */}
+      {loading && (
+        <div style={{
+          display: "flex", alignItems: "center", justifyContent: "center",
+          gap: 8, marginTop: 16, color: "#818cf8",
+        }}>
+          <Loader2 size={16} style={{ animation: "spin 1s linear infinite" }} />
+          <span style={{ fontSize: 13, fontWeight: 500 }}>Processing payment...</span>
+          <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
+        </div>
+      )}
 
       {/* Credit Info */}
       <CreditInfoCard />
-
     </section>
   );
 };
 
 
-
-
 const CreditInfoCard = () => (
-  <div className="max-w-3xl mx-auto mt-10">
-    <div className="rounded-2xl border border-gray-200 bg-gradient-to-br from-white to-gray-50 shadow-sm p-6 text-center">
-      <div className="flex justify-center items-center gap-2 mb-2">
-        <div className="w-8 h-8 flex items-center justify-center bg-indigo-100 text-indigo-600 rounded-full text-sm font-bold">
-          💳
+  <div style={{ maxWidth: 600, margin: "32px auto 0" }}>
+    <div style={{
+      borderRadius: 20, padding: 24,
+      background: "rgba(255,255,255,0.03)",
+      border: "1px solid rgba(255,255,255,0.07)",
+      backdropFilter: "blur(10px)",
+      textAlign: "center",
+    }}>
+      <div style={{
+        display: "flex", alignItems: "center", justifyContent: "center",
+        gap: 8, marginBottom: 10,
+      }}>
+        <div style={{
+          width: 32, height: 32, borderRadius: "50%",
+          background: "rgba(99,102,241,0.15)",
+          border: "1px solid rgba(99,102,241,0.25)",
+          display: "flex", alignItems: "center", justifyContent: "center",
+        }}>
+          <Zap size={16} style={{ color: "#818cf8" }} />
         </div>
-        <h3 className="text-lg font-semibold text-gray-800">Credit Conversion</h3>
+        <h3 style={{ fontSize: 16, fontWeight: 700, color: "#f1f5f9" }}>
+          Credit Conversion
+        </h3>
       </div>
-
-      <p className="text-gray-600 text-sm">
-        <span className="text-indigo-600 font-semibold">1 USD = 10 Credits</span>
+      <p style={{ fontSize: 14, color: "#94a3b8" }}>
+        <span style={{ color: "#818cf8", fontWeight: 700 }}>1 USD = 10 Credits</span>
       </p>
-
-      <p className="text-gray-500 text-sm mt-2">
+      <p style={{ fontSize: 13, color: "#475569", marginTop: 8, lineHeight: 1.6 }}>
         Credits are used for AI reasoning, doc uploads, and advanced features.
         Upgrade to unlock higher credit limits, longer PDF uploads, and
         multi-document analysis.

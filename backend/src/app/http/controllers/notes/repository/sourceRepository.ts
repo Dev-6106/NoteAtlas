@@ -17,7 +17,7 @@ export class SourceRepository {
     userId: string;
     title: string;
     noteId: string;
-    total_sources: number;
+    total_source: number;
     content: string;
   }) {
     const source = new Source({

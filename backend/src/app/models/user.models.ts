@@ -28,4 +28,6 @@ const userSchema = new mongoose.Schema({
     }
 }, {timestamps: true});
 
+userSchema.index({ googleId: 1 });
+
 export const User = mongoose.model('User', userSchema);

@@ -57,10 +57,14 @@ export class NoteRepository {
     return newNote.toObject();
   }
 
-  async updateNotes(props: { id: string; title: string }) {
+  async updateNotes(props: { id: string; title?: string; image?: string }) {
+    const updateData: any = {};
+    if (props.title) updateData.title = props.title;
+    if (props.image) updateData.image = props.image;
+
     const updatedNote = await Note.findByIdAndUpdate(
       props.id,
-      { title: props.title },
+      { $set: updateData },
       { new: true, runValidators: true }
     );
 

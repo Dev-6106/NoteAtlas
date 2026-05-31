@@ -1,6 +1,6 @@
-import { Express, Request, Response, Router } from "express";
 import cors from "cors";
-import express from "express";
+import helmet from "helmet";
+import express, { Express, Router, Request, Response } from "express";
 import passport from "passport";
 import session from "express-session";
 import MongoStore from "connect-mongo";
@@ -16,6 +16,9 @@ import { apiV1 } from "@/app/routes/apiV1";
 
 export function expressServer(app: Express, PORT: number) {
   const router = Router();
+
+  // ─── Security headers ──────────────────────────────────
+  app.use(helmet());
 
   // ─── CORS ────────────────────────────────────────────────
   app.use(

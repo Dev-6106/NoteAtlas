@@ -126,6 +126,19 @@ export class DocRepository {
     return row;
   }
 
+  async updateAudioOverview2(props: { docId: any, userId: any, noteId: any, audioOverview: any }) {
+    const { userId, noteId, docId } = props;
+    const row = await Doc.findOneAndUpdate({_id: docId, userId, noteId},{
+      $set: {audioOverview: props.audioOverview}
+    },{new: true,runValidators: true})
+    if(!row) throw new Error("No doc found");
+    return row;
+  }
+
+  async updateAudioOverview(props: DocFieldUpdate & { audioOverview: string }) {
+    return this.updateField(props, { audioOverview: props.audioOverview }, "audioOverview");
+  }
+
   async getSingleDoc(props: { userId: string; noteId: string }) {
     return Doc.findOne(props).lean();
   }
@@ -136,5 +149,13 @@ export class DocRepository {
 
   async getDocsByNoteId(noteId: string) {
     return Doc.find({ noteId }).lean();
+  }
+
+  async getDocsByIds(props: { docIds: string[]; userId: string; noteId: string }) {
+    return Doc.find({
+      _id: { $in: props.docIds },
+      userId: props.userId,
+      noteId: props.noteId,
+    }).lean();
   }
 }

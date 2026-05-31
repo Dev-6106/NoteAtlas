@@ -92,20 +92,7 @@ export const sendTextData = async (text: string, noteId?: string) => {
 
 
 
-export const sendYoutubeLink = async (youtubeLink: string, noteId?: string) => {
-    try {
-        const userData = getUserData()
-        const userId = userData?._id
 
-        const data = await makeHttpReq('POST', `notes/youtube-link`,
-            { youtubeLink, userId, noteId })
-        console.log('add text : ', data)
-
-    } catch (error) {
-        console.log('error : ', error)
-    }
-
-};
 
 
 export const searchWeb = async (query: string,userId:string) => {
@@ -263,17 +250,17 @@ export const generateStudyguide = async (userId: string, noteId: string, docIds:
 
 
 
-export const createBriefingDoc = async (noteId: string, docIds: string[], type: 'audio' | 'briefing-doc') => {
+export const createBriefingDoc = async (noteId: string, docIds: string[]) => {
     try {
         const userData = getUserData()
         const userId = userData?._id
 
         const data = await makeHttpReq('POST', `notes/briefingdoc`,
-            { userId, noteId, docIds, type })
+            { userId, noteId, docIds, type: 'briefing-doc' })
 
         //it means we already have summaries for all selected sources(docs)
         if (data.status == 'ready_to_generate_source') {
-            await generateBriefingDoc(userId, noteId, docIds,type)
+            await generateBriefingDoc(userId, noteId, docIds)
         }
     } catch (error) {
         console.log('error : ', error)
@@ -282,11 +269,11 @@ export const createBriefingDoc = async (noteId: string, docIds: string[], type: 
 };
 
 
-export const generateBriefingDoc = async (userId: string, noteId: string, docIds: string[],type: 'audio' | 'briefing-doc') => {
+export const generateBriefingDoc = async (userId: string, noteId: string, docIds: string[]) => {
     try {
 
         const data = await makeHttpReq('POST', `notes/add/briefingdoc/sources`,
-            { userId, noteId, docIds,type })
+            { userId, noteId, docIds, type: 'briefing-doc' })
 
         showSuccess(data?.message)
     } catch (error) {
@@ -345,6 +332,45 @@ export const generateMindMap = async (userId: string, noteId: string, docIds: st
 }
 
 
+// end
+
+
+// Audio Overview
+
+export const createAudioOverview = async (noteId?: string, docIds: string[]) => {
+    try {
+        const userData = getUserData()
+        const userId = userData?._id
+
+        // Note: For audio overviews, we'll directly generate it (skipping the "check if exists" step for now,
+        // or simulating the same pattern if we had an audio overview endpoint). 
+        // For simplicity we go straight to generation.
+        await generateAudioOverview(userId as string, noteId as string, docIds)
+    } catch (error) {
+        console.log('error : ', error)
+    }
+};
+
+export const generateAudioOverview = async (userId: string, noteId: string, docIds: string[]) => {
+    try {
+        const data = await makeHttpReq('POST', `notes/add/audio/sources`,
+            { userId, noteId, docIds })
+
+        showSuccess(data?.message)
+    } catch (error) {
+        console.log('error : ', error)
+    }
+}
+
+export const getAudioUrl = async (key: string) => {
+    try {
+        const data = await makeHttpReq('GET', `notes/audio/url?key=${encodeURIComponent(key)}`) as { url: string };
+        return data.url;
+    } catch (error) {
+        console.log('error : ', error);
+        return null;
+    }
+}
 // end
 
 

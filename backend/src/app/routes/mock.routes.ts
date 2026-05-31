@@ -14,7 +14,6 @@ export function mockRoutes(router: Router) {
     router.get("/notes/source/results", (req, res) => {
         res.json({
             sources: [],
-            audioCard: null,
             mindMapCard: null
         });
     });
@@ -36,7 +35,6 @@ export function mockRoutes(router: Router) {
     // Mocks for missing source upload routes
     router.post("/notes/weblinkdata", (req, res) => res.json({ message: "Weblink uploaded successfully (mock)" }));
     router.post("/notes/text-data", (req, res) => res.json({ message: "Text data uploaded successfully (mock)" }));
-    router.post("/notes/youtube-link", (req, res) => res.json({ message: "Youtube link uploaded successfully (mock)" }));
     router.get("/notes/search/web", (req, res) => res.json({ results: [] }));
 
     // Mocks for AI Generations (Summary, FAQ, etc)

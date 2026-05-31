@@ -9,7 +9,7 @@ import { ChatPromptTemplate } from "@langchain/core/prompts";
 
 export async function generateBriefingDocSources(req: Request, res: Response, next: NextFunction) {
     try {
-        const { userId, noteId, docIds, type = 'briefing-doc' } = req.body as { userId: string, noteId: string, docIds: string[], type?: string };
+        const { userId, noteId, docIds, type = 'briefing-doc' } = req.body as { userId: string, noteId: string, docIds: string[], type: 'briefing-doc' };
 
         if (docIds.length === 0) return res.status(400).json({ message: "Select a source" });
 
@@ -19,14 +19,12 @@ export async function generateBriefingDocSources(req: Request, res: Response, ne
 
         const briefingDocs = [] as Array<{ title: string | null | undefined, briefingDoc: string | null | undefined }>;
 
-        for (const docId of docIds) {
-            const doc = await docRepo.getSingleDoc2({ _id: docId, userId, noteId });
-            if (doc) {
-                if (!doc.briefingDoc) {
-                    return res.status(500).json({ message: `Briefing Doc for document '${doc.title}' was not generated successfully. Please try again.` });
-                }
-                briefingDocs.push({ title: doc.title, briefingDoc: doc.briefingDoc });
+        const docs = await docRepo.getDocsByIds({ docIds, userId, noteId });
+        for (const doc of docs) {
+            if (!doc.briefingDoc) {
+                return res.status(500).json({ message: `Briefing Doc for document '${doc.title}' was not generated successfully. Please try again.` });
             }
+            briefingDocs.push({ title: doc.title, briefingDoc: doc.briefingDoc });
         }
 
         console.log("Sources: ", briefingDocs);
@@ -34,23 +32,29 @@ export async function generateBriefingDocSources(req: Request, res: Response, ne
             if (briefingDocs.length === 1) {
                 const title = await generateTitle(llm, [new Document({ pageContent: briefingDocs[0]?.briefingDoc as string })]);
 
-                await sourceRepo.createSource({
-                    userId, noteId, title, source_type: type, content: briefingDocs[0]?.briefingDoc as string, total_sources: 1
-                });
-                console.log("Finished briefing doc... \n\n Title: ", title, "\n\n Briefing Doc: ", briefingDocs);
-                return res.status(200).send({ message: "Finished creating briefing doc" });
+
+
+                if (type === 'briefing-doc') {
+                    await sourceRepo.createSource({
+                        userId, noteId, title, source_type: type, content: briefingDocs[0]?.briefingDoc as string, total_source: 1
+                    });
+                    console.log("Finished briefing doc... \n\n Title: ", title, "\n\n Briefing Doc: ", briefingDocs);
+                    return res.status(200).send({ message: "Finished creating briefing doc" });
+                }
             } else {
                 const countSource = briefingDocs.length;
                 const briefingToStr = formatBriefingDocs(briefingDocs);
-                
+
                 const llmFinalBriefingDoc = await mergeBriefingDocs({ countSource, llm, briefingToStr }) as string;
                 const title = await generateTitle(llm, [new Document({ pageContent: briefingToStr as string })]);
-                
-                await sourceRepo.createSource({
-                    userId, noteId, title, source_type: type, content: llmFinalBriefingDoc, total_sources: countSource
-                });
-                console.log("Finished briefing doc... \n\n Title: ", title, "\n\n Briefing Doc: ", llmFinalBriefingDoc);
-                return res.status(200).json({ message: "Finished creating briefing docs" }); 
+
+                if (type === 'briefing-doc') {
+                    await sourceRepo.createSource({
+                        userId, noteId, title, source_type: type, content: llmFinalBriefingDoc, total_source: countSource
+                    });
+                    console.log("Finished briefing doc... \n\n Title: ", title, "\n\n Briefing Doc: ", llmFinalBriefingDoc);
+                    return res.status(200).json({ message: "Finished creating briefing docs" });
+                }
             }
         }
 
@@ -104,7 +108,7 @@ Output requirements:
    - Only return Markdown content; do not include explanations outside of Markdown.`
     ]);
 
-    const prompt = await mapPrompt.invoke({context: briefingToStr});
+    const prompt = await mapPrompt.invoke({ context: briefingToStr });
     const response = await llm.invoke(prompt);
     const llmFinalBriefingDoc = response?.content;
     console.log("Merged briefing docs....")

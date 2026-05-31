@@ -6,26 +6,73 @@ import React from "react";
 import { useDispatch, useSelector } from "react-redux";
 
 import ReactMarkdown from "react-markdown";
-import remarkGfm from 'remark-gfm'
+import remarkGfm from 'remark-gfm';
 import { closeSourceModal } from "@/store/rightPanelSlice";
+import { getAudioUrl } from "@/api/notes";
+
+const AudioPlayer = ({ storageKey }: { storageKey: string }) => {
+  const [url, setUrl] = React.useState<string | null>(null);
+  const [loading, setLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    if (storageKey) {
+      setLoading(true);
+      getAudioUrl(storageKey).then((signedUrl) => {
+        setUrl(signedUrl);
+        setLoading(false);
+      });
+    }
+  }, [storageKey]);
+
+  if (loading) {
+    return (
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: 100, color: "#94a3b8" }}>
+        <span style={{
+          width: 24, height: 24,
+          border: "2px solid rgba(255,255,255,0.1)",
+          borderTopColor: "#818cf8",
+          borderRadius: "50%",
+          animation: "spin 1s linear infinite",
+          display: "inline-block",
+          marginRight: 12
+        }} />
+        Loading Audio...
+      </div>
+    );
+  }
+
+  if (!url) {
+    return <p style={{ color: "#ef4444" }}>Failed to load audio.</p>;
+  }
+
+  return (
+    <div style={{
+      padding: 24,
+      background: "rgba(255,255,255,0.03)",
+      borderRadius: 16,
+      border: "1px solid rgba(255,255,255,0.08)",
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center",
+      gap: 16
+    }}>
+      <p style={{ color: "#e2e8f0", fontSize: 16, fontWeight: 600 }}>Audio Overview</p>
+      <audio controls src={url} style={{ width: "100%", borderRadius: 8 }} />
+    </div>
+  );
+};
 
 
 
 
 export const SourceModal = () => {
-  const [open, setOpen] = React.useState(false)
+  const [open, setOpen] = React.useState(false);
   const dispatch = useDispatch<AppDispatch>();
 
   const { sourceModal } = useSelector((state: RootState) => state.rightPanel);
 
   return (
-
-
-
-
     <div>
-
-
       <BaseModal
         open={sourceModal?.modal}
         onOpenChange={setOpen}
@@ -35,45 +82,86 @@ export const SourceModal = () => {
         height={700}
         footer={
           <>
-            <Button variant="outline" onClick={() => dispatch(closeSourceModal())}>
+            <button
+              onClick={() => dispatch(closeSourceModal())}
+              style={{
+                padding: "9px 18px", borderRadius: 10,
+                background: "rgba(255,255,255,0.06)",
+                border: "1px solid rgba(255,255,255,0.1)",
+                color: "#94a3b8", fontSize: 13, fontWeight: 600,
+                cursor: "pointer", transition: "all 0.2s",
+              }}
+              onMouseEnter={e => {
+                (e.currentTarget as HTMLButtonElement).style.background = "rgba(255,255,255,0.1)";
+                (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(255,255,255,0.2)";
+              }}
+              onMouseLeave={e => {
+                (e.currentTarget as HTMLButtonElement).style.background = "rgba(255,255,255,0.06)";
+                (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(255,255,255,0.1)";
+              }}
+            >
               Close Modal
-            </Button>
-
+            </button>
           </>
         }
       >
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          {sourceModal?.source_type === "audio-overview" ? (
+            <AudioPlayer storageKey={sourceModal?.content} />
+          ) : (
+            <ReactMarkdown
+              remarkPlugins={[remarkGfm]}
+              components={{
+                a: ({ node, ...props }) => (
+                  <a style={{ color: "#818cf8", textDecoration: "underline" }} {...props} />
+                ),
+                ul: ({ node, ...props }) => (
+                  <ul style={{ listStyleType: "disc", paddingLeft: 24, marginBottom: 8, color: "#cbd5e1" }} {...props} />
+                ),
+                ol: ({ node, ...props }) => (
+                  <ol style={{ listStyleType: "decimal", paddingLeft: 24, marginBottom: 8, color: "#cbd5e1" }} {...props} />
+                ),
+                li: ({ node, ...props }) => (
+                  <li style={{ marginBottom: 4, color: "#cbd5e1" }} {...props} />
+                ),
+                h1: ({ node, ...props }) => (
+                  <h1 style={{ fontSize: 22, fontWeight: 800, color: "#f1f5f9", margin: "8px 0" }} {...props} />
+                ),
+                h2: ({ node, ...props }) => (
+                  <h2 style={{ fontSize: 18, fontWeight: 600, color: "#e2e8f0", margin: "8px 0" }} {...props} />
+                ),
+                h3: ({ node, ...props }) => (
+                  <h3 style={{ fontSize: 16, fontWeight: 600, color: "#e2e8f0", margin: "6px 0" }} {...props} />
+                ),
+                p: ({ node, ...props }) => (
+                  <p style={{ color: "#cbd5e1", lineHeight: 1.7, marginBottom: 4 }} {...props} />
+                ),
+                strong: ({ node, ...props }) => (
+                  <strong style={{ fontWeight: 700, color: "#f1f5f9" }} {...props} />
+                ),
+                pre: ({ node, ...props }) => (
+                  <pre style={{
+                    margin: "4px 0", padding: 12, borderRadius: 10,
+                    background: "rgba(255,255,255,0.04)",
+                    border: "1px solid rgba(255,255,255,0.06)",
+                    overflowX: "auto",
+                  }} {...props} />
+                ),
+                code: ({ node, ...props }) => (
+                  <code style={{ fontFamily: "'DM Mono', monospace", fontSize: 13, color: "#a5b4fc" }} {...props} />
+                ),
+              }}
+            >
+              {`
+# ${sourceModal?.title}
 
-        <div
-          className="grid gap-3 "
-        >
 
-          <ReactMarkdown remarkPlugins={[remarkGfm]} components={{
-            a: ({ node, ...props }) => (
-              <a className="text-blue-500 underline hover:text-blue-700" {...props} />
-            ),
-            ul: ({ node, ...props }) => (
-              <ul className="list-disc ml-6 mb-2" {...props} />
-            ),
-            ol: ({ node, ...props }) => (
-              <ol className="list-decimal ml-6 mb-2" {...props} />
-            ),
-            li: ({ node, ...props }) => <li className="mb-1" {...props} />,
-            h1: ({ node, ...props }) => <h1 className="text-2xl  font-bold text-gray-800 my-2" {...props} />,
-            h2: ({ node, ...props }) => <h2 className="text-xl font-semibold text-gray-700 my-2" {...props} />,
-            strong: ({ node, ...props }) => <strong className="font-bold text-gray-700" {...props} />,
-          }}>
-            {`
-                # ${sourceModal?.title}
-
-
-                  ${sourceModal?.content}
-            `}
-          </ReactMarkdown>
-
+  ${sourceModal?.content}
+              `}
+            </ReactMarkdown>
+          )}
         </div>
       </BaseModal>
     </div>
-
   );
-}
-
+};

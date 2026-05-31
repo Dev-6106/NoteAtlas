@@ -18,6 +18,9 @@ const envSchema = z.object({
   // LangChain / Tavily
   TAVILY_API_KEY: z.string().min(1, "TAVILY_API_KEY is required"),
 
+  // Hugging Face
+  HUGGINGFACE_API_KEY: z.string().min(1, "HUGGINGFACE_API_KEY is required"),
+
   // RAG - Cohere
   COHERE_API_KEY: z.string().min(1, "COHERE_API_KEY is required"),
 
@@ -43,6 +46,10 @@ const envSchema = z.object({
   JWT_REFRESH_SECRET: z
     .string()
     .min(16, "JWT_REFRESH_SECRET must be at least 16 characters"),
+  // Supabase Storage
+  SUPABASE_URL: z.string().url("SUPABASE_URL must be a valid URL"),
+  SUPABASE_SERVICE_ROLE_KEY: z.string().min(1, "SUPABASE_SERVICE_ROLE_KEY is required"),
+  SUPABASE_BUCKET: z.string().min(1, "SUPABASE_BUCKET is required"),
 });
 
 export type EnvConfig = z.infer<typeof envSchema>;

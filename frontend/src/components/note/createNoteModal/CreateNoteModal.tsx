@@ -1,21 +1,18 @@
 import { useEffect, useRef, useState } from "react";
-import { BaseModal } from "../../base/BaseModal"
-import { Button } from "../../ui/button"
-import { ClipboardMinus, HardDrive, Link2, Loader2, MoveLeft, Newspaper, Search, Youtube } from "lucide-react";
+import { BaseModal } from "../../base/BaseModal";
+import { ClipboardMinus, HardDrive, Link2, Loader2, Newspaper, Upload } from "lucide-react";
 import type { AppDispatch, RootState } from "@/store";
 import { useDispatch, useSelector } from "react-redux";
 import { toggleAddSourceNoteModal } from "@/store/addSourceSlice";
 import { fetchSingleNote } from "@/store/chatSlice";
-import useDrivePicker from 'react-google-drive-picker'
+import useDrivePicker from 'react-google-drive-picker';
 import { apiUrl, developerKey, googleClientId } from "@/config/get-env";
 import { getUserData } from "@/helper/getUserData";
 
-import { Label } from "../../ui/label";
-import { Textarea } from "../../ui/textarea";
 import { uploadPickedFiles } from "@/api/notes";
 import { AddPasteTextForm } from "./AddPasteTextForm";
 import AddWebLinkForm from "./AddWebLinkForm";
-import AddYoutubeLinkForm from "./AddYoutubeForm";
+
 import { toggleDiscoveryModal } from "@/store/discoveryModalSlice";
 import { showInfo } from "@/util/toast-notification";
 
@@ -25,7 +22,7 @@ const CreateNoteModal = ({ noteId }: { noteId?: string }) => {
 
     const dispatch = useDispatch<AppDispatch>();
     const { modal } = useSelector((state: RootState) => state.addSource);
-    const userData = getUserData()
+    const userData = getUserData();
 
 
 
@@ -50,72 +47,45 @@ const CreateNoteModal = ({ noteId }: { noteId?: string }) => {
                     }
                 }
             }
-        })
+        });
 
-        dispatch(toggleAddSourceNoteModal())
-
-
-    }
+        dispatch(toggleAddSourceNoteModal());
 
 
-    const [dropZone, setDropZone] = useState(true)
-    const [youtubeLinkForm, setYoutubeLinkForm] = useState(false)
-    const [websiteLinkForm, setWebsiteLinkForm] = useState(false)
-    const [pasteTextForm, setPasteTextForm] = useState(false)
+    };
 
 
-    //youtube form
-    const hideYoutubeLinkForm = () => {
-        setYoutubeLinkForm(false)
-        setDropZone(true)
-    }
+    const [dropZone, setDropZone] = useState(true);
 
-    const showYoutubeLinkForm = () => {
-        setYoutubeLinkForm(true)
-        setDropZone(false)
-    }
-    //end youtube form
-
+    const [websiteLinkForm, setWebsiteLinkForm] = useState(false);
+    const [pasteTextForm, setPasteTextForm] = useState(false);
 
 
     //web linkform
     const hideWebLinkForm = () => {
-        setWebsiteLinkForm(false)
-        setDropZone(true)
-    }
+        setWebsiteLinkForm(false);
+        setDropZone(true);
+    };
 
     const showWebLinkForm = () => {
-        setWebsiteLinkForm(true)
-        setDropZone(false)
-    }
-
-    //end web linkform
-
-
+        setWebsiteLinkForm(true);
+        setDropZone(false);
+    };
 
     //paste text form
     const hidePasteTextForm = () => {
-        setPasteTextForm(false)
-        setDropZone(true)
-    }
+        setPasteTextForm(false);
+        setDropZone(true);
+    };
 
     const showPasteTextForm = () => {
-        setPasteTextForm(true)
-        setDropZone(false)
-    }
-
-    //paste text form
-
-
-    // Removed useEffect for data since it's handled in callbackFunction
+        setPasteTextForm(true);
+        setDropZone(false);
+    };
 
 
     return (
-
-
         <div>
-
-
             <BaseModal
                 open={modal}
                 onOpenChange={() => dispatch(toggleAddSourceNoteModal())}
@@ -123,90 +93,159 @@ const CreateNoteModal = ({ noteId }: { noteId?: string }) => {
                 description=""
                 width={850}
                 height={600}
-                footer={
-                    <>
-
-                    </>
-                }
+                footer={<></>}
             >
-
-                <div className="flex justify-between mb-10 ">
-                    <div className="text-xl font-semibold">Add Sources</div>
-                  
+                {/* Header */}
+                <div style={{
+                    display: "flex", justifyContent: "space-between",
+                    alignItems: "center", marginBottom: 24,
+                }}>
+                    <h2 style={{
+                        fontSize: 18, fontWeight: 700, color: "#f1f5f9",
+                        letterSpacing: "-0.3px",
+                    }}>
+                        Add Sources
+                    </h2>
                 </div>
-                <div>
 
+                {/* Description */}
+                <p style={{
+                    fontSize: 14, color: "#64748b", lineHeight: 1.7,
+                    marginBottom: 16,
+                }}>
+                    Sources let NotebookLM base its responses on the information that matters most to you.
+                    (Examples: marketing plans, course reading, research notes, meeting transcripts, sales documents, etc.)
+                </p>
 
-
-                    <p className="text-sm text-gray-600">Sources let NotebookLM base its responses on the information that matters most to you.
-                        (Examples: marketing plans, course reading, research notes, meeting transcripts, sales documents, etc.)</p>
-                </div>
                 {dropZone && <UploadFileSection noteId={noteId} />}
-
-
-                {youtubeLinkForm && <AddYoutubeLinkForm noteId={noteId} hideYoutubeLinkForm={hideYoutubeLinkForm} />}
 
                 {websiteLinkForm && <AddWebLinkForm noteId={noteId} hideWebLinkForm={hideWebLinkForm} />}
 
-
                 {pasteTextForm && <AddPasteTextForm noteId={noteId} hidePasteTextForm={hidePasteTextForm} />}
 
-
-
-
-                {/* div card :actions buttons  */}
-                <div className="flex gap-2">
-                    <div className="flex-1  cursor-pointer rounded-md border border-gray-200 p-4">
-                        <div className="mb-5 ">
-                            <p className="text-gray-900">Google Workspace</p>
-                        </div>
-                        <button onClick={() => handleOpenPicker()} className="flex gap-2 bg-slate-100 p-2 rounded-md text-sm text-blue-600 font-semibold">
-                            <HardDrive></HardDrive>
+                {/* Action cards */}
+                <div style={{ display: "flex", gap: 12 }}>
+                    {/* Google Workspace */}
+                    <div style={{
+                        flex: 1, borderRadius: 14, padding: 16,
+                        background: "rgba(255,255,255,0.03)",
+                        border: "1px solid rgba(255,255,255,0.07)",
+                        transition: "all 0.2s",
+                    }}>
+                        <p style={{
+                            fontSize: 14, fontWeight: 600, color: "#f1f5f9",
+                            marginBottom: 16,
+                        }}>
+                            Google Workspace
+                        </p>
+                        <button
+                            onClick={() => handleOpenPicker()}
+                            style={{
+                                display: "flex", alignItems: "center", gap: 8,
+                                padding: "8px 14px", borderRadius: 10,
+                                background: "rgba(99,102,241,0.1)",
+                                border: "1px solid rgba(99,102,241,0.25)",
+                                color: "#a5b4fc", fontSize: 13, fontWeight: 600,
+                                cursor: "pointer", transition: "all 0.2s",
+                            }}
+                            onMouseEnter={e => {
+                                (e.currentTarget as HTMLButtonElement).style.background = "rgba(99,102,241,0.18)";
+                                (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(99,102,241,0.4)";
+                            }}
+                            onMouseLeave={e => {
+                                (e.currentTarget as HTMLButtonElement).style.background = "rgba(99,102,241,0.1)";
+                                (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(99,102,241,0.25)";
+                            }}
+                        >
+                            <HardDrive size={15} />
                             Google Drive
-
                         </button>
                     </div>
-                    <div className="flex-1 rounded-md border border-gray-200 p-4">
-                        <div className="flex gap-1 mb-5 ">
-                            <Link2></Link2>
-                            <p className="text-gray-900 font-semibold">Link</p>
-                        </div>
-                        <div className="flex gap-2">
-                            <button onClick={showWebLinkForm} className="flex cursor-pointer bg-slate-100 gap-2 p-2 rounded-md text-sm text-blue-600 font-semibold">
-                                <Newspaper size={20}></Newspaper>   Website
-                            </button>
 
-                            <button onClick={showYoutubeLinkForm} className="flex cursor-pointer gap-2 bg-slate-100 p-2 rounded-md text-sm text-blue-600 font-semibold">
-                                <span><Youtube></Youtube></span> Youtube</button>
+                    {/* Link */}
+                    <div style={{
+                        flex: 1, borderRadius: 14, padding: 16,
+                        background: "rgba(255,255,255,0.03)",
+                        border: "1px solid rgba(255,255,255,0.07)",
+                        transition: "all 0.2s",
+                    }}>
+                        <div style={{
+                            display: "flex", alignItems: "center", gap: 6,
+                            marginBottom: 16,
+                        }}>
+                            <Link2 size={16} style={{ color: "#818cf8" }} />
+                            <p style={{ fontSize: 14, fontWeight: 600, color: "#f1f5f9" }}>Link</p>
                         </div>
+                        <button
+                            onClick={showWebLinkForm}
+                            style={{
+                                display: "flex", alignItems: "center", gap: 8,
+                                padding: "8px 14px", borderRadius: 10,
+                                background: "rgba(99,102,241,0.1)",
+                                border: "1px solid rgba(99,102,241,0.25)",
+                                color: "#a5b4fc", fontSize: 13, fontWeight: 600,
+                                cursor: "pointer", transition: "all 0.2s",
+                            }}
+                            onMouseEnter={e => {
+                                (e.currentTarget as HTMLButtonElement).style.background = "rgba(99,102,241,0.18)";
+                                (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(99,102,241,0.4)";
+                            }}
+                            onMouseLeave={e => {
+                                (e.currentTarget as HTMLButtonElement).style.background = "rgba(99,102,241,0.1)";
+                                (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(99,102,241,0.25)";
+                            }}
+                        >
+                            <Newspaper size={15} />
+                            Website
+                        </button>
                     </div>
 
-
-                    <div className="flex-1 rounded-md border border-gray-200 p-4">
-                        <div className="mb-5 " >
-                            <p className="flex cursor-pointer gap-2 font-semibold text-gray-900">
-                                <ClipboardMinus></ClipboardMinus> Paste text
-                            </p>
+                    {/* Paste text */}
+                    <div style={{
+                        flex: 1, borderRadius: 14, padding: 16,
+                        background: "rgba(255,255,255,0.03)",
+                        border: "1px solid rgba(255,255,255,0.07)",
+                        transition: "all 0.2s",
+                    }}>
+                        <div style={{
+                            display: "flex", alignItems: "center", gap: 6,
+                            marginBottom: 16,
+                        }}>
+                            <ClipboardMinus size={16} style={{ color: "#818cf8" }} />
+                            <p style={{ fontSize: 14, fontWeight: 600, color: "#f1f5f9" }}>Paste text</p>
                         </div>
-                        <button onClick={showPasteTextForm} className="bg-slate-100 p-2 rounded-md text-sm text-blue-600 font-semibold">Copied text</button>
+                        <button
+                            onClick={showPasteTextForm}
+                            style={{
+                                padding: "8px 14px", borderRadius: 10,
+                                background: "rgba(99,102,241,0.1)",
+                                border: "1px solid rgba(99,102,241,0.25)",
+                                color: "#a5b4fc", fontSize: 13, fontWeight: 600,
+                                cursor: "pointer", transition: "all 0.2s",
+                            }}
+                            onMouseEnter={e => {
+                                (e.currentTarget as HTMLButtonElement).style.background = "rgba(99,102,241,0.18)";
+                                (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(99,102,241,0.4)";
+                            }}
+                            onMouseLeave={e => {
+                                (e.currentTarget as HTMLButtonElement).style.background = "rgba(99,102,241,0.1)";
+                                (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(99,102,241,0.25)";
+                            }}
+                        >
+                            Copied text
+                        </button>
                     </div>
-
                 </div>
             </BaseModal>
         </div>
     );
-}
-
-
-
-
+};
 
 
 const UploadFileSection = ({ noteId }: { noteId?: string }) => {
     const [isDragging, setIsDragging] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [loading, setLoading] = useState(false);
-
 
     const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
         e.preventDefault();
@@ -228,7 +267,7 @@ const UploadFileSection = ({ noteId }: { noteId?: string }) => {
     };
 
     const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (loading) return; // prevent new uploads
+        if (loading) return;
         const files = e.target.files;
         if (files && files.length > 0) {
             uploadFiles(files);
@@ -238,13 +277,12 @@ const UploadFileSection = ({ noteId }: { noteId?: string }) => {
     const uploadFiles = async (files: FileList) => {
         setLoading(true);
         const formData = new FormData();
-        const userData = getUserData()
-        const userId = userData?._id
+        const userData = getUserData();
+        const userId = userData?._id;
         Array.from(files).forEach((file) => {
             formData.append("doc", file);
-            formData.append("userId", userId)
-            formData.append("noteId", noteId as string)
-
+            formData.append("userId", userId);
+            formData.append("noteId", noteId as string);
         });
 
         try {
@@ -259,85 +297,95 @@ const UploadFileSection = ({ noteId }: { noteId?: string }) => {
 
             const data = await response.json();
             console.log("Upload successful:", data);
-            showInfo('File uploaded successfully')
+            showInfo('File uploaded successfully');
             setLoading(false);
         } catch (error) {
             setLoading(false);
-
             console.error("Error uploading files:", error);
         }
     };
-
-
-
-
 
     const handleClick = () => {
         fileInputRef.current?.click();
     };
 
     return (
-
-
-
-
         <div
-            className={`mb-8 mt-6 rounded-lg p-8 flex flex-col items-center justify-center text-center 
-      ${isDragging ? "border-solid border-2 border-indigo-500 bg-indigo-50" : "border-2 border-dashed border-gray-300"}`}
+            onClick={handleClick}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
-            onClick={handleClick}
-            style={{ cursor: "pointer" }}
+            style={{
+                marginBottom: 28, marginTop: 20,
+                borderRadius: 14, padding: 32,
+                display: "flex", flexDirection: "column",
+                alignItems: "center", justifyContent: "center",
+                textAlign: "center", cursor: "pointer",
+                border: isDragging
+                    ? "2px solid rgba(99,102,241,0.6)"
+                    : "2px dashed rgba(255,255,255,0.12)",
+                background: isDragging
+                    ? "rgba(99,102,241,0.08)"
+                    : "rgba(255,255,255,0.02)",
+                transition: "all 0.2s",
+            }}
+            onMouseEnter={e => {
+                if (!isDragging) {
+                    (e.currentTarget as HTMLDivElement).style.borderColor = "rgba(99,102,241,0.3)";
+                    (e.currentTarget as HTMLDivElement).style.background = "rgba(99,102,241,0.04)";
+                }
+            }}
+            onMouseLeave={e => {
+                if (!isDragging) {
+                    (e.currentTarget as HTMLDivElement).style.borderColor = "rgba(255,255,255,0.12)";
+                    (e.currentTarget as HTMLDivElement).style.background = "rgba(255,255,255,0.02)";
+                }
+            }}
         >
-
-
             {loading && (
-                <div className="mb-4 flex items-center space-x-2 text-indigo-500">
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    <span>Uploading...</span>
+                <div style={{
+                    display: "flex", alignItems: "center", gap: 8,
+                    marginBottom: 12, color: "#818cf8",
+                }}>
+                    <Loader2 size={16} style={{ animation: "spin 1s linear infinite" }} />
+                    <span style={{ fontSize: 14, fontWeight: 500 }}>Uploading...</span>
                 </div>
             )}
 
-            <div className="bg-indigo-50 rounded-full p-4 mb-3">
-                <svg
-                    className="w-8 h-8 text-indigo-500"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    viewBox="0 0 24 24"
-                >
-                    <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M16 12l-4-4m0 0l-4 4m4-4v12"
-                    />
-                </svg>
+            <div style={{
+                width: 56, height: 56, borderRadius: "50%",
+                background: "rgba(99,102,241,0.12)",
+                border: "1px solid rgba(99,102,241,0.25)",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                marginBottom: 12,
+            }}>
+                <Upload size={24} style={{ color: "#818cf8" }} />
             </div>
 
-            <p className="font-medium text-gray-900">Upload sources</p>
-            <p className="text-gray-500 text-sm mb-2">
-                Drag & drop or <span className="text-indigo-600 cursor-pointer">choose file</span> to upload
+            <p style={{ fontSize: 15, fontWeight: 600, color: "#f1f5f9", marginBottom: 4 }}>
+                Upload sources
             </p>
-            <p className="text-gray-400 text-xs">
-                Supported file types: PDF, .txt, Markdown, Audio (e.g. mp3)
+            <p style={{ fontSize: 13, color: "#64748b", marginBottom: 6 }}>
+                Drag & drop or{" "}
+                <span style={{ color: "#818cf8", fontWeight: 600 }}>choose file</span>{" "}
+                to upload
+            </p>
+            <p style={{ fontSize: 12, color: "#334155" }}>
+                Supported file types: PDF, .txt, Markdown
             </p>
 
             <input
                 type="file"
                 ref={fileInputRef}
-                className="hidden"
+                style={{ display: "none" }}
                 onChange={handleFileSelect}
                 multiple
             />
+
+            <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
         </div>
     );
 };
-
-
-
-
-
 
 
 export default CreateNoteModal;

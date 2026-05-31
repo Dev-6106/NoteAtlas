@@ -11,6 +11,7 @@ import { mindMapRoutes } from "../http/controllers/notes/routes/mindMap.routes";
 import { mockRoutes } from "./mock.routes";
 import { addSourceRoutes } from "../http/controllers/add-sources/routes/addSources.routes";
 import { sourceResultRoutes } from "../http/controllers/manage-sources/routes/sourceResults.routes";
+import { chatRoutes } from "../http/controllers/notes/routes/chat.routes";
 
 export function apiV1(app: Express, router: Router) {
     const driveRouter = driveRoutes(router);
@@ -25,5 +26,6 @@ export function apiV1(app: Express, router: Router) {
     const addSourceRouter = addSourceRoutes(router);
     const sourceResultsRouter = sourceResultRoutes(router);
     const mockRouter = mockRoutes(router);
-    app.use('/api/v1', driveRouter, noteRouter, updateRouter, summaryRouter, briefingRouter, faqRouter, studyGuideRouter, mindMapRouter, getAllNotesRouter, addSourceRouter, sourceResultsRouter, mockRouter);
+    const chatRouter = chatRoutes(router);
+    app.use('/api/v1', driveRouter, noteRouter, updateRouter, summaryRouter, briefingRouter, faqRouter, studyGuideRouter, mindMapRouter, getAllNotesRouter, addSourceRouter, sourceResultsRouter, mockRouter, chatRouter);
 }

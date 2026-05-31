@@ -22,20 +22,20 @@ export async function generateMindMapFromSources(req: Request, res: Response, ne
 
         const studyguides = [] as Array<{ title: string | null | undefined, studyguide: string | null | undefined }>;
 
-        for (const docId of docIds) {
-            const doc = await docRepo.getSingleDoc2({ _id: docId, userId, noteId });
-            if (doc) studyguides.push({
+        const docs = await docRepo.getDocsByIds({ docIds, userId, noteId });
+        for (const doc of docs) {
+            studyguides.push({
                 title: doc?.title,
                 studyguide: doc?.studyGuide
             });
-        };
+        }
 
         if (studyguides.length > 0) {
             if (studyguides.length === 1) {
                 const title = await generateTitle(llm, [new Document({ pageContent: studyguides[0]?.studyguide as string })]);
                 const mindMap = await generateMindMap(llm, studyguides[0]?.studyguide as string);
 
-                await sourceRepo.createSource({ userId, noteId, title, source_type: "mindMap", content: mindMap, total_sources: 1 });
+                await sourceRepo.createSource({ userId, noteId, title, source_type: "mindMap", content: mindMap, total_source: 1 });
                 return res.status(200).send({ message: "Finished creating mindmap..." });
             } else {
                 const countSource = studyguides.length;
@@ -46,7 +46,7 @@ export async function generateMindMapFromSources(req: Request, res: Response, ne
                 const title = await generateTitle(llm, [new Document({ pageContent: studyGuideToStr as string })]);
                 const mindMap = await generateMindMap(llm, llmFinalStudyGuide);
 
-                await sourceRepo.createSource({ userId, noteId, title, source_type: "mindMap", content: mindMap, total_sources: countSource });
+                await sourceRepo.createSource({ userId, noteId, title, source_type: "mindMap", content: mindMap, total_source: countSource });
                 return res.status(200).send({ message: "Finished creating mindmap..." });
             }
         }

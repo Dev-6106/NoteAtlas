@@ -19,14 +19,12 @@ export async function generateSummarySources(req: Request, res: Response, next: 
 
         const summaries = [] as Array<{ title: string | null | undefined, summary: string | null | undefined }>;
 
-        for (const docId of docIds) {
-            const doc = await docRepo.getSingleDoc2({ _id: docId, userId, noteId });
-            if (doc) {
-                if (!doc.summary) {
-                    return res.status(500).json({ message: `Summary for document '${doc.title}' was not generated successfully. Please try again.` });
-                }
-                summaries.push({ title: doc.title, summary: doc.summary });
+        const docs = await docRepo.getDocsByIds({ docIds, userId, noteId });
+        for (const doc of docs) {
+            if (!doc.summary) {
+                return res.status(500).json({ message: `Summary for document '${doc.title}' was not generated successfully. Please try again.` });
             }
+            summaries.push({ title: doc.title, summary: doc.summary });
         }
 
         console.log("Sources: ",summaries);
@@ -35,7 +33,7 @@ export async function generateSummarySources(req: Request, res: Response, next: 
                 const title = await generateTitle(llm, [new Document({ pageContent: summaries[0]?.summary as string })]);
 
                 await sourceRepo.createSource({
-                    userId, noteId, title, source_type: 'summary', content: summaries[0]?.summary as string, total_sources: 1
+                    userId, noteId, title, source_type: 'summary', content: summaries[0]?.summary as string, total_source: 1
                 });
                 console.log("Finished summary... \n\n Title: ", title, "\n\n Summary: ", summaries);
                 return res.status(200).send({ message: "Finished creating summary" });
@@ -47,7 +45,7 @@ export async function generateSummarySources(req: Request, res: Response, next: 
                 const title = await generateTitle(llm, [new Document({ pageContent: summaryToStr as string })]);
                 
                 await sourceRepo.createSource({
-                    userId, noteId, title, source_type: 'summary', content: llmFinalSummary, total_sources: countSource
+                    userId, noteId, title, source_type: 'summary', content: llmFinalSummary, total_source: countSource
                 });
                 console.log("Finished summary... \n\n Title: ", title, "\n\n Summary: ", llmFinalSummary);
                 return res.status(200).json({ message: "Finished creating summaries" }); 

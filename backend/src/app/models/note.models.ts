@@ -7,4 +7,6 @@ const noteSchema = new mongoose.Schema({
     docs: [{ type: mongoose.Schema.Types.ObjectId, ref: "Doc" }]
 }, {timestamps: true});
 
+noteSchema.index({ userId: 1 });
+
 export const Note = mongoose.model("Note", noteSchema);

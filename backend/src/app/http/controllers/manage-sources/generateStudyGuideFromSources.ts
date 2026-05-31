@@ -19,14 +19,12 @@ export async function generateStudyGuideSources(req: Request, res: Response, nex
 
         const studyGuides = [] as Array<{ title: string | null | undefined, studyGuide: string | null | undefined }>;
 
-        for (const docId of docIds) {
-            const doc = await docRepo.getSingleDoc2({ _id: docId, userId, noteId });
-            if (doc) {
-                if (!doc.studyGuide) {
-                    return res.status(500).json({ message: `Study Guide for document '${doc.title}' was not generated successfully. Please try again.` });
-                }
-                studyGuides.push({ title: doc.title, studyGuide: doc.studyGuide });
+        const docs = await docRepo.getDocsByIds({ docIds, userId, noteId });
+        for (const doc of docs) {
+            if (!doc.studyGuide) {
+                return res.status(500).json({ message: `Study Guide for document '${doc.title}' was not generated successfully. Please try again.` });
             }
+            studyGuides.push({ title: doc.title, studyGuide: doc.studyGuide });
         }
 
         console.log("Sources StudyGuide: ", studyGuides.map(s => s.title));
@@ -35,7 +33,7 @@ export async function generateStudyGuideSources(req: Request, res: Response, nex
                 const title = await generateTitle(llm, [new Document({ pageContent: studyGuides[0]?.studyGuide as string })]);
 
                 await sourceRepo.createSource({
-                    userId, noteId, title, source_type: 'study-guide', content: studyGuides[0]?.studyGuide as string, total_sources: 1
+                    userId, noteId, title, source_type: 'study-guide', content: studyGuides[0]?.studyGuide as string, total_source: 1
                 });
                 console.log("Finished Study Guide... \n\n Title: ", title);
                 return res.status(200).send({ message: "Finished creating Study Guide" });
@@ -47,7 +45,7 @@ export async function generateStudyGuideSources(req: Request, res: Response, nex
                 const title = await generateTitle(llm, [new Document({ pageContent: studyGuideToStr as string })]);
                 
                 await sourceRepo.createSource({
-                    userId, noteId, title, source_type: 'study-guide', content: llmFinalStudyGuide, total_sources: countSource
+                    userId, noteId, title, source_type: 'study-guide', content: llmFinalStudyGuide, total_source: countSource
                 });
                 console.log("Finished Study Guide... \n\n Title: ", title);
                 return res.status(200).json({ message: "Finished creating Study Guides" }); 

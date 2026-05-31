@@ -9,9 +9,13 @@ const docSchema = new mongoose.Schema({
     briefingDoc: { type: String },
     FAQ: { type: String },
     mindMap: { type: String },
+    audioOverview: { type: String },
 
     noteId: {type: mongoose.Schema.Types.ObjectId, ref: "Note", required: true},
     userId: {type: mongoose.Schema.Types.ObjectId, ref: "User", required: true},
 }, {timestamps: true});
+
+docSchema.index({ userId: 1 });
+docSchema.index({ noteId: 1 });
 
 export const Doc = mongoose.model("Doc", docSchema);

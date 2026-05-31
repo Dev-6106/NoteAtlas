@@ -3,6 +3,7 @@ import { env } from "@/config/env";
 import { NoteRepository } from "./repository/notes.repository";
 import { cwd } from "process";
 import path from "path";
+import fs from "fs";
 
 import { generateTitle } from "./helpers/TitleGeneration";
 import { generatePrompt } from "./helpers/promptGenerator";
@@ -10,6 +11,7 @@ import { LLM } from "@/app/llm/llm";
 import { loadDocument } from "./loader/loaders";
 import { DocRepository } from "./repository/DocRepository";
 import { getDocChunk } from "@/util/getDocChunk";
+import { uploadToStorage } from "@/services/storage/upload.service";
 
 export async function createNote(
   req: Request,
@@ -37,11 +39,26 @@ export async function createNote(
       Math.floor(Math.random() * 1e9);
 
     const llm = LLM.getInstance();
-    const fileName = req.file.filename;
+    
+    // Upload the file to Supabase Storage directly from the memory buffer
+    const fileBuffer = req.file.buffer;
+    const mimeType = req.file.mimetype;
+    const originalName = req.file.originalname;
+    
+    const storageKey = await uploadToStorage(fileBuffer, originalName, mimeType, `users/${userId}/notes`);
+    const fileName = storageKey;
+
+    // We can't load the document directly from disk anymore. 
+    // We can either pass the buffer to the loader or use the presigned URL.
+    // For now, let's assume `loadDocument` can handle buffers or we write a temp file.
+    // Let's write to a temp file, load it, then delete it.
+    const tempPath = path.join(cwd(), "tmp", randomName + originalName);
+    if (!fs.existsSync(path.join(cwd(), "tmp"))) fs.mkdirSync(path.join(cwd(), "tmp"));
+    fs.writeFileSync(tempPath, fileBuffer);
+
     // Load document
-    const docSplit = await loadDocument(
-      `${uploadDir}/${fileName}`,
-    );
+    const docSplit = await loadDocument(tempPath);
+    fs.unlinkSync(tempPath);
 
     // Take only first chunk
     const firstChunk = getDocChunk(docSplit);
@@ -58,8 +75,8 @@ export async function createNote(
       title,
     );
 
-    // Image path
-    const image = `${env.APP_URL}/uploads/${randomName}.png`;
+    // Image path will be updated by the agenda job later
+    const image = "📓";
 
     const NoteRepo = NoteRepository.getInstance();
     const docRepo = DocRepository.getInstance();
@@ -72,9 +89,8 @@ export async function createNote(
         userId,
       },
       {
+        filePath: storageKey,
         generateImagePrompt: imagePrompt,
-        uploadDir,
-        randomName,
       },
     );
 

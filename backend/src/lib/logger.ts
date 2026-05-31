@@ -23,7 +23,14 @@ function shouldLog(level: LogLevel): boolean {
 function formatMessage(level: LogLevel, message: string, meta?: unknown): string {
   const timestamp = new Date().toISOString();
   const prefix = `[${timestamp}] [${level.toUpperCase()}]`;
-  const metaStr = meta !== undefined ? ` ${JSON.stringify(meta)}` : "";
+  let metaStr = "";
+  if (meta !== undefined) {
+    if (meta instanceof Error) {
+      metaStr = ` ${meta.stack || meta.message}`;
+    } else {
+      metaStr = ` ${JSON.stringify(meta)}`;
+    }
+  }
   return `${prefix} ${message}${metaStr}`;
 }
 

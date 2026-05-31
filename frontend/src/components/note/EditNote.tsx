@@ -3,8 +3,6 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { MoveLeft, Loader2, } from "lucide-react";
 
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
 import { Link } from "react-router";
 import { updateNote } from "@/api/notes";
 import { useEffect } from "react";
@@ -17,7 +15,6 @@ const editNoteSchema = z.object({
 type EditNoteFormValues = z.infer<typeof editNoteSchema>;
 interface EditNoteProps {
   note?: { _id: string; title: string };
-  //   onSave: (data: EditNoteFormValues) => Promise<void>;
 }
 
 export const EditNote = ({ note }: EditNoteProps) => {
@@ -48,37 +45,68 @@ export const EditNote = ({ note }: EditNoteProps) => {
   const handleBlur = async () => {
     const data = getValues();
     if (!errors.title) {
-      //   await onSave(data);
       await updateNote(note?._id as string, data?.title)
     }
   };
 
   return (
-    <div className="flex items-center justify-between mb-4">
-      <div className="flex items-center gap-2 w-full">
+    <div style={{
+      display: "flex", alignItems: "center",
+      justifyContent: "space-between", marginBottom: 0,
+    }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, width: "100%" }}>
         <Link
           to="/notes"
-          className="cursor-pointer text-gray-500 hover:text-gray-700 transition"
+          style={{
+            width: 30, height: 30, borderRadius: 8,
+            display: "flex", alignItems: "center", justifyContent: "center",
+            background: "rgba(255,255,255,0.05)",
+            border: "1px solid rgba(255,255,255,0.08)",
+            color: "#64748b", textDecoration: "none",
+            transition: "all 0.2s", flexShrink: 0,
+          }}
+          onMouseEnter={e => {
+            (e.currentTarget as HTMLAnchorElement).style.background = "rgba(99,102,241,0.12)";
+            (e.currentTarget as HTMLAnchorElement).style.borderColor = "rgba(99,102,241,0.35)";
+            (e.currentTarget as HTMLAnchorElement).style.color = "#a5b4fc";
+          }}
+          onMouseLeave={e => {
+            (e.currentTarget as HTMLAnchorElement).style.background = "rgba(255,255,255,0.05)";
+            (e.currentTarget as HTMLAnchorElement).style.borderColor = "rgba(255,255,255,0.08)";
+            (e.currentTarget as HTMLAnchorElement).style.color = "#64748b";
+          }}
         >
-          <MoveLeft size={18} />
+          <MoveLeft size={15} />
         </Link>
-        {/* <span style={{ fontSize: "3rem", lineHeight: "1.2" }}>🧠✨</span> */}
-        <div className="flex-1">
-
-          <Input
+        <div style={{ flex: 1 }}>
+          <input
             id="title"
             {...register("title")}
             onBlur={handleBlur}
-            className="border-none h-12 w-[400px] !text-lg focus:ring-0 focus:border-0 outline-none bg-transparent"
+            style={{
+              width: 400,
+              height: 42,
+              fontSize: 16,
+              fontWeight: 700,
+              color: "#f1f5f9",
+              letterSpacing: "-0.3px",
+              background: "transparent",
+              border: "none",
+              outline: "none",
+              fontFamily: "'DM Sans', system-ui, sans-serif",
+              padding: "4px 8px",
+            }}
           />
 
           {errors.title && (
-            <p className="text-xs text-red-500 mt-1">{errors.title.message}</p>
+            <p style={{ fontSize: 12, color: "#ef4444", marginTop: 4 }}>
+              {errors.title.message}
+            </p>
           )}
         </div>
       </div>
 
-      <div className="mr-4">
+      <div style={{ marginRight: 16 }}>
         {/* header actions, e.g., user avatar */}
       </div>
     </div>

@@ -83,9 +83,9 @@ export function errorHandler(
   }
 
   res.status(statusCode).json({
-    error: {
-      message,
-      status: statusCode,
-    },
+    success: false,
+    status: statusCode,
+    message,
+    data: null,
   });
 }

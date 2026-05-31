@@ -19,14 +19,12 @@ export async function generateFAQSources(req: Request, res: Response, next: Next
 
         const faqs = [] as Array<{ title: string | null | undefined, faq: string | null | undefined }>;
 
-        for (const docId of docIds) {
-            const doc = await docRepo.getSingleDoc2({ _id: docId, userId, noteId });
-            if (doc) {
-                if (!doc.FAQ) {
-                    return res.status(500).json({ message: `FAQ for document '${doc.title}' was not generated successfully. Please try again.` });
-                }
-                faqs.push({ title: doc.title, faq: doc.FAQ });
+        const docs = await docRepo.getDocsByIds({ docIds, userId, noteId });
+        for (const doc of docs) {
+            if (!doc.FAQ) {
+                return res.status(500).json({ message: `FAQ for document '${doc.title}' was not generated successfully. Please try again.` });
             }
+            faqs.push({ title: doc.title, faq: doc.FAQ });
         }
 
         console.log("Sources FAQ: ", faqs.map(f => f.title));
@@ -35,7 +33,7 @@ export async function generateFAQSources(req: Request, res: Response, next: Next
                 const title = await generateTitle(llm, [new Document({ pageContent: faqs[0]?.faq as string })]);
 
                 await sourceRepo.createSource({
-                    userId, noteId, title, source_type: 'faq', content: faqs[0]?.faq as string, total_sources: 1
+                    userId, noteId, title, source_type: 'faq', content: faqs[0]?.faq as string, total_source: 1
                 });
                 console.log("Finished FAQ... \n\n Title: ", title);
                 return res.status(200).send({ message: "Finished creating FAQ" });
@@ -47,7 +45,7 @@ export async function generateFAQSources(req: Request, res: Response, next: Next
                 const title = await generateTitle(llm, [new Document({ pageContent: faqToStr as string })]);
                 
                 await sourceRepo.createSource({
-                    userId, noteId, title, source_type: 'faq', content: llmFinalFaq, total_sources: countSource
+                    userId, noteId, title, source_type: 'faq', content: llmFinalFaq, total_source: countSource
                 });
                 console.log("Finished FAQ... \n\n Title: ", title);
                 return res.status(200).json({ message: "Finished creating FAQs" }); 

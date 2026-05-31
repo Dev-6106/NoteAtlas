@@ -7,6 +7,9 @@ import { LLM } from "@/app/llm/llm";
 import { loadDocument } from "./loader/loaders";
 import { DocRepository } from "./repository/DocRepository";
 import { getDocChunk } from "@/util/getDocChunk";
+import { uploadToStorage } from "@/services/storage/upload.service";
+import crypto from "crypto";
+import fs from "fs";
 
 export async function uploadFiles(
   req: Request,
@@ -25,11 +28,6 @@ export async function uploadFiles(
     }
 
     const currentDir = cwd();
-    const uploadDir = path.join(
-      currentDir,
-      "public",
-      "uploads",
-    );
 
     const llm = LLM.getInstance();
     const docRepo = DocRepository.getInstance();
@@ -38,12 +36,21 @@ export async function uploadFiles(
     const createdDocs = [];
 
     for (const file of files) {
-      const fileName = file.filename;
+      const fileBuffer = file.buffer;
+      const mimeType = file.mimetype;
+      const originalName = file.originalname;
+
+      const storageKey = await uploadToStorage(fileBuffer, file.originalname, file.mimetype, `users/${userId}/notes`);
+      const fileName = storageKey;
       
+      const randomName = crypto.randomUUID();
+      const tempPath = path.join(cwd(), "tmp", randomName + "-" + originalName);
+      if (!fs.existsSync(path.join(cwd(), "tmp"))) fs.mkdirSync(path.join(cwd(), "tmp"));
+      fs.writeFileSync(tempPath, fileBuffer);
+
       // Load document
-      const docSplit = await loadDocument(
-        `${uploadDir}/${fileName}`,
-      );
+      const docSplit = await loadDocument(tempPath);
+      fs.unlinkSync(tempPath);
 
       // Take only first chunk
       const firstChunk = getDocChunk(docSplit);
