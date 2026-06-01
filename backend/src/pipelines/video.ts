@@ -58,23 +58,15 @@ export async function generateVideo<T extends Runnable>(llm: T, splitDocs: Docum
   }
 
   try {
-    const app = await Client.connect("Wan-AI/Wan2.1-T2V-14B", {
+    const app = await Client.connect("fffiloni/Wan2.1", {
       hf_token: hfToken as `hf_${string}`,
     });
 
     console.log("Connected to Gradio Space, generating video...");
 
-    // Call the prediction endpoint — the Space's API determines the parameters
-    const result = await app.predict("/generate", [
+    // Call the prediction endpoint
+    const result = await app.predict("/infer", [
       videoPrompt,        // prompt text
-      "",                 // negative prompt
-      480,                // height
-      832,                // width
-      81,                 // number of frames
-      5,                  // guidance scale
-      3,                  // shift
-      42,                 // seed
-      true,               // use random seed (randomize_seed)
     ]);
 
     // The result typically contains a file path or URL to the generated video
