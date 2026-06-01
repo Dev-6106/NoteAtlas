@@ -1,4 +1,4 @@
-import { PanelRight, GitBranch, FileText } from "lucide-react";
+import { PanelRight, GitBranch, FileText, Video, Mic, Headphones } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { addExtraWidth, reduceExtraWidth, toggleRightPanel } from "@/store/chatSlice";
 import './animate.css';
@@ -9,7 +9,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
-import { createBriefingDoc, createFAQ, createMindMap, createStudyGuide, createSummary, createAudioOverview } from "@/api/notes";
+import { createBriefingDoc, createFAQ, createMindMap, createStudyGuide, createSummary, createAudioOverview, createVideoOverview, createPodcast } from "@/api/notes";
 import type { AppDispatch, RootState } from "@/store";
 import { showError } from "@/util/toast-notification";
 import { useState } from "react";
@@ -327,7 +327,7 @@ const PanelItem = ({
 
 // ─── ReportPanelItem ───────────────────────────────────────────────────────────
 
-const REPORT_MENU_ITEMS = ["Summary", "Study Guide", "Briefing Doc", "FAQ", "Audio Overview"] as const;
+const REPORT_MENU_ITEMS = ["Summary", "Study Guide", "Briefing Doc", "FAQ", "Audio Overview", "Video Overview", "Podcast"] as const;
 
 const ReportPanelItem = ({
   rightPanelOpen,
@@ -354,6 +354,8 @@ const ReportPanelItem = ({
       else if (item === "Study Guide") await createStudyGuide(noteId, docIds);
       else if (item === "Briefing Doc") await createBriefingDoc(noteId, docIds, "briefing-doc");
       else if (item === "Audio Overview") await createAudioOverview(noteId, docIds);
+      else if (item === "Video Overview") await createVideoOverview(noteId, docIds);
+      else if (item === "Podcast") await createPodcast(noteId, docIds);
       fetchSources();
     } catch {
       showError("Failed to generate report");
@@ -470,8 +472,14 @@ function SourceIcon({ type = "" }: { type?: string }) {
   if (normalized.includes("mindmap")) {
     return <GitBranch size={18} style={{ color: "#f59e0b", flexShrink: 0 }} />;
   }
+  if (normalized.includes("video")) {
+    return <Video size={18} style={{ color: "#10b981", flexShrink: 0 }} />;
+  }
+  if (normalized.includes("podcast")) {
+    return <Mic size={18} style={{ color: "#f97316", flexShrink: 0 }} />;
+  }
   if (normalized.includes("audio")) {
-    return <FileText size={18} style={{ color: "#ec4899", flexShrink: 0 }} />;
+    return <Headphones size={18} style={{ color: "#ec4899", flexShrink: 0 }} />;
   }
   return <FileText size={18} style={{ color: "#818cf8", flexShrink: 0 }} />;
 }
