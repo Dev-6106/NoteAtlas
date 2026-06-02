@@ -1,118 +1,210 @@
 import { Document } from "@langchain/core/documents";
 import { ChatPromptTemplate } from "@langchain/core/prompts";
 import { Runnable } from "@langchain/core/runnables";
-import { Client } from "@gradio/client";
+import * as googleTTS from "google-tts-api";
 import { invokeWithRetry } from "@/util/invokeWithRetry";
-import { env } from "@/config/env";
+import ffmpeg from "fluent-ffmpeg";
+import ffmpegPath from "ffmpeg-static";
+import fs from "fs";
+import path from "path";
+import os from "os";
+
+// Ensure ffmpeg is available
+if (ffmpegPath) {
+  ffmpeg.setFfmpegPath(ffmpegPath);
+}
+
+interface VideoScriptJSON {
+  narration: string;
+  image_prompts: string[];
+}
 
 /**
- * Generate a short video from document content using a free Gradio Space.
+ * Generate a programmatic video overview from document content.
  * The pipeline:
- *   1. Uses an LLM to create a short, vivid visual scene prompt from the documents
- *   2. Calls a public Wan2.1 text-to-video Gradio Space
- *   3. Returns the video data as a Buffer
+ *   1. Uses an LLM to generate a JSON script containing an audio narration and 3-4 visual scene prompts.
+ *   2. Generates audio from the narration using Google TTS.
+ *   3. Generates images concurrently using pollinations.ai.
+ *   4. Stitches the images (as a slideshow) and audio into an MP4 video using ffmpeg.
  */
 export async function generateVideo<T extends Runnable>(llm: T, splitDocs: Document[]): Promise<Buffer> {
-  // 1. Generate a concise visual scene description from the document content
-  const firstChunk = splitDocs[0]?.pageContent || "A calming nature documentary scene";
+  // 1. Combine document text
+  const combinedText = splitDocs.map(d => d.pageContent).join("\n\n").slice(0, 4000);
 
   const promptTemplate = ChatPromptTemplate.fromMessages([
     [
       "system",
-      "You are an expert at creating vivid, cinematic scene descriptions for AI video generators. Create a single, concise prompt (15–25 words) that captures a visually appealing scene related to the document content. Focus on concrete visual elements, lighting, and camera movement. Return ONLY the prompt, no quotes, no extra text.",
+      `You are a video producer. Read the text and create a short video script consisting of:
+1. "narration": A concise, engaging spoken narration (40-60 words max) summarizing the key points.
+2. "image_prompts": An array of exactly 4 highly descriptive, visually rich image prompts (each 15-20 words) that represent key concepts from the narration. These will be used to generate visual aids. Ensure the prompts are completely standalone and describe visual scenes.
+
+Respond ONLY with valid JSON in the exact following format:
+{{
+  "narration": "Your spoken narration script here...",
+  "image_prompts": ["prompt 1", "prompt 2", "prompt 3", "prompt 4"]
+}}`
     ],
     [
       "user",
-      "Text:\n\n{context}",
+      "Text:\n\n{context}"
     ],
   ]);
 
   const prompt = await promptTemplate.invoke({
-    context: firstChunk.slice(0, 3000),
+    context: combinedText,
   });
 
   const llmResult = await invokeWithRetry(() => llm.invoke(prompt));
-  let videoPrompt = String(llmResult.content).trim();
+  let scriptContent = String(llmResult.content).trim();
 
-  // Clean up quotes if the LLM added them
-  videoPrompt = videoPrompt.replace(/^["']|["']$/g, '');
-
-  console.log("Generated Video Prompt:", videoPrompt);
-
-  // 2. Call a public Gradio Space for text-to-video
-  // Using a popular Wan2.1 text-to-video Space (ZeroGPU)
-  const hfToken = env.HUGGINGFACE_API_KEY;
-
-  if (!hfToken || hfToken === "hf_placeholder_key" || hfToken.includes("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")) {
-    console.warn("⚠️ Invalid or missing HUGGINGFACE_API_KEY. Using a placeholder demo video.");
-    
-    // Download a free sample MP4 to act as a placeholder video
-    const demoVideoUrl = "https://media.w3.org/2010/05/sintel/trailer.mp4";
-    const response = await fetch(demoVideoUrl);
-    if (!response.ok) {
-      throw new Error(`Failed to download placeholder video: ${response.statusText}`);
-    }
-    
-    const arrayBuffer = await response.arrayBuffer();
-    return Buffer.from(arrayBuffer);
+  // Extract JSON if wrapped in markdown code blocks
+  if (scriptContent.startsWith("```json")) {
+    scriptContent = scriptContent.replace(/^```json\n/, "").replace(/\n```$/, "");
+  } else if (scriptContent.startsWith("```")) {
+    scriptContent = scriptContent.replace(/^```\n/, "").replace(/\n```$/, "");
   }
 
+  let script: VideoScriptJSON;
   try {
-    const app = await Client.connect("fffiloni/Wan2.1", {
-      hf_token: hfToken as `hf_${string}`,
-    });
-
-    console.log("Connected to Gradio Space, generating video...");
-
-    // Call the prediction endpoint
-    const result = await app.predict("/infer", [
-      videoPrompt,        // prompt text
-    ]);
-
-    // The result typically contains a file path or URL to the generated video
-    const resultData = result.data as any[];
-
-    if (!resultData || resultData.length === 0) {
-      throw new Error("No video data returned from the Gradio Space");
-    }
-
-    // The result may be a file object with a URL or path
-    const videoResult = resultData[0];
-    let videoUrl: string;
-
-    if (typeof videoResult === "string") {
-      videoUrl = videoResult;
-    } else if (videoResult?.url) {
-      videoUrl = videoResult.url;
-    } else if (videoResult?.path) {
-      videoUrl = videoResult.path;
-    } else {
-      throw new Error("Unexpected video result format from Gradio Space");
-    }
-
-    console.log("Video URL from Space:", videoUrl);
-
-    // 3. Download the video and return as Buffer
-    const response = await fetch(videoUrl);
-    if (!response.ok) {
-      throw new Error(`Failed to download video: ${response.status} ${response.statusText}`);
-    }
-
-    const arrayBuffer = await response.arrayBuffer();
-    return Buffer.from(arrayBuffer);
-
-  } catch (error: any) {
-    console.warn("⚠️ Gradio Space error or overload:", error.message);
-    console.warn("⚠️ Falling back to placeholder demo video to prevent app crash.");
-    
-    // Download a free sample MP4 to act as a placeholder video
-    const demoVideoUrl = "https://media.w3.org/2010/05/sintel/trailer.mp4";
-    const response = await fetch(demoVideoUrl);
-    if (!response.ok) {
-      throw new Error(`Failed to download placeholder video: ${response.statusText}`);
-    }
-    
-    const arrayBuffer = await response.arrayBuffer();
-    return Buffer.from(arrayBuffer);
+    script = JSON.parse(scriptContent);
+  } catch (error) {
+    console.error("Failed to parse LLM video script output:", scriptContent);
+    throw new Error("Invalid JSON generated for video script.");
   }
+
+  console.log("Parsed Video Script:", script);
+
+  const numImages = script.image_prompts.length;
+  if (numImages === 0) {
+    throw new Error("No image prompts generated.");
+  }
+
+  // 2. Generate Audio via Google TTS (MP3 Base64)
+  console.log("Generating Audio...");
+  const audioChunks = await googleTTS.getAllAudioBase64(script.narration, {
+    lang: "en",
+    slow: false,
+    host: "https://translate.google.com",
+  });
+  const audioBuffer = Buffer.concat(audioChunks.map(chunk => Buffer.from(chunk.base64, "base64")));
+
+  // 3. Generate Images sequentially via Pollinations to avoid rate limits/paywalls
+  console.log("Generating Images...");
+  const imageBuffers: Buffer[] = [];
+  let i = 1;
+  for (const imgPrompt of script.image_prompts) {
+    console.log(`Fetching image ${i}/${script.image_prompts.length}...`);
+    const seed = Math.floor(Math.random() * 1000000);
+    const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(imgPrompt)}?seed=${seed}&width=768&height=432&nologo=true&model=turbo`;
+    
+    let success = false;
+    let retries = 3;
+    while (!success && retries > 0) {
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s timeout
+        
+        const res = await fetch(url, { 
+          headers: { "User-Agent": "NotebookLMClone-VideoPipeline" },
+          signal: controller.signal as any
+        });
+        
+        clearTimeout(timeoutId);
+
+        if (!res.ok) {
+          throw new Error(`Failed to generate image from pollinations: ${res.statusText}`);
+        }
+        const arrayBuffer = await res.arrayBuffer();
+        imageBuffers.push(Buffer.from(arrayBuffer));
+        console.log(`Fetched image ${i} successfully.`);
+        success = true;
+      } catch (err: any) {
+        console.error(`Attempt failed: ${err.message}. Retrying...`);
+        retries--;
+        await new Promise(resolve => setTimeout(resolve, 2000));
+      }
+    }
+    
+    if (!success) {
+      console.warn("Failed to fetch image from Pollinations after multiple retries. Using fallback image.");
+      // Fallback to dummyimage.com
+      const fallbackUrl = `https://dummyimage.com/768x432/282c34/61dafb.jpg&text=${encodeURIComponent(imgPrompt.slice(0, 30))}`;
+      const res = await fetch(fallbackUrl);
+      const arrayBuffer = await res.arrayBuffer();
+      imageBuffers.push(Buffer.from(arrayBuffer));
+    }
+
+    i++;
+  }
+
+  // 4. Stitch Images and Audio using FFmpeg
+  console.log("Stitching Video...");
+  
+  // Prepare temporary directory
+  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "video-gen-"));
+  const audioPath = path.join(tmpDir, "audio.mp3");
+  fs.writeFileSync(audioPath, audioBuffer);
+
+  const imagePaths: string[] = [];
+  for (let i = 0; i < imageBuffers.length; i++) {
+    const imgPath = path.join(tmpDir, `image_${i.toString().padStart(3, "0")}.jpg`);
+    fs.writeFileSync(imgPath, imageBuffers[i]);
+    imagePaths.push(imgPath);
+  }
+
+  const outputPath = path.join(tmpDir, "output.mp4");
+
+  // Create a concat demuxer file for ffmpeg to show images sequentially
+  const concatFilePath = path.join(tmpDir, "images.txt");
+  
+  // Calculate duration per image (5 seconds each)
+  let concatText = "";
+  for (const imgPath of imagePaths) {
+    concatText += `file '${imgPath.replace(/\\/g, "/")}'\n`;
+    concatText += `duration 5\n`;
+  }
+  // To avoid issues with the last image disappearing, repeat the last image
+  concatText += `file '${imagePaths[imagePaths.length - 1].replace(/\\/g, "/")}'\n`;
+
+  fs.writeFileSync(concatFilePath, concatText);
+
+  return new Promise((resolve, reject) => {
+    ffmpeg()
+      .input(concatFilePath)
+      .inputOptions(["-f concat", "-safe 0"])
+      .input(audioPath)
+      // video codec
+      .videoCodec("libx264")
+      .outputOptions([
+        "-pix_fmt yuv420p",
+        "-shortest", // Stop encoding when the shortest stream (audio) ends
+        "-r 30"      // 30 fps
+      ])
+      .audioCodec("aac")
+      .on("end", () => {
+        console.log("Video generation complete.");
+        try {
+          const videoBuffer = fs.readFileSync(outputPath);
+          
+          // Cleanup
+          fs.rmSync(tmpDir, { recursive: true, force: true });
+          
+          resolve(videoBuffer);
+        } catch (err) {
+          reject(err);
+        }
+      })
+      .on("error", (err, stdout, stderr) => {
+        console.error("FFmpeg error:", err.message);
+        console.error("FFmpeg stderr:", stderr);
+        
+        // Cleanup on error
+        try {
+          fs.rmSync(tmpDir, { recursive: true, force: true });
+        } catch (e) {}
+        
+        reject(err);
+      })
+      .save(outputPath);
+  });
 }
