@@ -374,40 +374,6 @@ export const getAudioUrl = async (key: string) => {
 // end
 
 
-// Video Overview
-
-export const createVideoOverview = async (noteId?: string, docIds: string[] = []) => {
-    try {
-        const userData = getUserData()
-        const userId = userData?._id
-
-        await generateVideoOverview(userId as string, noteId as string, docIds)
-    } catch (error) {
-        console.log('error : ', error)
-    }
-};
-
-export const generateVideoOverview = async (userId: string, noteId: string, docIds: string[]) => {
-    try {
-        const data = await makeHttpReq('POST', `notes/add/video/sources`,
-            { userId, noteId, docIds })
-
-        showSuccess(data?.message)
-    } catch (error) {
-        console.log('error : ', error)
-    }
-}
-
-export const getVideoUrl = async (key: string) => {
-    try {
-        const data = await makeHttpReq('GET', `notes/video/url?key=${encodeURIComponent(key)}`) as { url: string };
-        return data.url;
-    } catch (error) {
-        console.log('error : ', error);
-        return null;
-    }
-}
-
 // end
 
 

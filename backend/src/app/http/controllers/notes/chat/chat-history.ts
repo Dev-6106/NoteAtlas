@@ -1,26 +1,18 @@
-import fs from "fs";
-import path from "path";
-import { cwd } from "process";
-
-const currDir = cwd();
-const uploadsDir = path.join(currDir, "public", "chat-history");
-
-if(!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, {recursive: true});
-
-const HISTORY_FILE = path.join(uploadsDir, "chat-history.json");
+import { ChatMessage } from "../../../models/chat.models";
 
 export async function storeConversation(messages: {role: "user" | "ai" | "system", content: string, userId?: string, noteId?: string}[]) {
     try {
-        let history: {role: string, content: string, userId?: string, noteId?: string}[] = [];
-
-        if(fs.existsSync(HISTORY_FILE)){
-            const data = fs.readFileSync(HISTORY_FILE, "utf-8");
-            history = JSON.parse(data);
-        }
-
-        history.push(...messages);
-
-        fs.writeFileSync(HISTORY_FILE, JSON.stringify(history, null, 2), "utf-8");
+        if (!messages.length) return {success: true, message: "No messages to store"};
+        
+        // ensure all messages have userId and noteId if provided to the array
+        const docs = messages.map(msg => ({
+            role: msg.role,
+            content: msg.content,
+            userId: msg.userId,
+            noteId: msg.noteId
+        }));
+        
+        await ChatMessage.insertMany(docs);
         return {success: true, message: "Conversation stored successfully"};
     } catch (error) {
         console.error("Error storing conversation: ", error);
@@ -28,13 +20,15 @@ export async function storeConversation(messages: {role: "user" | "ai" | "system
     }
 }
 
-export async function getConversationHistory() {
+export async function getConversationHistory(userId: string, noteId: string) {
     try {
-        if(fs.existsSync(HISTORY_FILE)){
-            const data = fs.readFileSync(HISTORY_FILE, "utf-8");
-            return JSON.parse(data);
-        }
-        return [];
+        const history = await ChatMessage.find({ userId, noteId }).sort({ createdAt: 1 }).lean();
+        return history.map(msg => ({
+            role: msg.role,
+            content: msg.content,
+            userId: msg.userId,
+            noteId: msg.noteId
+        }));
     } catch (error) {
         console.error("Error getting conversation history: ", error);
         return [];

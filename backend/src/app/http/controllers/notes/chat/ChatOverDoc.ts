@@ -34,8 +34,7 @@ export async function ChatOverDoc(req: Request, res: Response, next: NextFunctio
 
 
         await storeConversation([{role: 'user', content: query as string, userId, noteId}]);
-        const allHistory = await getConversationHistory();
-        const chatHistory = allHistory.filter((msg: any) => msg.userId === userId && msg.noteId === noteId);
+        const chatHistory = await getConversationHistory(userId as string, noteId as string);
 
         const agentOutput = await appWithMessagesModified.invoke({
             messages: [...chatHistory],
