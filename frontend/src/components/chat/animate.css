@@ -1,17 +1,40 @@
-/* Dark theme animation utilities */
+/* ═══════════════════════════════════════════════
+   Premium Animation System
+   ═══════════════════════════════════════════════ */
+
+/* ── Gradient border animation ── */
 @keyframes gradient-border {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
   100% { background-position: 0% 50%; }
 }
 
-/* Professional animated gradient border */
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 8px rgba(109, 95, 246, 0.15); }
+  50%      { box-shadow: 0 0 20px rgba(109, 95, 246, 0.35); }
+}
+
+@keyframes fade-in-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ── Animated gradient border wrapper ── */
 .animated-gradient-border {
   position: relative;
-  border-radius: 0.5rem;
-  background-color: inherit;
+  border-radius: 14px;
   z-index: 0;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+              box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .animated-gradient-border::before {
@@ -23,29 +46,69 @@
   background: linear-gradient(
     270deg,
     #818cf8,
-    #6366f1,
-    #8b5cf6,
-    #818cf8
+    #6d5ff6,
+    #a78bfa,
+    #6d5ff6
   );
   background-size: 600% 600%;
   animation: gradient-border 3s ease infinite;
-  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box,
+               linear-gradient(#fff 0 0);
   -webkit-mask-composite: destination-out;
   mask-composite: exclude;
   pointer-events: none;
   z-index: -1;
-  transition: all 0.3s ease;
+}
+
+.animated-gradient-border:hover::before {
+  filter: brightness(1.15);
 }
 
 .animated-gradient-inner {
-  border-radius: 0.5rem;
-  background: #0c0f1a;
+  border-radius: inherit;
+  background: var(--bg-surface, #fff);
   width: 100%;
   height: 100%;
 }
 
-/* subtle hover glow */
-.animated-gradient-border:hover::before {
-  filter: brightness(1.2);
-  transform: scale(1.02);
+/* ── Shimmer loading skeleton ── */
+.shimmer-loading {
+  background: linear-gradient(
+    90deg,
+    rgba(109, 95, 246, 0.06) 25%,
+    rgba(109, 95, 246, 0.14) 50%,
+    rgba(109, 95, 246, 0.06) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.8s ease-in-out infinite;
+}
+
+/* ── Pulse glow for active/loading states ── */
+.pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+/* ── Fade-in entrance ── */
+.fade-in-up {
+  animation: fade-in-up 0.35s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+/* ── Spinner ── */
+.spin {
+  animation: spin 0.8s linear infinite;
+}
+
+/* ── Scrollbar styling for panels ── */
+.studio-scroll::-webkit-scrollbar {
+  width: 4px;
+}
+.studio-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+.studio-scroll::-webkit-scrollbar-thumb {
+  background: rgba(109, 95, 246, 0.25);
+  border-radius: 4px;
+}
+.studio-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(109, 95, 246, 0.45);
 }

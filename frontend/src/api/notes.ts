@@ -299,7 +299,7 @@ export async function getSourceResults(noteId: string) {
 
 // mindMap
 
-export const createMindMap = async (noteId?: string, docIds: string[]) => {
+export const createMindMap = async (noteId: string, docIds: string[]) => {
     try {
         const userData = getUserData()
         const userId = userData?._id
@@ -337,7 +337,7 @@ export const generateMindMap = async (userId: string, noteId: string, docIds: st
 
 // Audio Overview
 
-export const createAudioOverview = async (noteId?: string, docIds: string[]) => {
+export const createAudioOverview = async (noteId: string, docIds: string[]) => {
     try {
         const userData = getUserData()
         const userId = userData?._id
@@ -379,7 +379,7 @@ export const getAudioUrl = async (key: string) => {
 
 // Podcast (TTS Narration)
 
-export const createPodcast = async (noteId?: string, docIds: string[] = []) => {
+export const createPodcast = async (noteId: string, docIds: string[] = []) => {
     try {
         const userData = getUserData()
         const userId = userData?._id

@@ -39,77 +39,100 @@ export function SuggestedInput({
     });
   };
 
-  return (
-    <div style={{ position: "relative", padding: "8px 16px" }}>
-      <style>{`
-        .suggested-scroll::-webkit-scrollbar { display: none; }
-      `}</style>
+  if (!questions?.length) return null;
 
+  return (
+    <div style={{ position: "relative", padding: "10px 0 4px" }}>
+      {/* Left arrow */}
       {showArrows && (
         <button
           onClick={() => scroll(-1)}
           style={{
-            position: "absolute", left: 4, top: "50%", transform: "translateY(-50%)",
-            zIndex: 10, width: 28, height: 28, borderRadius: "50%",
-            background: "rgba(99,102,241,0.15)",
-            border: "1px solid rgba(99,102,241,0.3)",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            color: "#818cf8", cursor: "pointer", transition: "all 0.2s",
-            backdropFilter: "blur(8px)",
+            position: "absolute",
+            left: 0,
+            top: "50%",
+            transform: "translateY(-50%)",
+            zIndex: 10,
+            width: 28,
+            height: 28,
+            borderRadius: "50%",
+            border: "1px solid var(--border-default)",
+            background: "var(--bg-surface)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            cursor: "pointer",
+            color: "var(--text-3)",
+            transition: "all 0.2s",
+            boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.borderColor = "var(--border-accent)";
+            e.currentTarget.style.color = "var(--primary-brand)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.borderColor = "var(--border-default)";
+            e.currentTarget.style.color = "var(--text-3)";
           }}
         >
           <ArrowLeft />
         </button>
       )}
 
+      {/* Chips container */}
       <div
         ref={chipsRef}
-        className="suggested-scroll"
         style={{
-          display: "flex", gap: 8,
-          overflowX: "auto", padding: "0 24px",
+          display: "flex",
+          gap: 8,
+          overflowX: "auto",
+          scrollbarWidth: "none",
+          padding: showArrows ? "0 32px" : "0 2px",
+          msOverflowStyle: "none",
         }}
       >
-        {questions?.map((q, i) => (
-          <button
+        <style>{`
+          .suggested-chips-scroll::-webkit-scrollbar { display: none; }
+        `}</style>
+        {questions.map((q, i) => (
+          <SuggestionChip
             key={i}
+            text={q}
             onClick={() => selectQuestion(q)}
-            style={{
-              whiteSpace: "nowrap", borderRadius: 999,
-              padding: "7px 14px", fontSize: 13, fontWeight: 500,
-              background: "rgba(255,255,255,0.05)",
-              border: "1px solid rgba(255,255,255,0.08)",
-              color: "#94a3b8", cursor: "pointer",
-              transition: "all 0.2s",
-              fontFamily: "'DM Sans', system-ui, sans-serif",
-            }}
-            onMouseEnter={e => {
-              (e.currentTarget as HTMLButtonElement).style.background = "rgba(99,102,241,0.12)";
-              (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(99,102,241,0.35)";
-              (e.currentTarget as HTMLButtonElement).style.color = "#c7d2fe";
-            }}
-            onMouseLeave={e => {
-              (e.currentTarget as HTMLButtonElement).style.background = "rgba(255,255,255,0.05)";
-              (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(255,255,255,0.08)";
-              (e.currentTarget as HTMLButtonElement).style.color = "#94a3b8";
-            }}
-          >
-            {q}
-          </button>
+          />
         ))}
       </div>
 
+      {/* Right arrow */}
       {showArrows && (
         <button
           onClick={() => scroll(1)}
           style={{
-            position: "absolute", right: 4, top: "50%", transform: "translateY(-50%)",
-            zIndex: 10, width: 28, height: 28, borderRadius: "50%",
-            background: "rgba(99,102,241,0.15)",
-            border: "1px solid rgba(99,102,241,0.3)",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            color: "#818cf8", cursor: "pointer", transition: "all 0.2s",
-            backdropFilter: "blur(8px)",
+            position: "absolute",
+            right: 0,
+            top: "50%",
+            transform: "translateY(-50%)",
+            zIndex: 10,
+            width: 28,
+            height: 28,
+            borderRadius: "50%",
+            border: "1px solid var(--border-default)",
+            background: "var(--bg-surface)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            cursor: "pointer",
+            color: "var(--text-3)",
+            transition: "all 0.2s",
+            boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.borderColor = "var(--border-accent)";
+            e.currentTarget.style.color = "var(--primary-brand)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.borderColor = "var(--border-default)";
+            e.currentTarget.style.color = "var(--text-3)";
           }}
         >
           <ArrowRight />
@@ -119,8 +142,47 @@ export function SuggestedInput({
   );
 }
 
+/* ── Suggestion chip ── */
+const SuggestionChip = ({
+  text,
+  onClick,
+}: {
+  text: string;
+  onClick: () => void;
+}) => (
+  <button
+    onClick={onClick}
+    style={{
+      whiteSpace: "nowrap",
+      borderRadius: 20,
+      padding: "6px 14px",
+      fontSize: 12,
+      fontWeight: 500,
+      border: "1px solid var(--border-default)",
+      background: "transparent",
+      color: "var(--text-2)",
+      cursor: "pointer",
+      transition: "all 0.2s",
+      flexShrink: 0,
+    }}
+    onMouseEnter={(e) => {
+      e.currentTarget.style.borderColor = "var(--border-accent)";
+      e.currentTarget.style.background = "var(--primary-glow)";
+      e.currentTarget.style.color = "var(--primary-brand)";
+    }}
+    onMouseLeave={(e) => {
+      e.currentTarget.style.borderColor = "var(--border-default)";
+      e.currentTarget.style.background = "transparent";
+      e.currentTarget.style.color = "var(--text-2)";
+    }}
+  >
+    {text}
+  </button>
+);
+
+/* ── Arrow icons ── */
 const ArrowLeft = () => (
-  <svg width="14" height="14" viewBox="0 0 24 24">
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
     <path
       d="M15 18l-6-6 6-6"
       stroke="currentColor"
@@ -132,7 +194,7 @@ const ArrowLeft = () => (
 );
 
 const ArrowRight = () => (
-  <svg width="14" height="14" viewBox="0 0 24 24">
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
     <path
       d="M9 6l6 6-6 6"
       stroke="currentColor"

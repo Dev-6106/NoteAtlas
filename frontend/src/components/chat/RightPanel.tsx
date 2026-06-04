@@ -1,41 +1,62 @@
-import { PanelRight, GitBranch, FileText, Mic, Headphones } from "lucide-react";
+import {
+  PanelRight,
+  Sparkles,
+  GitBranch,
+  FileText,
+  Music2,
+  NotebookTabs,
+  HelpCircle,
+  BookOpen,
+  FileSignature,
+  Loader2,
+} from "lucide-react";
+import { Button } from "../ui/button";
 import { useDispatch, useSelector } from "react-redux";
-import { addExtraWidth, reduceExtraWidth, toggleRightPanel } from "@/store/chatSlice";
-import './animate.css';
+import {
+  addExtraWidth,
+  reduceExtraWidth,
+  toggleRightPanel,
+} from "@/store/chatSlice";
+import "./animate.css";
 
 import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuItem,
-} from "@/components/ui/dropdown-menu";
-import { createBriefingDoc, createFAQ, createMindMap, createStudyGuide, createSummary, createAudioOverview, createPodcast } from "@/api/notes";
+  createBriefingDoc,
+  createFAQ,
+  createMindMap,
+  createStudyGuide,
+  createSummary,
+} from "@/api/notes";
 import type { AppDispatch, RootState } from "@/store";
 import { showError } from "@/util/toast-notification";
 import { useState } from "react";
-import { fetchNoteSourceResult, showSourceModalContent } from "@/store/rightPanelSlice";
+import {
+  fetchNoteSourceResult,
+  showSourceModalContent,
+} from "@/store/rightPanelSlice";
 import { truncateTitle } from "@/util/truncateTitle";
 import { SourceModal } from "../note/rightpanel/SourceModal";
 import MindMapSourceModal from "../note/rightpanel/MindMapSourceModal";
+import AudioSection from "./AudioSection";
+import { apiUrl } from "@/config/get-env";
 
-// ─── Shared style constants ────────────────────────────────────────────────────
-
-const PANEL_ITEM_BASE: React.CSSProperties = {
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  borderRadius: 14,
-  cursor: "pointer",
-  transition: "all 0.2s",
-  userSelect: "none",
-};
-
-// ─── RightPanel ────────────────────────────────────────────────────────────────
-
+/* ═══════════════════════════════════════
+   Right Panel — Studio
+   ═══════════════════════════════════════ */
 const RightPanel = ({ noteId }: { noteId?: string }) => {
   const dispatch = useDispatch<AppDispatch>();
   const { rightPanelOpen } = useSelector((state: RootState) => state.chat);
-  const { docIds, sources, sourceModal } = useSelector((state: RootState) => state.rightPanel);
+  const { docIds, sources } = useSelector(
+    (state: RootState) => state.rightPanel
+  );
+  const audioCard = (useSelector((state: RootState) => state.rightPanel) as any)?.audioCard;
+
+  /* ── local loading states ── */
+  const [audioLoading, setAudioLoading] = useState(false);
+  const [mindMapLoading, setMindMapLoading] = useState(false);
+  const [summaryLoading, setSummaryLoading] = useState(false);
+  const [faqLoading, setFaqLoading] = useState(false);
+  const [studyGuideLoading, setStudyGuideLoading] = useState(false);
+  const [briefingDocLoading, setBriefingDocLoading] = useState(false);
 
   function showSourceModal(source: any) {
     dispatch(showSourceModalContent(source));
@@ -48,22 +69,40 @@ const RightPanel = ({ noteId }: { noteId?: string }) => {
   function togglePanel() {
     if (rightPanelOpen) {
       dispatch(addExtraWidth());
+      dispatch(toggleRightPanel());
     } else {
       dispatch(reduceExtraWidth());
+      dispatch(toggleRightPanel());
     }
-    dispatch(toggleRightPanel());
   }
 
-  const [mindMapLoading, setMindMapLoading] = useState(false);
-
-  async function generateMindMap() {
+  /* ── Generators ── */
+  function requireDocs() {
     if (docIds.length === 0) {
       showError("Please select a source");
-      return;
+      return false;
     }
+    return true;
+  }
+
+  async function generateAudio() {
+    if (!requireDocs()) return;
+    try {
+      setAudioLoading(true);
+      await createBriefingDoc(noteId!, docIds);
+      fetchSources();
+    } catch {
+      showError("Failed to generate audio");
+    } finally {
+      setAudioLoading(false);
+    }
+  }
+
+  async function generateMindMap() {
+    if (!requireDocs()) return;
     try {
       setMindMapLoading(true);
-      await createMindMap(noteId, docIds);
+      await createMindMap(noteId!, docIds);
       fetchSources();
     } catch {
       showError("Failed to generate mind map");
@@ -72,177 +111,402 @@ const RightPanel = ({ noteId }: { noteId?: string }) => {
     }
   }
 
+  async function generateSummary() {
+    if (!requireDocs()) return;
+    try {
+      setSummaryLoading(true);
+      await createSummary(noteId!, docIds);
+      fetchSources();
+    } catch {
+      showError("Failed to generate summary");
+    } finally {
+      setSummaryLoading(false);
+    }
+  }
+
+  async function generateFAQ() {
+    if (!requireDocs()) return;
+    try {
+      setFaqLoading(true);
+      await createFAQ(noteId!, docIds);
+      fetchSources();
+    } catch {
+      showError("Failed to generate FAQ");
+    } finally {
+      setFaqLoading(false);
+    }
+  }
+
+  async function generateStudyGuide() {
+    if (!requireDocs()) return;
+    try {
+      setStudyGuideLoading(true);
+      await createStudyGuide(noteId!, docIds);
+      fetchSources();
+    } catch {
+      showError("Failed to generate study guide");
+    } finally {
+      setStudyGuideLoading(false);
+    }
+  }
+
+  async function generateBriefingDoc() {
+    if (!requireDocs()) return;
+    try {
+      setBriefingDocLoading(true);
+      await createBriefingDoc(noteId!, docIds);
+      fetchSources();
+    } catch {
+      showError("Failed to generate briefing doc");
+    } finally {
+      setBriefingDocLoading(false);
+    }
+  }
+
+  /* ── Action items config ── */
+  const studioActions = [
+    {
+      key: "audio",
+      label: "Audio Overview",
+      icon: <Sparkles size={18} />,
+      color: "#4ade80",
+      bgLight: "rgba(74, 222, 128, 0.08)",
+      bgHover: "rgba(74, 222, 128, 0.16)",
+      loading: audioLoading,
+      onClick: generateAudio,
+    },
+    {
+      key: "mindmap",
+      label: "Mind Map",
+      icon: <GitBranch size={18} />,
+      color: "#f59e0b",
+      bgLight: "rgba(245, 158, 11, 0.08)",
+      bgHover: "rgba(245, 158, 11, 0.16)",
+      loading: mindMapLoading,
+      onClick: generateMindMap,
+    },
+    {
+      key: "summary",
+      label: "Summary",
+      icon: <NotebookTabs size={18} />,
+      color: "#818cf8",
+      bgLight: "rgba(129, 140, 248, 0.08)",
+      bgHover: "rgba(129, 140, 248, 0.16)",
+      loading: summaryLoading,
+      onClick: generateSummary,
+    },
+    {
+      key: "faq",
+      label: "FAQ",
+      icon: <HelpCircle size={18} />,
+      color: "#f472b6",
+      bgLight: "rgba(244, 114, 182, 0.08)",
+      bgHover: "rgba(244, 114, 182, 0.16)",
+      loading: faqLoading,
+      onClick: generateFAQ,
+    },
+    {
+      key: "study-guide",
+      label: "Study Guide",
+      icon: <BookOpen size={18} />,
+      color: "#38bdf8",
+      bgLight: "rgba(56, 189, 248, 0.08)",
+      bgHover: "rgba(56, 189, 248, 0.16)",
+      loading: studyGuideLoading,
+      onClick: generateStudyGuide,
+    },
+    {
+      key: "briefing-doc",
+      label: "Briefing Doc",
+      icon: <FileSignature size={18} />,
+      color: "#a78bfa",
+      bgLight: "rgba(167, 139, 250, 0.08)",
+      bgHover: "rgba(167, 139, 250, 0.16)",
+      loading: briefingDocLoading,
+      onClick: generateBriefingDoc,
+    },
+  ];
+
   return (
     <div
       style={{
-        height: "100%",
         display: "flex",
         flexDirection: "column",
-        padding: rightPanelOpen ? 16 : 8,
-        width: rightPanelOpen ? "25%" : 64,
-        transition: "all 0.3s ease",
-        fontFamily: "'DM Sans', system-ui, sans-serif",
-        minWidth: rightPanelOpen ? 200 : 64,
+        height: "100%",
+        width: rightPanelOpen ? "100%" : 56,
+        transition: "width 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+        overflow: "hidden",
       }}
     >
       <SourceModal />
       <MindMapSourceModal />
 
-      {/* Header */}
-      <div style={{
-        display: "flex",
-        justifyContent: rightPanelOpen ? "space-between" : "center",
-        alignItems: "center",
-        marginBottom: 8,
-        minHeight: 32,
-      }}>
+      {/* ── Header ── */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: rightPanelOpen ? "space-between" : "center",
+          padding: rightPanelOpen ? "16px 18px 12px" : "16px 8px 12px",
+          flexShrink: 0,
+        }}
+      >
         {rightPanelOpen && (
-          <p style={{ fontSize: 14, fontWeight: 600, color: "#f1f5f9", letterSpacing: "-0.2px", margin: 0 }}>
+          <span
+            style={{
+              fontSize: 14,
+              fontWeight: 600,
+              letterSpacing: "0.04em",
+              textTransform: "uppercase",
+              color: "var(--text-2)",
+            }}
+          >
             Studio
-          </p>
+          </span>
         )}
         <button
           onClick={togglePanel}
           style={{
-            width: 32, height: 32, borderRadius: 8,
-            display: "flex", alignItems: "center", justifyContent: "center",
-            background: "rgba(255,255,255,0.05)",
-            border: "1px solid rgba(255,255,255,0.08)",
-            color: "#64748b", cursor: "pointer",
+            width: 32,
+            height: 32,
+            borderRadius: 8,
+            border: "1px solid var(--border-default)",
+            background: "transparent",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            cursor: "pointer",
+            color: "var(--text-3)",
             transition: "all 0.2s",
-            flexShrink: 0,
           }}
-          onMouseEnter={e => {
-            e.currentTarget.style.background = "rgba(99,102,241,0.12)";
-            e.currentTarget.style.borderColor = "rgba(99,102,241,0.35)";
-            e.currentTarget.style.color = "#a5b4fc";
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = "var(--primary-glow)";
+            e.currentTarget.style.borderColor = "var(--border-accent)";
+            e.currentTarget.style.color = "var(--primary-brand)";
           }}
-          onMouseLeave={e => {
-            e.currentTarget.style.background = "rgba(255,255,255,0.05)";
-            e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)";
-            e.currentTarget.style.color = "#64748b";
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = "transparent";
+            e.currentTarget.style.borderColor = "var(--border-default)";
+            e.currentTarget.style.color = "var(--text-3)";
           }}
         >
           <PanelRight size={16} />
         </button>
       </div>
 
-      <div style={{ height: 1, background: "rgba(255,255,255,0.06)", marginBottom: 12 }} />
-
-      {/* Action buttons */}
-      <div style={{
-        display: "grid",
-        gridTemplateColumns: rightPanelOpen ? "1fr 1fr" : "1fr",
-        gap: rightPanelOpen ? 12 : 10,
-        marginTop: 4,
-      }}>
-        <PanelItem
-          generateSource={generateMindMap}
-          loading={mindMapLoading}
-          rightPanelOpen={rightPanelOpen}
-          icon={<GitBranch size={20} style={{ color: "#f59e0b" }} />}
-          label="Mind Map"
-          accentColor="rgba(245,158,11,0.12)"
-          accentBorder="rgba(245,158,11,0.25)"
-        />
-        <ReportPanelItem
-          rightPanelOpen={rightPanelOpen}
-          fetchSources={fetchSources}
-          noteId={noteId}
-          docIds={docIds}
-        />
-      </div>
-
-      {/* Divider */}
-      <div style={{ height: 1, background: "rgba(255,255,255,0.06)", margin: "16px 0" }} />
-
-      {/* Sources list */}
+      {/* ── Divider ── */}
       <div
-        className="right-panel-scroll"
-        style={{ flex: 1, overflowY: "auto", paddingRight: 4 }}
-      >
-        <style>{`
-          .right-panel-scroll::-webkit-scrollbar { width: 5px; }
-          .right-panel-scroll::-webkit-scrollbar-track { background: transparent; }
-          .right-panel-scroll::-webkit-scrollbar-thumb { background: #312e81; border-radius: 4px; }
-          @keyframes spin { to { transform: rotate(360deg); } }
-          .panel-source-row:hover { background: rgba(99,102,241,0.08) !important; }
-          .panel-source-icon-btn:hover { background: rgba(99,102,241,0.15) !important; border-color: rgba(99,102,241,0.3) !important; }
-        `}</style>
+        style={{
+          height: 1,
+          background: "var(--border-default)",
+          margin: "0 16px",
+          flexShrink: 0,
+        }}
+      />
 
-        {rightPanelOpen ? (
-          sources?.length > 0 ? (
-            <div style={{ display: "flex", flexDirection: "column", gap: 4, paddingBottom: 40 }}>
-              {Array.isArray(sources) && sources.map((source) => (
-                <div
-                  key={source._id}
-                  className="panel-source-row"
-                  onClick={() => showSourceModal(source)}
+      {/* ── Action Buttons Grid ── */}
+      <div
+        className="studio-scroll"
+        style={{
+          flex: 1,
+          overflowY: "auto",
+          padding: rightPanelOpen ? "16px" : "12px 6px",
+        }}
+      >
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: rightPanelOpen ? "1fr 1fr" : "1fr",
+            gap: rightPanelOpen ? 10 : 8,
+          }}
+        >
+          {studioActions.map((action) => (
+            <StudioActionButton
+              key={action.key}
+              action={action}
+              expanded={rightPanelOpen}
+            />
+          ))}
+        </div>
+
+        {/* ── Audio Player ── */}
+        {rightPanelOpen && audioCard?.show && (
+          <div style={{ marginTop: 16 }}>
+            <AudioSection
+              audioUrl={`${apiUrl}/api/v1/notes/read/audios/${audioCard?.content}`}
+              title={audioCard?.title}
+            />
+          </div>
+        )}
+
+        {/* ── Generated Sources List ── */}
+        {rightPanelOpen && (
+          <div style={{ marginTop: 20 }}>
+            {sources?.length > 0 ? (
+              <>
+                <p
                   style={{
-                    display: "flex", alignItems: "center", gap: 10,
-                    padding: "10px 8px", borderRadius: 10,
-                    cursor: "pointer", transition: "background 0.15s",
+                    fontSize: 11,
+                    fontWeight: 600,
+                    textTransform: "uppercase",
+                    letterSpacing: "0.06em",
+                    color: "var(--text-3)",
+                    marginBottom: 10,
+                  }}
+                >
+                  Generated
+                </p>
+                <div
+                  className="studio-scroll"
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 4,
+                    maxHeight: audioCard?.show ? 200 : 320,
+                    overflowY: "auto",
+                    paddingBottom: 20,
+                  }}
+                >
+                  {Array.isArray(sources) &&
+                    sources.map((source: any) => (
+                      <button
+                        key={source._id}
+                        onClick={() => showSourceModal(source)}
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 10,
+                          padding: "10px 12px",
+                          borderRadius: 10,
+                          border: "1px solid transparent",
+                          background: "transparent",
+                          cursor: "pointer",
+                          transition: "all 0.2s",
+                          textAlign: "left",
+                          width: "100%",
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.background =
+                            "var(--bg-card-hover)";
+                          e.currentTarget.style.borderColor =
+                            "var(--border-default)";
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.background = "transparent";
+                          e.currentTarget.style.borderColor = "transparent";
+                        }}
+                      >
+                        <SourceIcon type={source?.source_type} />
+                        <div
+                          style={{
+                            display: "flex",
+                            flexDirection: "column",
+                            minWidth: 0,
+                            flex: 1,
+                          }}
+                        >
+                          <span
+                            style={{
+                              fontSize: 13,
+                              fontWeight: 500,
+                              color: "var(--text-1)",
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                              whiteSpace: "nowrap",
+                            }}
+                          >
+                            {truncateTitle(source?.title, 30) || "No title"}
+                          </span>
+                          <span
+                            style={{
+                              fontSize: 11,
+                              color: "var(--text-3)",
+                              marginTop: 1,
+                            }}
+                          >
+                            {source?.source_type} · {source?.total_source}{" "}
+                            sources
+                          </span>
+                        </div>
+                      </button>
+                    ))}
+                </div>
+              </>
+            ) : (
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  padding: "32px 16px",
+                  textAlign: "center",
+                }}
+              >
+                <FileText
+                  size={40}
+                  style={{ color: "var(--text-3)", opacity: 0.5 }}
+                />
+                <p
+                  style={{
+                    fontSize: 13,
+                    color: "var(--text-3)",
+                    marginTop: 12,
+                    lineHeight: 1.5,
+                  }}
+                >
+                  Select sources and generate content
+                  <br />
+                  using the buttons above.
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Collapsed view — show icon-only source list */}
+        {!rightPanelOpen && (
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: 6,
+              marginTop: 12,
+            }}
+          >
+            {Array.isArray(sources) &&
+              sources.slice(0, 6).map((source: any) => (
+                <button
+                  key={source._id}
+                  onClick={() => showSourceModal(source)}
+                  title={source?.title}
+                  style={{
+                    width: 36,
+                    height: 36,
+                    borderRadius: 8,
+                    border: "1px solid var(--border-default)",
                     background: "transparent",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    cursor: "pointer",
+                    transition: "all 0.2s",
+                    color: "var(--text-3)",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = "var(--primary-glow)";
+                    e.currentTarget.style.borderColor = "var(--border-accent)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = "transparent";
+                    e.currentTarget.style.borderColor =
+                      "var(--border-default)";
                   }}
                 >
                   <SourceIcon type={source?.source_type} />
-                  <div style={{ display: "flex", flexDirection: "column", minWidth: 0, flex: 1 }}>
-                    <span style={{
-                      fontSize: 13, fontWeight: 500, color: "#cbd5e1",
-                      overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
-                    }}>
-                      {truncateTitle(source?.title, 35) || "No title"}
-                    </span>
-                    <span style={{ fontSize: 11, color: "#475569" }}>
-                      {source?.source_type} · {source?.total_source} sources
-                    </span>
-                  </div>
-                </div>
+                </button>
               ))}
-            </div>
-          ) : (
-            <div style={{
-              display: "flex", flexDirection: "column",
-              alignItems: "center", justifyContent: "center",
-              marginTop: 40, textAlign: "center",
-            }}>
-              <div style={{
-                width: 56, height: 56, borderRadius: 14,
-                background: "rgba(99,102,241,0.1)",
-                border: "1px solid rgba(99,102,241,0.2)",
-                display: "flex", alignItems: "center", justifyContent: "center",
-                marginBottom: 16,
-              }}>
-                <FileText size={28} style={{ color: "#818cf8" }} />
-              </div>
-              <p style={{ fontSize: 13, color: "#475569", fontWeight: 500, margin: 0 }}>
-                No sources available
-              </p>
-            </div>
-          )
-        ) : (
-          <div style={{
-            display: "flex", flexDirection: "column",
-            alignItems: "center", marginTop: 24, gap: 16,
-          }}>
-            {Array.isArray(sources) && sources.map((source) => (
-              <button
-                key={source._id}
-                className="panel-source-icon-btn"
-                onClick={() => showSourceModal(source)}
-                style={{
-                  width: 36, height: 36, borderRadius: 10,
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  background: "rgba(255,255,255,0.05)",
-                  border: "1px solid rgba(255,255,255,0.1)",
-                  color: "#818cf8", cursor: "pointer",
-                  transition: "all 0.2s",
-                  flexShrink: 0,
-                }}
-              >
-                <SourceIcon type={source?.source_type} />
-              </button>
-            ))}
           </div>
         )}
       </div>
@@ -250,234 +514,101 @@ const RightPanel = ({ noteId }: { noteId?: string }) => {
   );
 };
 
-// ─── PanelItem ─────────────────────────────────────────────────────────────────
-
-const PanelItem = ({
-  icon,
-  label,
-  rightPanelOpen,
-  generateSource,
-  loading = false,
-  accentColor = "rgba(99,102,241,0.1)",
-  accentBorder = "rgba(99,102,241,0.2)",
-}: {
-  icon: React.ReactNode;
+/* ═══════════════════════════════════════
+   Studio Action Button
+   ═══════════════════════════════════════ */
+type ActionConfig = {
+  key: string;
   label: string;
-  rightPanelOpen: boolean;
-  generateSource: () => void;
-  loading?: boolean;
-  accentColor?: string;
-  accentBorder?: string;
+  icon: React.ReactNode;
+  color: string;
+  bgLight: string;
+  bgHover: string;
+  loading: boolean;
+  onClick: () => void;
+};
+
+const StudioActionButton = ({
+  action,
+  expanded,
+}: {
+  action: ActionConfig;
+  expanded: boolean;
 }) => {
+  const [hovered, setHovered] = useState(false);
+
   return (
-    <div
-      onClick={!loading ? generateSource : undefined}
+    <button
+      onClick={!action.loading ? action.onClick : undefined}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      className={action.loading ? "animated-gradient-border" : ""}
       style={{
-        ...PANEL_ITEM_BASE,
-        flexDirection: rightPanelOpen ? "column" : "row",
-        height: rightPanelOpen ? 88 : 48,
-        padding: rightPanelOpen ? 16 : 12,
-        background: accentColor,
-        border: `1px solid ${accentBorder}`,
-        cursor: loading ? "not-allowed" : "pointer",
-        opacity: loading ? 0.65 : 1,
-        gap: 0,
-      }}
-      onMouseEnter={e => {
-        if (!loading) {
-          e.currentTarget.style.transform = "translateY(-2px)";
-          e.currentTarget.style.boxShadow = "0 8px 24px rgba(99,102,241,0.12)";
-        }
-      }}
-      onMouseLeave={e => {
-        e.currentTarget.style.transform = "translateY(0)";
-        e.currentTarget.style.boxShadow = "none";
+        display: "flex",
+        alignItems: expanded ? "center" : "center",
+        justifyContent: expanded ? "flex-start" : "center",
+        flexDirection: expanded ? "row" : "column",
+        gap: expanded ? 10 : 4,
+        padding: expanded ? "12px 14px" : "10px 4px",
+        borderRadius: 12,
+        border: `1px solid ${hovered ? `${action.color}33` : "var(--border-default)"}`,
+        background: hovered ? action.bgHover : action.bgLight,
+        cursor: action.loading ? "not-allowed" : "pointer",
+        transition: "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
+        opacity: action.loading ? 0.7 : 1,
+        minHeight: expanded ? 48 : 50,
+        width: "100%",
+        color: action.color,
+        transform: hovered && !action.loading ? "translateY(-1px)" : "none",
+        boxShadow: hovered && !action.loading
+          ? `0 4px 12px ${action.color}15`
+          : "none",
       }}
     >
-      {/* Icon / spinner — fixed size wrapper prevents layout shift */}
-      <div style={{ width: 24, height: 24, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-        {loading ? (
-          <span style={{
-            width: 20, height: 20,
-            border: "2px solid rgba(255,255,255,0.1)",
-            borderTopColor: "#818cf8",
-            borderRadius: "50%",
-            animation: "spin 0.8s linear infinite",
-            display: "block",
-          }} />
-        ) : (
-          icon
-        )}
-      </div>
-
-      {rightPanelOpen && (
-        <span style={{
-          marginTop: 8,
-          fontSize: 12,
-          fontWeight: 600,
-          color: "#94a3b8",
-          letterSpacing: "0.01em",
-        }}>
-          {loading ? "Generating…" : label}
-        </span>
+      {action.loading ? (
+        <Loader2 size={18} className="spin" style={{ color: action.color }} />
+      ) : (
+        <span style={{ display: "flex", flexShrink: 0 }}>{action.icon}</span>
       )}
-    </div>
-  );
-};
 
-// ─── ReportPanelItem ───────────────────────────────────────────────────────────
-
-const REPORT_MENU_ITEMS = ["Summary", "Study Guide", "Briefing Doc", "FAQ", "Audio Overview", "Podcast"] as const;
-
-const ReportPanelItem = ({
-  rightPanelOpen,
-  noteId,
-  docIds,
-  fetchSources,
-}: {
-  rightPanelOpen: boolean;
-  noteId: string;
-  docIds: string[];
-  fetchSources: () => void;
-}) => {
-  const [loading, setLoading] = useState(false);
-
-  async function generateSource(item: typeof REPORT_MENU_ITEMS[number]) {
-    if (docIds.length === 0) {
-      showError("Please select a source");
-      return;
-    }
-    try {
-      setLoading(true);
-      if (item === "Summary")      await createSummary(noteId, docIds);
-      else if (item === "FAQ")      await createFAQ(noteId, docIds);
-      else if (item === "Study Guide") await createStudyGuide(noteId, docIds);
-      else if (item === "Briefing Doc") await createBriefingDoc(noteId, docIds, "briefing-doc");
-      else if (item === "Audio Overview") await createAudioOverview(noteId, docIds);
-      else if (item === "Podcast") await createPodcast(noteId, docIds);
-      fetchSources();
-    } catch {
-      showError("Failed to generate report");
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        {/* Outer div is the visual tile — same sizing contract as PanelItem */}
-        <div
+      {expanded && (
+        <span
           style={{
-            ...PANEL_ITEM_BASE,
-            flexDirection: rightPanelOpen ? "column" : "row",
-            height: rightPanelOpen ? 88 : 48,
-            padding: rightPanelOpen ? 16 : 12,
-            background: "rgba(59,130,246,0.1)",
-            border: `1px solid ${loading ? "rgba(59,130,246,0.5)" : "rgba(59,130,246,0.2)"}`,
-            cursor: loading ? "not-allowed" : "pointer",
-            opacity: loading ? 0.65 : 1,
-          }}
-          onMouseEnter={e => {
-            if (!loading) {
-              e.currentTarget.style.transform = "translateY(-2px)";
-              e.currentTarget.style.boxShadow = "0 8px 24px rgba(99,102,241,0.12)";
-            }
-          }}
-          onMouseLeave={e => {
-            e.currentTarget.style.transform = "translateY(0)";
-            e.currentTarget.style.boxShadow = "none";
+            fontSize: 13,
+            fontWeight: 500,
+            color: "var(--text-1)",
+            whiteSpace: "nowrap",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
           }}
         >
-          {/* Fixed-size icon wrapper prevents layout shift during loading */}
-          <div style={{ width: 24, height: 24, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-            {loading ? (
-              <span style={{
-                width: 20, height: 20,
-                border: "2px solid rgba(255,255,255,0.1)",
-                borderTopColor: "#60a5fa",
-                borderRadius: "50%",
-                animation: "spin 0.8s linear infinite",
-                display: "block",
-              }} />
-            ) : (
-              <FileText size={20} style={{ color: "#60a5fa" }} />
-            )}
-          </div>
-
-          {rightPanelOpen && (
-            <span style={{
-              marginTop: 8,
-              fontSize: 12,
-              fontWeight: 600,
-              color: "#94a3b8",
-              letterSpacing: "0.01em",
-            }}>
-              {loading ? "Generating…" : "Reports"}
-            </span>
-          )}
-        </div>
-      </DropdownMenuTrigger>
-
-      <DropdownMenuContent
-        align="start"
-        style={{
-          width: 180,
-          background: "rgba(10,13,26,0.97)",
-          border: "1px solid rgba(99,102,241,0.2)",
-          borderRadius: 12,
-          boxShadow: "0 0 0 1px rgba(99,102,241,0.08), 0 16px 40px rgba(0,0,0,0.6)",
-          backdropFilter: "blur(20px)",
-          padding: 4,
-        }}
-      >
-        {REPORT_MENU_ITEMS.map((item) => (
-          <DropdownMenuItem
-            key={item}
-            disabled={loading}
-            onClick={() => generateSource(item)}
-            style={{
-              cursor: loading ? "not-allowed" : "pointer",
-              color: "#cbd5e1",
-              fontSize: 13,
-              fontWeight: 500,
-              padding: "8px 12px",
-              borderRadius: 8,
-              transition: "all 0.15s",
-            }}
-            onMouseEnter={e => {
-              if (!loading) {
-                e.currentTarget.style.background = "rgba(99,102,241,0.12)";
-                e.currentTarget.style.color = "#e0e7ff";
-              }
-            }}
-            onMouseLeave={e => {
-              e.currentTarget.style.background = "transparent";
-              e.currentTarget.style.color = "#cbd5e1";
-            }}
-          >
-            {item}
-          </DropdownMenuItem>
-        ))}
-      </DropdownMenuContent>
-    </DropdownMenu>
+          {action.loading ? "Generating…" : action.label}
+        </span>
+      )}
+    </button>
   );
 };
 
-// ─── SourceIcon ────────────────────────────────────────────────────────────────
-
+/* ═══════════════════════════════════════
+   Source Icon
+   ═══════════════════════════════════════ */
 function SourceIcon({ type = "" }: { type?: string }) {
-  const normalized = type.toLowerCase();
-  if (normalized.includes("mindmap")) {
-    return <GitBranch size={18} style={{ color: "#f59e0b", flexShrink: 0 }} />;
-  }
-  if (normalized.includes("podcast")) {
-    return <Mic size={18} style={{ color: "#f97316", flexShrink: 0 }} />;
-  }
-  if (normalized.includes("audio")) {
-    return <Headphones size={18} style={{ color: "#ec4899", flexShrink: 0 }} />;
-  }
-  return <FileText size={18} style={{ color: "#818cf8", flexShrink: 0 }} />;
+  const n = type.toLowerCase();
+
+  if (n.includes("audio"))
+    return <Music2 size={16} style={{ color: "#4ade80" }} />;
+  if (n.includes("mindmap"))
+    return <GitBranch size={16} style={{ color: "#f59e0b" }} />;
+  if (n.includes("summary"))
+    return <NotebookTabs size={16} style={{ color: "#818cf8" }} />;
+  if (n.includes("faq"))
+    return <HelpCircle size={16} style={{ color: "#f472b6" }} />;
+  if (n.includes("study"))
+    return <BookOpen size={16} style={{ color: "#38bdf8" }} />;
+  if (n.includes("briefing"))
+    return <FileSignature size={16} style={{ color: "#a78bfa" }} />;
+
+  return <FileText size={16} style={{ color: "#818cf8" }} />;
 }
 
 export default RightPanel;

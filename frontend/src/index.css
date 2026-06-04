@@ -44,7 +44,8 @@
 }
 
 :root {
-  --radius: 0.5rem; /* Slightly sharper radius for Linear/Notion style */
+  --radius: 0.5rem;
+  /* Base Tailwind variables */
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);
@@ -63,22 +64,26 @@
   --border: oklch(0.922 0 0);
   --input: oklch(0.922 0 0);
   --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  
+  /* NotebookLM Custom Theme Variables (Light Mode Default) */
+  --bg-base: #f5f7f9;
+  --bg-surface: #ffffff;
+  --bg-card: #ffffff;
+  --bg-card-hover: #f8fafc;
+  --border-default: rgba(0,0,0,0.08);
+  --border-hover: rgba(0,0,0,0.15);
+  --border-accent: rgba(109,95,246,0.25);
+  --text-1: #1e293b;
+  --text-2: #475569;
+  --text-3: #64748b;
+  --primary-brand: #6d5ff6;
+  --primary-light: #8b80f8;
+  --primary-glow: rgba(109,95,246,0.12);
+  --primary-mid: rgba(109,95,246,0.08);
 }
 
 .dark {
+  /* Tailwind Dark variables */
   --background: oklch(0.145 0 0);
   --foreground: oklch(0.985 0 0);
   --card: oklch(0.205 0 0);
@@ -97,19 +102,22 @@
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
   --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  
+  /* NotebookLM Custom Theme Variables (Dark Mode) */
+  --bg-base: #05060d;
+  --bg-surface: #0a0c17;
+  --bg-card: rgba(255,255,255,0.025);
+  --bg-card-hover: rgba(255,255,255,0.04);
+  --border-default: rgba(255,255,255,0.06);
+  --border-hover: rgba(255,255,255,0.13);
+  --border-accent: rgba(109,95,246,0.45);
+  --text-1: #f0eeff;
+  --text-2: #9b93c8;
+  --text-3: #4e4872;
+  --primary-brand: #6d5ff6;
+  --primary-light: #8b80f8;
+  --primary-glow: rgba(109,95,246,0.18);
+  --primary-mid: rgba(109,95,246,0.06);
 }
 
 @layer base {

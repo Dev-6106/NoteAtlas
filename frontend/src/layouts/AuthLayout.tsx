@@ -1,6 +1,20 @@
-import React from "react";
 import { Link, Outlet } from "react-router";
-import { MoveLeft, Sparkles } from "lucide-react";
+import { MoveLeft } from "lucide-react";
+
+import { T } from "@/components/ThemeTokens";
+
+const LogoMark = ({ size = 30 }: { size?: number }) => (
+  <div style={{
+    width: size, height: size, borderRadius: Math.round(size * 0.28),
+    background: "linear-gradient(135deg,#6d5ff6,#a78bfa)",
+    display: "flex", alignItems: "center", justifyContent: "center",
+    boxShadow: "0 0 20px rgba(109,95,246,0.42)", flexShrink: 0,
+  }}>
+    <svg width={size * 0.52} height={size * 0.52} viewBox="0 0 18 18" fill="none">
+      <path d="M9 2L11.5 7H16.5L12.5 10.5L14 16L9 12.5L4 16L5.5 10.5L1.5 7H6.5L9 2Z" fill="white" fillOpacity="0.9" />
+    </svg>
+  </div>
+);
 
 export default function AuthLayout() {
   return (
@@ -8,106 +22,97 @@ export default function AuthLayout() {
       minHeight: "100vh",
       display: "flex",
       flexDirection: "column",
-      background: "#080b14",
-      fontFamily: "'DM Sans', system-ui, sans-serif",
+      background: T.bg,
+      fontFamily: T.fontSans,
       position: "relative",
       overflow: "hidden",
     }}>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap');
-        * { box-sizing: border-box; }
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: #0f1120; }
-        ::-webkit-scrollbar-thumb { background: #312e81; border-radius: 3px; }
+        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;0,9..40,800;1,9..40,400&family=Instrument+Serif:ital@0;1&family=DM+Mono&display=swap');
+        *{box-sizing:border-box}
+        ::-webkit-scrollbar{width:5px}
+        ::-webkit-scrollbar-track{background:#080a12}
+        ::-webkit-scrollbar-thumb{background:#2d2760;border-radius:3px}
+        @keyframes orb1{0%,100%{transform:translate(0,0)}50%{transform:translate(50px,-70px)}}
+        @keyframes orb2{0%,100%{transform:translate(0,0)}50%{transform:translate(-60px,45px)}}
+        @keyframes orb3{0%,100%{transform:translate(0,0)}50%{transform:translate(35px,55px)}}
       `}</style>
 
-      {/* ── Ambient orbs ── */}
+      {/* Mesh orbs */}
+      <div style={{ position: "absolute", inset: 0, zIndex: 0, pointerEvents: "none", overflow: "hidden" }}>
+        <div style={{
+          position: "absolute", top: "-15%", left: "-8%", width: 700, height: 700, borderRadius: "50%",
+          background: "radial-gradient(circle, rgba(109,95,246,0.13) 0%, transparent 65%)",
+          filter: "blur(40px)", animation: "orb1 14s ease-in-out infinite",
+        }} />
+        <div style={{
+          position: "absolute", bottom: "-5%", right: "-5%", width: 550, height: 550, borderRadius: "50%",
+          background: "radial-gradient(circle, rgba(139,112,246,0.09) 0%, transparent 65%)",
+          filter: "blur(40px)", animation: "orb2 17s ease-in-out infinite",
+        }} />
+        <div style={{
+          position: "absolute", top: "38%", right: "22%", width: 360, height: 360, borderRadius: "50%",
+          background: "radial-gradient(circle, rgba(78,58,180,0.07) 0%, transparent 65%)",
+          filter: "blur(30px)", animation: "orb3 21s ease-in-out infinite",
+        }} />
+      </div>
+
+      {/* Grid lines */}
       <div style={{
-        position: "absolute", top: "-15%", left: "-10%",
-        width: 500, height: 500, borderRadius: "50%", pointerEvents: "none",
-        background: "radial-gradient(circle, rgba(99,102,241,0.13) 0%, transparent 70%)",
-        animation: "orbFloat1 14s ease-in-out infinite",
-      }} />
-      <div style={{
-        position: "absolute", bottom: "-10%", right: "-5%",
-        width: 400, height: 400, borderRadius: "50%", pointerEvents: "none",
-        background: "radial-gradient(circle, rgba(139,92,246,0.1) 0%, transparent 70%)",
-        animation: "orbFloat2 18s ease-in-out infinite",
-      }} />
-      {/* Grid overlay */}
-      <div style={{
-        position: "absolute", inset: 0, pointerEvents: "none",
-        backgroundImage: `linear-gradient(rgba(99,102,241,0.04) 1px, transparent 1px),
-          linear-gradient(90deg, rgba(99,102,241,0.04) 1px, transparent 1px)`,
-        backgroundSize: "60px 60px",
-        maskImage: "radial-gradient(ellipse 80% 70% at 50% 0%, black 40%, transparent 100%)",
+        position: "absolute", inset: 0, pointerEvents: "none", zIndex: 0,
+        backgroundImage: `linear-gradient(rgba(109,95,246,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(109,95,246,0.04) 1px, transparent 1px)`,
+        backgroundSize: "72px 72px",
+        maskImage: "radial-gradient(ellipse 80% 70% at 50% 50%, black 30%, transparent 100%)",
       }} />
 
-      <style>{`
-        @keyframes orbFloat1 { 0%,100%{transform:translate(0,0)} 50%{transform:translate(30px,-40px)} }
-        @keyframes orbFloat2 { 0%,100%{transform:translate(0,0)} 50%{transform:translate(-30px,30px)} }
-      `}</style>
-
-      {/* ── Header ── */}
+      {/* Header */}
       <header style={{
-        padding: "0 28px", height: 60,
+        padding: "0 32px", height: 60, zIndex: 10, position: "relative",
         display: "flex", alignItems: "center", gap: 12,
-        borderBottom: "1px solid rgba(255,255,255,0.05)",
-        background: "rgba(8,11,20,0.7)",
-        backdropFilter: "blur(16px)",
-        position: "relative", zIndex: 10,
+        borderBottom: `1px solid ${T.border}`,
+        background: "rgba(5,6,13,0.75)",
+        backdropFilter: "blur(20px)",
         flexShrink: 0,
       }}>
-        {/* Back button */}
         <Link
           to="/"
           style={{
             width: 34, height: 34, borderRadius: 9,
             display: "flex", alignItems: "center", justifyContent: "center",
-            background: "rgba(255,255,255,0.05)",
-            border: "1px solid rgba(255,255,255,0.08)",
-            color: "#64748b", textDecoration: "none",
-            transition: "all 0.2s",
-            flexShrink: 0,
+            background: "rgba(255,255,255,0.04)",
+            border: `1px solid ${T.border}`,
+            color: T.text3, textDecoration: "none",
+            transition: "all 0.2s", flexShrink: 0,
           }}
           onMouseEnter={e => {
-            (e.currentTarget as HTMLAnchorElement).style.background = "rgba(99,102,241,0.12)";
-            (e.currentTarget as HTMLAnchorElement).style.borderColor = "rgba(99,102,241,0.35)";
-            (e.currentTarget as HTMLAnchorElement).style.color = "#a5b4fc";
+            (e.currentTarget as HTMLAnchorElement).style.background = "rgba(109,95,246,0.12)";
+            (e.currentTarget as HTMLAnchorElement).style.borderColor = "rgba(109,95,246,0.4)";
+            (e.currentTarget as HTMLAnchorElement).style.color = "#a78bfa";
           }}
           onMouseLeave={e => {
-            (e.currentTarget as HTMLAnchorElement).style.background = "rgba(255,255,255,0.05)";
-            (e.currentTarget as HTMLAnchorElement).style.borderColor = "rgba(255,255,255,0.08)";
-            (e.currentTarget as HTMLAnchorElement).style.color = "#64748b";
+            (e.currentTarget as HTMLAnchorElement).style.background = "rgba(255,255,255,0.04)";
+            (e.currentTarget as HTMLAnchorElement).style.borderColor = T.border;
+            (e.currentTarget as HTMLAnchorElement).style.color = T.text3;
           }}
         >
-          <MoveLeft size={15} />
+          <MoveLeft size={14} />
         </Link>
 
-        {/* Logo */}
         <Link to="/" style={{ display: "flex", alignItems: "center", gap: 9, textDecoration: "none" }}>
-          <div style={{
-            width: 30, height: 30, borderRadius: 8,
-            background: "linear-gradient(135deg,#6366f1,#8b5cf6)",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            boxShadow: "0 0 14px rgba(99,102,241,0.4)",
-            flexShrink: 0,
-          }}>
-            <Sparkles size={14} color="#fff" />
-          </div>
-          <span style={{ fontSize: 16, fontWeight: 800, color: "#f1f5f9", letterSpacing: "-0.4px" }}>
-            NotebookLM
+          <LogoMark size={28} />
+          <span style={{ fontSize: 15, fontWeight: 700, color: T.text1, letterSpacing: "-0.4px", fontFamily: T.fontSans }}>
+            Notebook<span style={{ color: "#8b80f8" }}>LM</span>
           </span>
         </Link>
       </header>
 
-      {/* ── Content ── */}
+      {/* Content */}
       <div style={{
         flex: 1,
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        padding: "40px 24px 80px",
+        padding: "48px 24px 80px",
         position: "relative", zIndex: 1,
       }}>
         <Outlet />

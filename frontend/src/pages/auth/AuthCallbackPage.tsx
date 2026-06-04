@@ -1,163 +1,155 @@
 import { getAuthUserData } from "@/api/auth"
 import { useEffect } from "react"
-import { Sparkles } from "lucide-react"
+
+const LogoMark = ({ size = 34 }: { size?: number }) => (
+  <div style={{
+    width: size, height: size, borderRadius: Math.round(size * 0.28),
+    background: "linear-gradient(135deg,#6d5ff6,#a78bfa)",
+    display: "flex", alignItems: "center", justifyContent: "center",
+    boxShadow: "0 0 24px rgba(109,95,246,0.48)", flexShrink: 0,
+  }}>
+    <svg width={size * 0.52} height={size * 0.52} viewBox="0 0 18 18" fill="none">
+      <path d="M9 2L11.5 7H16.5L12.5 10.5L14 16L9 12.5L4 16L5.5 10.5L1.5 7H6.5L9 2Z" fill="white" fillOpacity="0.9" />
+    </svg>
+  </div>
+);
 
 function AuthCallbackPage() {
-
-    const getUserData = async () => {
-        try {
-            const data = await getAuthUserData()
-            console.log("Auth data received:", data)
-            if (data) {
-                const { _id, name, email, image, googleAccessToken, ...resProps } = data
-                const user = { _id, name, email, image, googleAccessToken }
-                console.log("Saving user to localStorage:", user)
-                localStorage.setItem('userData', JSON.stringify(user))
-                window.location.href = '/notes'
-            }
-        } catch (error) {
-            console.error("Failed to get auth user data:", error)
-        }
+  const getUserData = async () => {
+    try {
+      const data = await getAuthUserData()
+      if (data) {
+        const { _id, name, email, image, googleAccessToken } = data
+        localStorage.setItem('userData', JSON.stringify({ _id, name, email, image, googleAccessToken }))
+        window.location.href = '/notes'
+      }
+    } catch (error) {
+      console.error("Failed to get auth user data:", error)
     }
+  }
 
-    useEffect(() => {
-        getUserData()
-    }, [])
+  useEffect(() => { getUserData() }, [])
 
-    return (
+  return (
+    <div style={{
+      minHeight: "100vh",
+      background: "#05060d",
+      fontFamily: "'DM Sans', system-ui, sans-serif",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      position: "relative",
+      overflow: "hidden",
+    }}>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Instrument+Serif:ital@0;1&display=swap');
+        *{box-sizing:border-box}
+        @keyframes orb1{0%,100%{transform:translate(0,0)}50%{transform:translate(50px,-70px)}}
+        @keyframes orb2{0%,100%{transform:translate(0,0)}50%{transform:translate(-60px,45px)}}
+        @keyframes spin{to{transform:rotate(360deg)}}
+        @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.35}}
+        @keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+        @keyframes dotBounce{0%,80%,100%{transform:translateY(0);opacity:0.4}40%{transform:translateY(-7px);opacity:1}}
+      `}</style>
+
+      {/* Orbs */}
+      <div style={{ position: "absolute", inset: 0, zIndex: 0, pointerEvents: "none", overflow: "hidden" }}>
         <div style={{
-            minHeight: "100vh",
-            background: "#080b14",
-            fontFamily: "'DM Sans', system-ui, sans-serif",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            position: "relative",
-            overflow: "hidden",
-        }}>
-            <style>{`
-                @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap');
-                * { box-sizing: border-box; }
-                @keyframes orbA { 0%,100%{transform:translate(0,0)} 50%{transform:translate(30px,-40px)} }
-                @keyframes orbB { 0%,100%{transform:translate(0,0)} 50%{transform:translate(-28px,32px)} }
-                @keyframes fadeUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
-                @keyframes spin { to { transform: rotate(360deg); } }
-                @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
-                @keyframes dotBounce {
-                    0%,80%,100% { transform: translateY(0); opacity: 0.4; }
-                    40%         { transform: translateY(-6px); opacity: 1; }
-                }
-            `}</style>
+          position: "absolute", top: "-15%", left: "-8%", width: 700, height: 700, borderRadius: "50%",
+          background: "radial-gradient(circle, rgba(109,95,246,0.13) 0%, transparent 65%)",
+          filter: "blur(40px)", animation: "orb1 14s ease-in-out infinite",
+        }} />
+        <div style={{
+          position: "absolute", bottom: "-5%", right: "-5%", width: 550, height: 550, borderRadius: "50%",
+          background: "radial-gradient(circle, rgba(139,112,246,0.09) 0%, transparent 65%)",
+          filter: "blur(40px)", animation: "orb2 17s ease-in-out infinite",
+        }} />
+      </div>
 
-            {/* Orbs */}
-            <div style={{
-                position: "absolute", top: "-15%", left: "-10%",
-                width: 500, height: 500, borderRadius: "50%", pointerEvents: "none",
-                background: "radial-gradient(circle, rgba(99,102,241,0.13) 0%, transparent 70%)",
-                animation: "orbA 14s ease-in-out infinite",
-            }} />
-            <div style={{
-                position: "absolute", bottom: "-10%", right: "-5%",
-                width: 400, height: 400, borderRadius: "50%", pointerEvents: "none",
-                background: "radial-gradient(circle, rgba(139,92,246,0.1) 0%, transparent 70%)",
-                animation: "orbB 18s ease-in-out infinite",
-            }} />
+      {/* Grid */}
+      <div style={{
+        position: "absolute", inset: 0, pointerEvents: "none", zIndex: 0,
+        backgroundImage: `linear-gradient(rgba(109,95,246,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(109,95,246,0.04) 1px, transparent 1px)`,
+        backgroundSize: "72px 72px",
+        maskImage: "radial-gradient(ellipse 70% 60% at 50% 50%, black 30%, transparent 100%)",
+      }} />
 
-            {/* Grid */}
-            <div style={{
-                position: "absolute", inset: 0, pointerEvents: "none",
-                backgroundImage: `linear-gradient(rgba(99,102,241,0.04) 1px, transparent 1px),
-                    linear-gradient(90deg, rgba(99,102,241,0.04) 1px, transparent 1px)`,
-                backgroundSize: "60px 60px",
-                maskImage: "radial-gradient(ellipse 70% 60% at 50% 50%, black 30%, transparent 100%)",
-            }} />
+      {/* Card */}
+      <div style={{
+        position: "relative", zIndex: 1,
+        display: "flex", flexDirection: "column", alignItems: "center", gap: 28,
+        background: "rgba(10,12,23,0.88)",
+        border: "1px solid rgba(109,95,246,0.4)",
+        borderRadius: 20, padding: "44px 52px",
+        backdropFilter: "blur(24px)",
+        boxShadow: "0 0 0 1px rgba(109,95,246,0.06), 0 32px 64px rgba(0,0,0,0.55), 0 0 64px rgba(109,95,246,0.09)",
+        animation: "fadeUp 0.5s ease both",
+        minWidth: 300, textAlign: "center",
+      }}>
+        {/* Top accent */}
+        <div style={{
+          position: "absolute", top: 0, left: 0, right: 0, height: 2,
+          background: "linear-gradient(90deg, transparent, #6d5ff6 40%, #a78bfa 60%, transparent)",
+          borderRadius: "20px 20px 0 0",
+        }} />
 
-            {/* Card */}
-            <div style={{
-                position: "relative", zIndex: 1,
-                display: "flex", flexDirection: "column", alignItems: "center", gap: 28,
-                background: "rgba(10,13,26,0.85)",
-                border: "1px solid rgba(99,102,241,0.2)",
-                borderRadius: 24, padding: "44px 52px",
-                backdropFilter: "blur(24px)",
-                boxShadow: "0 0 0 1px rgba(99,102,241,0.08), 0 24px 60px rgba(0,0,0,0.55), 0 0 60px rgba(99,102,241,0.08)",
-                animation: "fadeUp 0.5s ease both",
-                minWidth: 300, textAlign: "center",
-            }}>
-                {/* Top accent */}
-                <div style={{
-                    position: "absolute", top: 0, left: 0, right: 0, height: 2,
-                    background: "linear-gradient(90deg, transparent, #6366f1 40%, #8b5cf6 60%, transparent)",
-                    borderRadius: "24px 24px 0 0",
-                }} />
-
-                {/* Logo */}
-                <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
-                    <div style={{
-                        width: 34, height: 34, borderRadius: 10,
-                        background: "linear-gradient(135deg,#6366f1,#8b5cf6)",
-                        display: "flex", alignItems: "center", justifyContent: "center",
-                        boxShadow: "0 0 18px rgba(99,102,241,0.5)",
-                    }}>
-                        <Sparkles size={16} color="#fff" />
-                    </div>
-                    <span style={{ fontSize: 17, fontWeight: 800, color: "#f1f5f9", letterSpacing: "-0.4px" }}>
-                        NotebookLM
-                    </span>
-                </div>
-
-                {/* Spinner ring */}
-                <div style={{ position: "relative", width: 56, height: 56 }}>
-                    {/* Outer ring */}
-                    <div style={{
-                        position: "absolute", inset: 0, borderRadius: "50%",
-                        border: "2px solid rgba(99,102,241,0.15)",
-                    }} />
-                    {/* Spinning arc */}
-                    <div style={{
-                        position: "absolute", inset: 0, borderRadius: "50%",
-                        border: "2px solid transparent",
-                        borderTopColor: "#6366f1",
-                        borderRightColor: "#8b5cf6",
-                        animation: "spin 0.9s linear infinite",
-                    }} />
-                    {/* Center dot */}
-                    <div style={{
-                        position: "absolute", inset: 0,
-                        display: "flex", alignItems: "center", justifyContent: "center",
-                    }}>
-                        <div style={{
-                            width: 8, height: 8, borderRadius: "50%",
-                            background: "linear-gradient(135deg,#6366f1,#8b5cf6)",
-                            boxShadow: "0 0 8px rgba(99,102,241,0.6)",
-                            animation: "pulse 1.5s ease-in-out infinite",
-                        }} />
-                    </div>
-                </div>
-
-                {/* Text */}
-                <div>
-                    <p style={{ fontSize: 16, fontWeight: 700, color: "#f1f5f9", letterSpacing: "-0.3px", marginBottom: 6 }}>
-                        Authenticating
-                    </p>
-                    <p style={{ fontSize: 13, color: "#475569", lineHeight: 1.6 }}>
-                        Verifying your credentials,<br />please wait…
-                    </p>
-                </div>
-
-                {/* Bouncing dots */}
-                <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-                    {[0, 1, 2].map(i => (
-                        <div key={i} style={{
-                            width: 6, height: 6, borderRadius: "50%",
-                            background: "#6366f1",
-                            animation: `dotBounce 1.2s ease-in-out ${i * 0.2}s infinite`,
-                        }} />
-                    ))}
-                </div>
-            </div>
+        {/* Logo */}
+        <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
+          <LogoMark size={32} />
+          <span style={{ fontSize: 16, fontWeight: 700, color: "#f0eeff", letterSpacing: "-0.4px" }}>
+            Notebook<span style={{ color: "#8b80f8" }}>LM</span>
+          </span>
         </div>
-    )
+
+        {/* Spinner */}
+        <div style={{ position: "relative", width: 52, height: 52 }}>
+          <div style={{
+            position: "absolute", inset: 0, borderRadius: "50%",
+            border: "2px solid rgba(109,95,246,0.12)",
+          }} />
+          <div style={{
+            position: "absolute", inset: 0, borderRadius: "50%",
+            border: "2px solid transparent",
+            borderTopColor: "#6d5ff6",
+            borderRightColor: "#a78bfa",
+            animation: "spin 0.8s linear infinite",
+          }} />
+          <div style={{
+            position: "absolute", inset: 0,
+            display: "flex", alignItems: "center", justifyContent: "center",
+          }}>
+            <div style={{
+              width: 7, height: 7, borderRadius: "50%",
+              background: "linear-gradient(135deg,#6d5ff6,#a78bfa)",
+              boxShadow: "0 0 8px rgba(109,95,246,0.7)",
+              animation: "pulse 1.5s ease-in-out infinite",
+            }} />
+          </div>
+        </div>
+
+        {/* Text */}
+        <div>
+          <p style={{ fontSize: 16, fontWeight: 600, color: "#f0eeff", letterSpacing: "-0.3px", marginBottom: 6 }}>
+            Authenticating
+          </p>
+          <p style={{ fontSize: 13, color: "#4e4872", lineHeight: 1.65 }}>
+            Verifying your credentials,<br />please wait…
+          </p>
+        </div>
+
+        {/* Bouncing dots */}
+        <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+          {[0, 1, 2].map(i => (
+            <div key={i} style={{
+              width: 6, height: 6, borderRadius: "50%",
+              background: "#6d5ff6",
+              animation: `dotBounce 1.2s ease-in-out ${i * 0.2}s infinite`,
+            }} />
+          ))}
+        </div>
+      </div>
+    </div>
+  )
 }
 
 export default AuthCallbackPage

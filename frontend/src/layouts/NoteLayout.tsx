@@ -1,14 +1,27 @@
-import { logoutUser } from "@/api/auth";
 import UserAvatar from "@/components/base/UserAvatar";
 import { getUserData } from "@/helper/getUserData";
-import React, { useState, useRef, useEffect } from "react";
 import { Link, Outlet } from "react-router";
-import { Sparkles } from "lucide-react";
 import { useDispatch, useSelector } from 'react-redux';
 import type { AppDispatch, RootState } from '@/store';
 import { fetchUserCreditAndPayment } from '@/store/creditMenuSlice';
 import { CreditMenu } from '@/components/base/CreditMenu';
 import BuyCreditModal from '@/components/payment/BuyCreditModal';
+import { useEffect } from "react";
+
+import { T } from "@/components/ThemeTokens";
+
+const LogoMark = ({ size = 30 }: { size?: number }) => (
+  <div style={{
+    width: size, height: size, borderRadius: Math.round(size * 0.28),
+    background: "linear-gradient(135deg,#6d5ff6,#a78bfa)",
+    display: "flex", alignItems: "center", justifyContent: "center",
+    boxShadow: "0 0 18px rgba(109,95,246,0.4)", flexShrink: 0,
+  }}>
+    <svg width={size * 0.52} height={size * 0.52} viewBox="0 0 18 18" fill="none">
+      <path d="M9 2L11.5 7H16.5L12.5 10.5L14 16L9 12.5L4 16L5.5 10.5L1.5 7H6.5L9 2Z" fill="white" fillOpacity="0.9" />
+    </svg>
+  </div>
+);
 
 export default function NoteLayout() {
   const dispatch = useDispatch<AppDispatch>();
@@ -16,79 +29,60 @@ export default function NoteLayout() {
   const userData = getUserData();
 
   useEffect(() => {
-    if (userData?._id) {
-      dispatch(fetchUserCreditAndPayment(userData._id));
-    }
+    if (userData?._id) dispatch(fetchUserCreditAndPayment(userData._id));
   }, [dispatch, userData?._id]);
+
   return (
     <div style={{
       minHeight: '100vh',
       display: 'flex',
       flexDirection: 'column',
-      background: '#080b14',
-      color: '#e2e8f0',
-      fontFamily: "'DM Sans', 'Outfit', system-ui, sans-serif",
+      background: T.bg,
+      color: T.text1,
+      fontFamily: T.fontSans,
     }}>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap');
-        * { box-sizing: border-box; }
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: #0f1120; }
-        ::-webkit-scrollbar-thumb { background: #312e81; border-radius: 3px; }
+        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;0,9..40,800;1,9..40,400&family=Instrument+Serif:ital@0;1&family=DM+Mono&display=swap');
+        *{box-sizing:border-box}
+        ::-webkit-scrollbar{width:5px}
+        ::-webkit-scrollbar-track{background:#080a12}
+        ::-webkit-scrollbar-thumb{background:#2d2760;border-radius:3px}
       `}</style>
 
-      {/* ── TOP NAVBAR ── */}
+      {/* Navbar */}
       <header style={{
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        padding: '0 28px',
+        padding: '0 32px',
         height: 60,
-        background: 'rgba(8,11,20,0.85)',
-        backdropFilter: 'blur(20px)',
-        borderBottom: '1px solid rgba(255,255,255,0.06)',
+        background: 'rgba(5,6,13,0.82)',
+        backdropFilter: 'blur(24px)',
+        borderBottom: `1px solid ${T.border}`,
         position: 'sticky',
         top: 0,
         zIndex: 100,
         flexShrink: 0,
       }}>
         {/* Logo */}
-        <Link to="/" style={{
-          display: 'flex', alignItems: 'center', gap: 10,
-          textDecoration: 'none',
-        }}>
-          <div style={{
-            width: 32, height: 32, borderRadius: 9,
-            background: 'linear-gradient(135deg,#6366f1,#8b5cf6)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            boxShadow: '0 0 16px rgba(99,102,241,0.45)',
-            flexShrink: 0,
-          }}>
-            <Sparkles size={15} color="#fff" />
-          </div>
-          <span style={{
-            fontSize: 16, fontWeight: 800,
-            color: '#f1f5f9', letterSpacing: '-0.4px',
-          }}>
-            NotebookLM
+        <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: 9, textDecoration: 'none' }}>
+          <LogoMark size={28} />
+          <span style={{ fontSize: 15, fontWeight: 700, color: T.text1, letterSpacing: '-0.4px', fontFamily: T.fontSans }}>
+            Notebook<span style={{ color: "#8b80f8" }}>LM</span>
           </span>
         </Link>
 
-        {/* Right side: Credit Menu & Avatar */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+        {/* Right */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
           <CreditMenu result={result} />
+          <div style={{ width: 1, height: 20, background: T.border }} />
           <UserAvatar />
           <BuyCreditModal />
         </div>
       </header>
 
-      {/* ── PAGE CONTENT ── */}
-      <main style={{
-        flex: 1,
-        padding: '28px 28px',
-        maxWidth: '100%',
-        overflowY: 'auto',
-      }}>
+      {/* Content */}
+      <main style={{ flex: 1, overflowY: 'auto' }}>
         <Outlet />
       </main>
     </div>

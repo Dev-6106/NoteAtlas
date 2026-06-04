@@ -1,497 +1,621 @@
-// MiddlePannel.jsx
+// MiddlePanel.tsx — Premium chat experience
 import { useDispatch, useSelector } from "react-redux";
-import type { AppDispatch, RootState } from "@/stores";
-import { Copy, GitBranch, Loader2, NotebookTabs, SendHorizonal, ArrowDown } from "lucide-react";
+import type { AppDispatch, RootState } from "@/store";
+import {
+  Copy,
+  Loader2,
+  SendHorizonal,
+  ArrowDown,
+  Sparkles,
+} from "lucide-react";
 import { memo, useEffect, useRef, useState } from "react";
-import { createBriefingDoc, createMindMap, createSummary, sendChatMessage, type chatHistoryType, type messageType, type questionAndDocOverviewType } from "@/api/notes";
+import {
+  sendChatMessage,
+  type chatHistoryType,
+  type messageType,
+  type questionAndDocOverviewType,
+} from "@/api/notes";
 import { addMessageInChatHistory } from "@/store/chatHistorySlice";
 import type { NoteType } from "@/types/note-types";
 import { showError } from "@/util/toast-notification";
-import { fetchNoteSourceResult } from "@/store/rightPanelSlice";
-
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { SuggestedInput } from "./SuggestedInput";
 import { ChatInput } from "./ChatInput";
 
+const MiddlePannel = ({
+  chatHistory,
+  userId,
+  note,
+  aiResult,
+}: {
+  chatHistory: chatHistoryType;
+  userId: string;
+  note: NoteType;
+  aiResult: questionAndDocOverviewType;
+}) => {
+  const { _id: noteId } = note;
+  const dispatch = useDispatch<AppDispatch>();
+  const { middlePanelDefaultWidth } = useSelector(
+    (state: RootState) => state.chat
+  );
+  const { docIds } = useSelector((state: RootState) => state.rightPanel);
+  const [inputValue, setInputValue] = useState("");
+  const [loading, setLoading] = useState(false);
+  const chatContainerRef = useRef<HTMLElement>(null);
+  const [showScrollButton, setShowScrollButton] = useState(false);
 
-const MiddlePannel = ({ chatHistory, userId, note, aiResult }: { chatHistory: chatHistoryType, userId: string, note: NoteType, aiResult: questionAndDocOverviewType }) => {
-    const { _id: noteId } = note;
-    const dispatch = useDispatch<AppDispatch>();
-    const { middlePanelDefaultWidth } = useSelector((state: RootState) => state.chat);
-
-    const { docIds } = useSelector((state: RootState) => state.rightPanel);
-
-    const [inputValue, setInputValue] = useState("");
-    const [loading, setLoading] = useState(false);
-
-    const chatContainerRef = useRef<HTMLElement>(null);
-    const [showScrollButton, setShowScrollButton] = useState(false);
-
-
-
-    async function sendUserMessage({ newMessage }: { newMessage: messageType }) {
-        setLoading(true);
-        dispatch(addMessageInChatHistory(newMessage));
-
-
-        const data = await sendChatMessage({ userId, noteId, query: inputValue || newMessage?.content });
-        setLoading(false);
-        setTimeout(scrollToBottom, 100);
-        dispatch(addMessageInChatHistory(data?.message));
-        
+  async function sendUserMessage({
+    newMessage,
+  }: {
+    newMessage: messageType;
+  }) {
+    setLoading(true);
+    dispatch(addMessageInChatHistory(newMessage));
+    const data = await sendChatMessage({
+      userId,
+      noteId,
+      query: inputValue || newMessage?.content,
+    });
+    setLoading(false);
+    setTimeout(scrollToBottom, 100);
+    if (data?.message) {
+      dispatch(addMessageInChatHistory(data.message));
     }
+  }
 
-    const sendMessage = async () => {
-        if (!inputValue.trim()) return;
-
-        const newMessage: messageType = {
-            role: "user",
-            content: inputValue,
-            userId, noteId
-        };
-
-        await sendUserMessage({ newMessage });
-       
+  const sendMessage = async () => {
+    if (!inputValue.trim()) return;
+    const newMessage: messageType = {
+      role: "user",
+      content: inputValue,
+      userId,
+      noteId,
     };
+    await sendUserMessage({ newMessage });
+  };
 
+  async function selectQuestion(question: string) {
+    const newMessage: messageType = {
+      role: "user",
+      content: question,
+      userId,
+      noteId,
+    };
+    await sendUserMessage({ newMessage });
+  }
 
-    async function selectQuestion(question: string) {
-        const newMessage: messageType = {
-            role: "user",
-            content: question,
-            userId, noteId
-        };
-
-
-        await sendUserMessage({ newMessage });
-
+  const onKeyDownMessage = async (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      const newMessage: messageType = {
+        role: "user",
+        content: inputValue,
+        userId,
+        noteId,
+      };
+      setInputValue("");
+      await sendUserMessage({ newMessage });
     }
+  };
 
+  const scrollToBottom = () => {
+    const container = chatContainerRef.current;
+    if (container) {
+      container.scrollTo({
+        top: container.scrollHeight,
+        behavior: "smooth",
+      });
+    }
+  };
 
-    const onKeyDownMessage = async (e) => {
-        if (e.key === "Enter" && !e.shiftKey) {
-            e.preventDefault();
-
-            const newMessage: messageType = {
-                role: "user",
-                content: inputValue,
-                userId, noteId
-            };
-            setInputValue("");
-            await sendUserMessage({ newMessage });
-            
-
-        }
+  useEffect(() => {
+    const container = chatContainerRef.current;
+    if (!container) return;
+    const handleScroll = () => {
+      const isAtBottom =
+        container.scrollHeight - container.scrollTop <=
+        container.clientHeight + 50;
+      setShowScrollButton(!isAtBottom);
     };
+    container.addEventListener("scroll", handleScroll);
+    return () => container.removeEventListener("scroll", handleScroll);
+  }, []);
 
-
-    const scrollToBottom = () => {
-        const container = chatContainerRef.current;
-        if (container) {
-            container.scrollTo({
-                top: container.scrollHeight,
-                behavior: "smooth",
-            });
-        }
-    };
-
-
-    useEffect(() => {
-        const container = chatContainerRef.current;
-        if (!container) return;
-
-        const handleScroll = () => {
-            const isAtBottom = container.scrollHeight - container.scrollTop <= container.clientHeight + 50;
-            setShowScrollButton(!isAtBottom);
-        };
-
-        container.addEventListener("scroll", handleScroll);
-        return () => container.removeEventListener("scroll", handleScroll);
-    }, []);
-
-
-
-    return (
-        <div
-            style={{
-                width: `${middlePanelDefaultWidth}%`,
-                transition: "all 0.3s ease",
-                height: "100%",
-                padding: 16,
-                display: "flex",
-                flexDirection: "column",
-                fontFamily: "'DM Sans', system-ui, sans-serif",
-            }}
+  return (
+    <div
+      style={{
+        width: "100%",
+        height: "100%",
+        display: "flex",
+        flexDirection: "column",
+        overflow: "hidden",
+      }}
+    >
+      {/* ── Chat header ── */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          padding: "14px 20px 10px",
+          flexShrink: 0,
+        }}
+      >
+        <span
+          style={{
+            fontSize: 14,
+            fontWeight: 600,
+            letterSpacing: "0.04em",
+            textTransform: "uppercase",
+            color: "var(--text-2)",
+          }}
         >
-            <style>{`
-                .mid-scroll::-webkit-scrollbar { width: 5px; }
-                .mid-scroll::-webkit-scrollbar-track { background: transparent; }
-                .mid-scroll::-webkit-scrollbar-thumb { background: #312e81; border-radius: 4px; }
-            `}</style>
+          Chat
+        </span>
+      </div>
+      <div
+        style={{
+          height: 1,
+          background: "var(--border-default)",
+          margin: "0 20px",
+          flexShrink: 0,
+        }}
+      />
 
-            {/* chat section */}
+      {/* ── Messages area ── */}
+      <div
+        ref={chatContainerRef as any}
+        className="studio-scroll"
+        style={{
+          flex: 1,
+          overflowY: "auto",
+          padding: "16px 20px",
+          display: "flex",
+          flexDirection: "column",
+          gap: 6,
+        }}
+      >
+        {/* Note header / overview */}
+        <NoteHeader
+          note={note}
+          docIds={docIds}
+          aiResult={aiResult}
+        />
+
+        {/* Messages */}
+        {chatHistory?.chatHistory?.filter(Boolean).map((msg, index) => (
+          <ChatMessage key={index} msg={msg} />
+        ))}
+
+        {/* Loading indicator */}
+        {loading && (
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              padding: "12px 0",
+            }}
+          >
             <div
-                ref={chatContainerRef}
-                className="mid-scroll"
-                style={{
-                    position: "relative",
-                    flex: 1,
-                    overflowY: "auto",
-                    marginBottom: 16,
-                    paddingRight: 8,
-                }}
+              style={{
+                width: 28,
+                height: 28,
+                borderRadius: "50%",
+                background:
+                  "linear-gradient(135deg, var(--primary-brand) 0%, var(--primary-light) 100%)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
             >
-                {/* Header */}
-                <div style={{
-                    display: "flex", justifyContent: "space-between",
-                    alignItems: "center", marginBottom: 12, flexShrink: 0,
-                }}>
-                    <p style={{ fontSize: 14, fontWeight: 600, color: "#f1f5f9", letterSpacing: "-0.2px" }}>
-                        Chat
-                    </p>
-                </div>
-
-                <div style={{ height: 1, background: "rgba(255,255,255,0.06)", marginBottom: 12 }} />
-
-                <MiddlePanelHeader aiResult={aiResult} note={note} docIds={docIds} />
-
-                {/* messages */}
-                {chatHistory?.chatHistory?.map((msg, index) => (
-                    <ChatMessage key={index} msg={msg} />
-                ))}
-
+              <Sparkles size={14} style={{ color: "#fff" }} />
             </div>
+            <div
+              style={{
+                display: "flex",
+                gap: 4,
+                alignItems: "center",
+              }}
+            >
+              {[0, 1, 2].map((i) => (
+                <span
+                  key={i}
+                  style={{
+                    width: 6,
+                    height: 6,
+                    borderRadius: "50%",
+                    background: "var(--primary-brand)",
+                    opacity: 0.5,
+                    animation: `pulse 1.2s ease-in-out ${i * 0.2}s infinite`,
+                  }}
+                />
+              ))}
+            </div>
+            <style>{`@keyframes pulse{0%,100%{opacity:.3;transform:scale(.85)}50%{opacity:1;transform:scale(1.1)}}`}</style>
+          </div>
+        )}
+      </div>
 
-            {/* jump-to-bottom button */}
-            {showScrollButton && (
-                <div style={{ display: "flex", justifyContent: "center", marginBottom: 12 }}>
-                    <button
-                        onClick={scrollToBottom}
-                        style={{
-                            display: "flex", alignItems: "center", gap: 8,
-                            padding: "7px 18px", borderRadius: 999,
-                            background: "linear-gradient(135deg,#6366f1,#8b5cf6)",
-                            color: "#fff", fontSize: 13, fontWeight: 600,
-                            border: "none", cursor: "pointer",
-                            boxShadow: "0 4px 16px rgba(99,102,241,0.35)",
-                            transition: "all 0.2s",
-                        }}
-                        onMouseEnter={e => {
-                            (e.currentTarget as HTMLButtonElement).style.transform = "translateY(-1px)";
-                            (e.currentTarget as HTMLButtonElement).style.boxShadow = "0 8px 24px rgba(99,102,241,0.5)";
-                        }}
-                        onMouseLeave={e => {
-                            (e.currentTarget as HTMLButtonElement).style.transform = "translateY(0)";
-                            (e.currentTarget as HTMLButtonElement).style.boxShadow = "0 4px 16px rgba(99,102,241,0.35)";
-                        }}
-                    >
-                        <ArrowDown size={15} />
-                        <span>Jump to bottom</span>
-                    </button>
-                </div>
+      {/* ── Jump to bottom ── */}
+      {showScrollButton && (
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            padding: "0 0 8px",
+          }}
+        >
+          <button
+            onClick={scrollToBottom}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+              padding: "6px 16px",
+              borderRadius: 20,
+              border: "1px solid var(--border-accent)",
+              background: "var(--primary-glow)",
+              color: "var(--primary-brand)",
+              fontSize: 12,
+              fontWeight: 600,
+              cursor: "pointer",
+              transition: "all 0.2s",
+              backdropFilter: "blur(12px)",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = "var(--primary-brand)";
+              e.currentTarget.style.color = "#fff";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = "var(--primary-glow)";
+              e.currentTarget.style.color = "var(--primary-brand)";
+            }}
+          >
+            <ArrowDown size={14} />
+            <span>Jump to bottom</span>
+          </button>
+        </div>
+      )}
+
+      {/* ── Chat input area ── */}
+      <div style={{ padding: "8px 16px 6px", flexShrink: 0 }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 10,
+            padding: "8px 14px",
+            borderRadius: 16,
+            border: "1px solid var(--border-default)",
+            background: "var(--bg-card)",
+            transition: "border-color 0.2s, box-shadow 0.2s",
+          }}
+          onFocus={(e) => {
+            e.currentTarget.style.borderColor = "var(--border-accent)";
+            e.currentTarget.style.boxShadow =
+              "0 0 0 3px var(--primary-glow)";
+          }}
+          onBlur={(e) => {
+            e.currentTarget.style.borderColor = "var(--border-default)";
+            e.currentTarget.style.boxShadow = "none";
+          }}
+        >
+          <ChatInput
+            inputValue={inputValue}
+            setInputValue={setInputValue}
+            onKeyDownMessage={onKeyDownMessage}
+          />
+
+          <span
+            style={{
+              fontSize: 11,
+              color: "var(--text-3)",
+              whiteSpace: "nowrap",
+              fontWeight: 500,
+            }}
+          >
+            {docIds?.length || 0} sources
+          </span>
+
+          <button
+            onClick={sendMessage}
+            disabled={loading}
+            aria-label="Send"
+            style={{
+              width: 36,
+              height: 36,
+              borderRadius: "50%",
+              border: "none",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              cursor: loading ? "not-allowed" : "pointer",
+              flexShrink: 0,
+              background: loading
+                ? "var(--text-3)"
+                : "linear-gradient(135deg, var(--primary-brand) 0%, var(--primary-light) 100%)",
+              transition: "all 0.25s",
+              transform: "scale(1)",
+              boxShadow: loading
+                ? "none"
+                : "0 2px 8px rgba(109, 95, 246, 0.3)",
+            }}
+            onMouseEnter={(e) => {
+              if (!loading)
+                e.currentTarget.style.transform = "scale(1.08)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = "scale(1)";
+            }}
+          >
+            {loading ? (
+              <Loader2
+                className="spin"
+                size={16}
+                style={{ color: "#fff" }}
+              />
+            ) : (
+              <SendHorizonal size={15} style={{ color: "#fff" }} />
             )}
-
-            {/* bordered chat-input card */}
-            <div style={{
-                position: "relative",
-                border: "1px solid rgba(255,255,255,0.08)",
-                borderRadius: 16,
-                padding: 12,
-                background: "rgba(255,255,255,0.03)",
-                backdropFilter: "blur(8px)",
-            }}>
-                {/* main input row */}
-                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                   
-                    <ChatInput
-                        inputValue={inputValue}
-                        setInputValue={setInputValue}
-                        onKeyDownMessage={onKeyDownMessage}
-                    />
-
-
-                    <div style={{
-                        fontSize: 12, color: "#475569",
-                        whiteSpace: "nowrap", fontWeight: 500,
-                    }}>
-                        {docIds?.length} sources
-                    </div>
-
-                    <button
-                        onClick={sendMessage}
-                        disabled={loading}
-                        aria-label="Send"
-                        style={{
-                            width: 38, height: 38, borderRadius: "50%",
-                            display: "flex", alignItems: "center", justifyContent: "center",
-                            background: loading
-                                ? "rgba(99,102,241,0.3)"
-                                : "linear-gradient(135deg,#6366f1,#8b5cf6)",
-                            border: "none",
-                            cursor: loading ? "not-allowed" : "pointer",
-                            boxShadow: loading ? "none" : "0 4px 14px rgba(99,102,241,0.35)",
-                            transition: "all 0.2s",
-                            flexShrink: 0,
-                        }}
-                        onMouseEnter={e => {
-                            if (!loading) {
-                                (e.currentTarget as HTMLButtonElement).style.transform = "translateY(-1px)";
-                                (e.currentTarget as HTMLButtonElement).style.boxShadow = "0 8px 20px rgba(99,102,241,0.5)";
-                            }
-                        }}
-                        onMouseLeave={e => {
-                            if (!loading) {
-                                (e.currentTarget as HTMLButtonElement).style.transform = "translateY(0)";
-                                (e.currentTarget as HTMLButtonElement).style.boxShadow = "0 4px 14px rgba(99,102,241,0.35)";
-                            }
-                        }}
-                    >
-                        {loading ? (
-                            <Loader2 size={16} style={{ color: "#a5b4fc", animation: "spin 1s linear infinite" }} />
-                        ) : (
-                            <SendHorizonal size={15} style={{ color: "#fff" }} />
-                        )}
-                    </button>
-                </div>
-            </div>
-
-            <SuggestedInput selectQuestion={selectQuestion} questions={aiResult?.aiResult?.questions} />
-
-            <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
+          </button>
         </div>
-    );
 
+        {/* Suggested questions */}
+        <SuggestedInput
+          selectQuestion={selectQuestion}
+          questions={aiResult?.aiResult?.questions}
+        />
+      </div>
+    </div>
+  );
 };
 
+/* ═══════════════════════════════════════
+   Note Header
+   ═══════════════════════════════════════ */
+const NoteHeader = ({
+  note,
+  docIds,
+  aiResult,
+}: {
+  note: NoteType;
+  docIds: string[];
+  aiResult: questionAndDocOverviewType;
+}) => {
+  const [copied, setCopied] = useState(false);
 
-const MiddlePanelHeader = ({ note, docIds, aiResult }: { note: NoteType, docIds: string[], aiResult: questionAndDocOverviewType }) => {
+  const handleCopy = () => {
+    const text = aiResult?.aiResult?.doc_overview || "";
+    navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
-    const [summaryLoading, setSummaryLoading] = useState(false);
-    const [mindMapLoading, setMindMapLoading] = useState(false);
+  return (
+    <div style={{ marginBottom: 16 }} className="fade-in-up">
+      {note?.image && (
+        <span style={{ fontSize: "3rem", lineHeight: 1.2 }}>
+          {note.image}
+        </span>
+      )}
 
-    const dispatch = useDispatch<AppDispatch>();
+      <h1
+        style={{
+          fontSize: "clamp(1.5rem, 3vw, 1.875rem)",
+          fontWeight: 700,
+          color: "var(--text-1)",
+          margin: "8px 0 6px",
+          lineHeight: 1.25,
+        }}
+      >
+        {note?.title}
+      </h1>
 
-    async function generateSummary() {
-        if (docIds.length > 0) {
-            setSummaryLoading(true);
-            await createSummary(note?._id, docIds);
-            setSummaryLoading(false);
-        } else {
-            showError("Please select a source");
-        }
-    }
+      <span
+        style={{
+          fontSize: 12,
+          color: "var(--text-3)",
+          fontWeight: 500,
+        }}
+      >
+        {docIds?.length || 0} sources
+      </span>
 
-    async function generateMindMap() {
-        if (docIds.length > 0) {
-            setMindMapLoading(true);
-            await createMindMap(note?._id, docIds);
-            setMindMapLoading(false);
-            dispatch(fetchNoteSourceResult(note?._id));
-        } else {
-            showError("Please select a source");
-        }
-    }
+      {aiResult?.aiResult?.doc_overview && (
+        <p
+          style={{
+            fontSize: 14,
+            color: "var(--text-2)",
+            lineHeight: 1.6,
+            margin: "10px 0 12px",
+          }}
+        >
+          {aiResult.aiResult.doc_overview}
+        </p>
+      )}
 
-    return (
-        <div style={{ marginBottom: 12 }}>
-            <div>
-                <span style={{ fontSize: "4rem" }}>
-                    {note?.image}
-                </span>
-            </div>
-            <div style={{ marginBottom: 16 }}>
-                <p style={{
-                    fontSize: 24, fontWeight: 800, color: "#f1f5f9",
-                    letterSpacing: "-0.5px", marginBottom: 6,
-                }}>
-                    {note?.title}
-                </p>
-                <p style={{ fontSize: 13, color: "#475569", fontWeight: 500, marginBottom: 4 }}>
-                    {docIds?.length} sources
-                </p>
-                <p style={{
-                    padding: "8px 0", fontSize: 14, color: "#94a3b8",
-                    lineHeight: 1.7, marginBottom: 16,
-                }}>
-                    {aiResult?.aiResult?.doc_overview}
-                </p>
-                <button
-                    style={{
-                        width: 34, height: 34, borderRadius: 9,
-                        display: "flex", alignItems: "center", justifyContent: "center",
-                        background: "rgba(255,255,255,0.05)",
-                        border: "1px solid rgba(255,255,255,0.08)",
-                        color: "#64748b", cursor: "pointer", transition: "all 0.2s",
-                    }}
-                    onMouseEnter={e => {
-                        (e.currentTarget as HTMLButtonElement).style.background = "rgba(99,102,241,0.12)";
-                        (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(99,102,241,0.35)";
-                        (e.currentTarget as HTMLButtonElement).style.color = "#a5b4fc";
-                    }}
-                    onMouseLeave={e => {
-                        (e.currentTarget as HTMLButtonElement).style.background = "rgba(255,255,255,0.05)";
-                        (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(255,255,255,0.08)";
-                        (e.currentTarget as HTMLButtonElement).style.color = "#64748b";
-                    }}
-                >
-                    <Copy size={15} />
-                </button>
-            </div>
+      <button
+        onClick={handleCopy}
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 6,
+          padding: "6px 12px",
+          borderRadius: 8,
+          border: "1px solid var(--border-default)",
+          background: "transparent",
+          color: "var(--text-3)",
+          fontSize: 12,
+          fontWeight: 500,
+          cursor: "pointer",
+          transition: "all 0.2s",
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.borderColor = "var(--border-accent)";
+          e.currentTarget.style.color = "var(--primary-brand)";
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.borderColor = "var(--border-default)";
+          e.currentTarget.style.color = "var(--text-3)";
+        }}
+      >
+        <Copy size={13} />
+        {copied ? "Copied!" : "Copy"}
+      </button>
 
-            <div style={{
-                display: "flex", gap: 10, marginBottom: 24,
-            }}>
-                <button
-                    disabled={summaryLoading}
-                    onClick={generateSummary}
-                    style={{
-                        display: "flex", alignItems: "center", gap: 8,
-                        padding: "10px 20px", borderRadius: 999,
-                        background: "rgba(255,255,255,0.05)",
-                        border: "1px solid rgba(255,255,255,0.1)",
-                        color: "#94a3b8", fontSize: 13, fontWeight: 600,
-                        cursor: summaryLoading ? "not-allowed" : "pointer",
-                        opacity: summaryLoading ? 0.6 : 1,
-                        transition: "all 0.2s",
-                    }}
-                    onMouseEnter={e => {
-                        if (!summaryLoading) {
-                            (e.currentTarget as HTMLButtonElement).style.background = "rgba(99,102,241,0.12)";
-                            (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(99,102,241,0.35)";
-                            (e.currentTarget as HTMLButtonElement).style.color = "#c7d2fe";
-                        }
-                    }}
-                    onMouseLeave={e => {
-                        (e.currentTarget as HTMLButtonElement).style.background = "rgba(255,255,255,0.05)";
-                        (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(255,255,255,0.1)";
-                        (e.currentTarget as HTMLButtonElement).style.color = "#94a3b8";
-                    }}
-                >
-                    {summaryLoading ? (
-                        <Loader2 size={15} style={{ animation: "spin 1s linear infinite", color: "#818cf8" }} />
-                    ) : (
-                        <NotebookTabs size={15} style={{ color: "#eab308" }} />
-                    )}
-                    <span>Summary</span>
-                </button>
-
-                <button
-                    disabled={mindMapLoading}
-                    onClick={generateMindMap}
-                    style={{
-                        display: "flex", alignItems: "center", gap: 8,
-                        padding: "10px 20px", borderRadius: 999,
-                        background: "rgba(255,255,255,0.05)",
-                        border: "1px solid rgba(255,255,255,0.1)",
-                        color: "#94a3b8", fontSize: 13, fontWeight: 600,
-                        cursor: mindMapLoading ? "not-allowed" : "pointer",
-                        opacity: mindMapLoading ? 0.6 : 1,
-                        transition: "all 0.2s",
-                    }}
-                    onMouseEnter={e => {
-                        if (!mindMapLoading) {
-                            (e.currentTarget as HTMLButtonElement).style.background = "rgba(99,102,241,0.12)";
-                            (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(99,102,241,0.35)";
-                            (e.currentTarget as HTMLButtonElement).style.color = "#c7d2fe";
-                        }
-                    }}
-                    onMouseLeave={e => {
-                        (e.currentTarget as HTMLButtonElement).style.background = "rgba(255,255,255,0.05)";
-                        (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(255,255,255,0.1)";
-                        (e.currentTarget as HTMLButtonElement).style.color = "#94a3b8";
-                    }}
-                >
-                    {mindMapLoading ? (
-                        <Loader2 size={15} style={{ animation: "spin 1s linear infinite", color: "#818cf8" }} />
-                    ) : (
-                        <GitBranch size={15} style={{ color: "#818cf8" }} />
-                    )}
-                    <span>MindMap</span>
-                </button>
-            </div>
-        </div>
-    );
+      <div
+        style={{
+          height: 1,
+          background: "var(--border-default)",
+          margin: "16px 0 8px",
+        }}
+      />
+    </div>
+  );
 };
 
-
+/* ═══════════════════════════════════════
+   Chat Message
+   ═══════════════════════════════════════ */
 type Msg = { role: "ai" | "user"; content: string };
 
 const ChatMessage = memo(({ msg }: { msg: Msg }) => {
-    const isUser = msg?.role === "user";
-    return (
-        <div style={{
-            display: "flex",
-            justifyContent: isUser ? "flex-end" : "flex-start",
-            marginBottom: 8,
-        }}>
-            <div
-                style={{
-                    maxWidth: "90%",
-                    padding: isUser ? "12px 16px" : "8px 4px",
-                    fontSize: 14,
-                    borderRadius: isUser ? "16px 16px 4px 16px" : undefined,
-                    background: isUser ? "rgba(99,102,241,0.15)" : "transparent",
-                    border: isUser ? "1px solid rgba(99,102,241,0.2)" : "none",
-                    color: isUser ? "#e0e7ff" : "#cbd5e1",
-                    lineHeight: 1.7,
-                }}
-            >
-                <div style={{
-                    overflowWrap: "break-word",
-                    whiteSpace: "pre-wrap",
-                    overflowX: "hidden",
-                }}>
-                    <ReactMarkdown
-                        remarkPlugins={[remarkGfm]}
-                        components={{
-                            a: ({ node, ...props }) => (
-                                <a style={{ color: "#818cf8", textDecoration: "underline" }} {...props} />
-                            ),
-                            ul: ({ node, ...props }) => (
-                                <ul style={{ listStyleType: "disc", paddingLeft: 20, marginBottom: 4 }} {...props} />
-                            ),
-                            ol: ({ node, ...props }) => (
-                                <ol style={{ paddingLeft: 20 }} {...props} />
-                            ),
-                            li: ({ node, ...props }) => (
-                                <li style={{ marginBottom: -12 }} {...props} />
-                            ),
-                            p: ({ node, ...props }) => (
-                                <p style={{ marginBottom: msg.role === "ai" ? 0 : undefined }} {...props} />
-                            ),
-                            h1: ({ node, ...props }) => (
-                                <h1 style={{ fontSize: 20, fontWeight: 700, color: "#f1f5f9", marginBottom: -16 }} {...props} />
-                            ),
-                            h2: ({ node, ...props }) => (
-                                <h2 style={{ fontSize: 18, fontWeight: 600, color: "#e2e8f0", marginBottom: -16 }} {...props} />
-                            ),
-                            h3: ({ node, ...props }) => (
-                                <h3 style={{ fontSize: 16, fontWeight: 600, color: "#e2e8f0", marginBottom: -16 }} {...props} />
-                            ),
-                            strong: ({ node, ...props }) => (
-                                <strong style={{ fontWeight: 700, color: "#f1f5f9" }} {...props} />
-                            ),
-                            pre: ({ node, ...props }) => (
-                                <pre style={{
-                                    margin: "4px 0", padding: 8, borderRadius: 8,
-                                    background: "rgba(255,255,255,0.04)",
-                                    border: "1px solid rgba(255,255,255,0.06)",
-                                    overflowX: "auto",
-                                }} {...props} />
-                            ),
-                            code: ({ node, ...props }) => (
-                                <code style={{ fontFamily: "'DM Mono', monospace", fontSize: 13, color: "#a5b4fc" }} {...props} />
-                            ),
-                        }}
-                    >
-                        {msg.content}
-                    </ReactMarkdown>
-                </div>
-            </div>
-        </div>
-    );
-});
+  if (!msg || !msg.content) return null;
+  const isAI = msg.role === "ai";
 
+  return (
+    <div
+      style={{
+        display: "flex",
+        justifyContent: isAI ? "flex-start" : "flex-end",
+        marginBottom: 4,
+      }}
+    >
+      <div
+        style={{
+          maxWidth: "88%",
+          padding: isAI ? "8px 4px" : "12px 16px",
+          borderRadius: isAI ? "4px" : "16px 16px 4px 16px",
+          background: isAI
+            ? "transparent"
+            : "linear-gradient(135deg, var(--primary-brand) 0%, var(--primary-light) 100%)",
+          color: isAI ? "var(--text-1)" : "#fff",
+          fontSize: 14,
+          lineHeight: 1.65,
+          boxShadow: isAI
+            ? "none"
+            : "0 2px 8px rgba(109, 95, 246, 0.18)",
+        }}
+      >
+        <div
+          style={{
+            wordBreak: "break-word",
+            whiteSpace: "pre-wrap",
+            overflowX: "hidden",
+          }}
+        >
+          <ReactMarkdown
+            remarkPlugins={[remarkGfm]}
+            components={{
+              a: ({ node, ...props }) => (
+                <a
+                  {...props}
+                  style={{
+                    color: isAI ? "var(--primary-brand)" : "#c4b5fd",
+                    textDecoration: "underline",
+                  }}
+                />
+              ),
+              ul: ({ node, ...props }) => (
+                <ul
+                  style={{
+                    listStyle: "disc",
+                    paddingLeft: 20,
+                    margin: "4px 0",
+                  }}
+                  {...props}
+                />
+              ),
+              ol: ({ node, ...props }) => (
+                <ol
+                  style={{
+                    listStyle: "decimal",
+                    paddingLeft: 20,
+                    margin: "4px 0",
+                  }}
+                  {...props}
+                />
+              ),
+              li: ({ node, ...props }) => (
+                <li style={{ marginBottom: 0 }} {...props} />
+              ),
+              p: ({ node, ...props }) => (
+                <p style={{ margin: isAI ? "4px 0" : "2px 0" }} {...props} />
+              ),
+              h1: ({ node, ...props }) => (
+                <h1
+                  style={{
+                    fontSize: "1.35rem",
+                    fontWeight: 700,
+                    margin: "8px 0 4px",
+                  }}
+                  {...props}
+                />
+              ),
+              h2: ({ node, ...props }) => (
+                <h2
+                  style={{
+                    fontSize: "1.15rem",
+                    fontWeight: 600,
+                    margin: "8px 0 4px",
+                  }}
+                  {...props}
+                />
+              ),
+              h3: ({ node, ...props }) => (
+                <h3
+                  style={{
+                    fontSize: "1.05rem",
+                    fontWeight: 600,
+                    margin: "6px 0 4px",
+                  }}
+                  {...props}
+                />
+              ),
+              strong: ({ node, ...props }) => (
+                <strong style={{ fontWeight: 700 }} {...props} />
+              ),
+              pre: ({ node, ...props }) => (
+                <pre
+                  style={{
+                    padding: 10,
+                    borderRadius: 8,
+                    background: isAI
+                      ? "var(--bg-card)"
+                      : "rgba(0,0,0,0.15)",
+                    overflowX: "auto",
+                    margin: "6px 0",
+                    fontSize: 13,
+                  }}
+                  {...props}
+                />
+              ),
+              code: ({ node, ...props }) => (
+                <code
+                  style={{ fontFamily: "var(--font-mono, monospace)" }}
+                  {...props}
+                />
+              ),
+            }}
+          >
+            {msg.content}
+          </ReactMarkdown>
+        </div>
+      </div>
+    </div>
+  );
+});
 
 export default MiddlePannel;

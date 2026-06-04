@@ -32,12 +32,16 @@ const chatHistorySlice = createSlice({
    
 
 
-    addMessageInChatHistory: (state,action) => {
-
-      if(state.chatHistory){
-       state.chatHistory?.chatHistory?.push(action.payload)
+    addMessageInChatHistory: (state, action) => {
+      if (state.chatHistory) {
+        state.chatHistory.chatHistory = [
+          ...(state.chatHistory.chatHistory ?? []),
+          action.payload,
+        ];
+      } else {
+        // Initialize if chatHistory hasn't loaded yet
+        state.chatHistory = { chatHistory: [action.payload] };
       }
-   
     },
 
 
