@@ -1,4 +1,4 @@
-import { ChatMessage } from "../../../models/chat.models";
+import { ChatMessage } from "@/app/models/chat.models";
 
 export async function storeConversation(messages: {role: "user" | "ai" | "system", content: string, userId?: string, noteId?: string}[]) {
     try {

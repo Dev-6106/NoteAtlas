@@ -4,7 +4,8 @@ import { Runnable } from "@langchain/core/runnables";
 import z from "zod";
 import { zodToJsonSchema } from "zod-to-json-schema";
 import "dotenv/config";
-import { ChatFireWorks } from "@langchain/community/chat_models/fireworks";
+
+import { invokeWithRetry } from "@/util/invokeWithRetry";
 
 export async function generatePrompt<T extends Runnable>(llm: T, title: string): Promise<string> {
   const prompt_image_generator = PromptTemplate.fromTemplate(`
@@ -21,7 +22,7 @@ export async function generatePrompt<T extends Runnable>(llm: T, title: string):
     `);
 
     const chain = prompt_image_generator.pipe(llm);
-    const chainResult = await chain.invoke({
+    const chainResult = await invokeWithRetry(() => chain.invoke({
       input: title
     },{
       response_format: {
@@ -32,7 +33,7 @@ export async function generatePrompt<T extends Runnable>(llm: T, title: string):
           })
         )
       }
-    } as any);
+    } as any));
 
     let rawContent = (chainResult as any).content as string;
     rawContent = rawContent.replace(/^```(json)?\n?/, '').replace(/\n?```$/, '').trim();

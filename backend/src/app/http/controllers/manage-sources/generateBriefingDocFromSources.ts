@@ -1,4 +1,4 @@
-import { ChatFireworks } from "@langchain/community/chat_models/fireworks";
+import { Runnable } from "@langchain/core/runnables";
 import { generateTitle } from "../notes/helpers/TitleGeneration";
 import { Document } from "@langchain/core/documents";
 import { NextFunction, Request, Response } from "express";
@@ -6,7 +6,7 @@ import { LLM } from "@/app/llm/llm";
 import { SourceRepository } from "../notes/repository/sourceRepository";
 import { DocRepository } from "../notes/repository/DocRepository";
 import { ChatPromptTemplate } from "@langchain/core/prompts";
-
+import { invokeWithRetry } from "@/util/invokeWithRetry";
 export async function generateBriefingDocSources(req: Request, res: Response, next: NextFunction) {
     try {
         const { userId, noteId, docIds, type = 'briefing-doc' } = req.body as { userId: string, noteId: string, docIds: string[], type: 'briefing-doc' };
@@ -72,7 +72,7 @@ function formatBriefingDocs(briefingDocs: BriefingDocItem[]): string {
     return briefingDocs.map((item) => `title: ${item.title ?? ""} \n\n, briefing doc: ${item.briefingDoc ?? ""}`).join("----=====|====----");
 }
 
-async function mergeBriefingDocs(props: { llm: ChatFireworks, countSource: number, briefingToStr: string }) {
+async function mergeBriefingDocs(props: { llm: Runnable, countSource: number, briefingToStr: string }) {
     const { llm, countSource, briefingToStr } = props;
     const mapPrompt = ChatPromptTemplate.fromMessages([
         "user",
@@ -109,7 +109,7 @@ Output requirements:
     ]);
 
     const prompt = await mapPrompt.invoke({ context: briefingToStr });
-    const response = await llm.invoke(prompt);
+    const response = await invokeWithRetry(() => llm.invoke(prompt)) as any;
     const llmFinalBriefingDoc = response?.content;
     console.log("Merged briefing docs....")
     return llmFinalBriefingDoc;

@@ -1,5 +1,4 @@
 import z from "zod";
-import { ChatFireworks } from "@langchain/community/chat_models/fireworks";
 import { PromptTemplate } from "@langchain/core/prompts";
 import zodToJsonSchema from "zod-to-json-schema";
 import { Runnable } from "@langchain/core/runnables";

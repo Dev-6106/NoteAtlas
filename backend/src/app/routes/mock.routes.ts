@@ -57,16 +57,16 @@ export function mockRoutes(router: Router) {
     // router.post("/notes/add/mindmap/sources", mockSuccess);
 
     // Mocks for missing chat POST route
-    router.post("/chats", (req, res) => {
-        res.json({
-            message: {
-                role: "ai",
-                noteId: req.body.noteId,
-                userId: req.body.userId,
-                content: "This is a mock AI response."
-            }
-        });
-    });
+    // router.post("/chats", (req, res) => {
+    //     res.json({
+    //         message: {
+    //             role: "ai",
+    //             noteId: req.body.noteId,
+    //             userId: req.body.userId,
+    //             content: "This is a mock AI response."
+    //         }
+    //     });
+    // });
 
     // Mocks for missing payment routes
     router.post("/notes/payment/create-setup-session", (req, res) => {

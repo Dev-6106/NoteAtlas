@@ -13,7 +13,9 @@ const envSchema = z.object({
   DB_URL: z.string().min(1, "DB_URL is required"),
 
   // LLM
-  CHATFIREWORK_API_KEY: z.string().min(1, "CHATFIREWORK_API_KEY is required"),
+  GOOGLE_GEMINI_API_KEY: z.string().min(1, "GOOGLE_GEMINI_API_KEY is required"),
+  CHATFIREWORK_API_KEY: z.string().optional(), // kept for image generation
+  GROQ_API_KEY: z.string().optional(), // kept for backward compat
 
   // LangChain / Tavily
   TAVILY_API_KEY: z.string().min(1, "TAVILY_API_KEY is required"),

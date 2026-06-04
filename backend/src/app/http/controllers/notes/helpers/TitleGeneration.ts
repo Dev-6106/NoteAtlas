@@ -15,6 +15,8 @@ Document Content:
 {document}
 `);
 
+import { invokeWithRetry } from "@/util/invokeWithRetry";
+
 export async function generateTitle<T extends Runnable>(
   llm: T, docs: Document<Record<string, any>>[],
 ) {
@@ -22,7 +24,7 @@ export async function generateTitle<T extends Runnable>(
 
   const chain = generate_title_prompt.pipe(llm);
 
-  const chainResult = await chain.invoke(
+  const chainResult = await invokeWithRetry(() => chain.invoke(
     {
       document: docToString,
     },
@@ -36,7 +38,7 @@ export async function generateTitle<T extends Runnable>(
         ),
       },
     },
-  );
+  )) as any;
 
   let rawContent = chainResult.content as string;
   rawContent = rawContent.replace(/^```(json)?\n?/, '').replace(/\n?```$/, '').trim();

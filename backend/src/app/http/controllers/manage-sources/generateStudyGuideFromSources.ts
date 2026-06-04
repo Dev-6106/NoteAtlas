@@ -1,4 +1,4 @@
-import { ChatFireworks } from "@langchain/community/chat_models/fireworks";
+import { Runnable } from "@langchain/core/runnables";
 import { generateTitle } from "../notes/helpers/TitleGeneration";
 import { Document } from "@langchain/core/documents";
 import { NextFunction, Request, Response } from "express";
@@ -6,7 +6,7 @@ import { LLM } from "@/app/llm/llm";
 import { SourceRepository } from "../notes/repository/sourceRepository";
 import { DocRepository } from "../notes/repository/DocRepository";
 import { ChatPromptTemplate } from "@langchain/core/prompts";
-
+import { invokeWithRetry } from "@/util/invokeWithRetry";
 export async function generateStudyGuideSources(req: Request, res: Response, next: NextFunction) {
     try {
         const { userId, noteId, docIds } = req.body as { userId: string, noteId: string, docIds: string[] };
@@ -66,7 +66,7 @@ function formatStudyGuides(studyGuides: StudyGuideItem[]): string {
     return studyGuides.map((item) => `title: ${item.title ?? ""} \n\n, studyGuide: ${item.studyGuide ?? ""}`).join("----=====|====----");
 }
 
-async function mergeStudyGuide(props: { llm: ChatFireworks, countSource: number, studyGuideToStr: string }) {
+async function mergeStudyGuide(props: { llm: Runnable, countSource: number, studyGuideToStr: string }) {
     const { llm, countSource, studyGuideToStr } = props;
     const mapPrompt = ChatPromptTemplate.fromMessages([
         "user",
@@ -99,7 +99,7 @@ Output requirements:
     ]);
 
     const prompt = await mapPrompt.invoke({context: studyGuideToStr});
-    const response = await llm.invoke(prompt);
+    const response = await invokeWithRetry(() => llm.invoke(prompt)) as any;
     const llmFinalStudyGuide = response?.content;
     console.log("Merged Study Guides....")
     return llmFinalStudyGuide;

@@ -6,7 +6,6 @@ import { ChatPromptTemplate } from "@langchain/core/prompts";
 import { RecursiveCharacterTextSplitter } from "@langchain/textsplitters";
 
 import { CheerioWebBaseLoader } from "@langchain/community/document_loaders/web/cheerio";
-import { ChatFireworks } from "@langchain/community/chat_models/fireworks";
 import { Runnable } from "@langchain/core/runnables";
 import { invokeWithRetry } from "@/util/invokeWithRetry";
 

@@ -1,4 +1,4 @@
-import { ChatFireworks } from "@langchain/community/chat_models/fireworks";
+import { Runnable } from "@langchain/core/runnables";
 import { generateTitle } from "../notes/helpers/TitleGeneration";
 import { Document } from "@langchain/core/documents";
 import { NextFunction, Request, Response } from "express";
@@ -6,7 +6,7 @@ import { LLM } from "@/app/llm/llm";
 import { SourceRepository } from "../notes/repository/sourceRepository";
 import { DocRepository } from "../notes/repository/DocRepository";
 import { ChatPromptTemplate } from "@langchain/core/prompts";
-
+import { invokeWithRetry } from "@/util/invokeWithRetry";
 export async function generateSummarySources(req: Request, res: Response, next: NextFunction) {
     try {
         const { userId, noteId, docIds } = req.body as { userId: string, noteId: string, docIds: string[] };
@@ -66,7 +66,7 @@ function formatSummaries(summaries: SummaryItem[]): string {
     return summaries.map((item) => `title: ${item.title ?? ""} \n\n, summary: ${item.summary ?? ""}`).join("----=====|====----");
 }
 
-async function mergeSummary(props: { llm: ChatFireworks, countSource: number, summaryToStr: string }) {
+async function mergeSummary(props: { llm: Runnable, countSource: number, summaryToStr: string }) {
     const { llm, countSource, summaryToStr } = props;
     const mapPrompt = ChatPromptTemplate.fromMessages([
         "user",
@@ -103,7 +103,7 @@ Output requirements:
     ]);
 
     const prompt = await mapPrompt.invoke({context: summaryToStr});
-    const response = await llm.invoke(prompt);
+    const response = await invokeWithRetry(() => llm.invoke(prompt)) as any;
     const llmFinalSummary = response?.content;
     console.log("Merged summaries....")
     return llmFinalSummary;

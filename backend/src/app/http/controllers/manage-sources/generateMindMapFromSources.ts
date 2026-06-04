@@ -5,8 +5,9 @@ import { DocRepository } from "../notes/repository/DocRepository";
 import { Document } from "@langchain/core/documents";
 import { generateMindMap } from "@/pipelines/mind-map";
 import { generateTitle } from "../notes/helpers/TitleGeneration";
+import { invokeWithRetry } from "@/util/invokeWithRetry";
 import { ChatPromptTemplate } from "@langchain/core/prompts";
-import { ChatFireworks } from "@langchain/community/chat_models/fireworks";
+import { Runnable } from "@langchain/core/runnables";
 
 export async function generateMindMapFromSources(req: Request, res: Response, next: NextFunction) {
     try {
@@ -64,7 +65,7 @@ function formatStudyGuides(studyGuides: StudyGuideItem[]): string {
     return studyGuides.map((item) => `title: ${item.title ?? ""} \n\n, studyGuide: ${item.studyGuide ?? ""}`).join("----=====|====----");
 }
 
-async function mergeStudyGuide(props: { llm: ChatFireworks, countSource: number, studyGuideToStr: string }): Promise<string> {
+async function mergeStudyGuide(props: { llm: Runnable, countSource: number, studyGuideToStr: string }): Promise<string> {
     const { llm, countSource, studyGuideToStr } = props;
     const mapPrompt = ChatPromptTemplate.fromMessages([
         "user",
@@ -97,7 +98,7 @@ Output requirements:
     ]);
 
     const prompt = await mapPrompt.invoke({ context: studyGuideToStr });
-    const response = await llm.invoke(prompt);
+    const response = await invokeWithRetry(() => llm.invoke(prompt)) as any;
     const llmFinalStudyGuide = response?.content;
     console.log("Merged Study Guides....")
     return llmFinalStudyGuide as string;

@@ -29,7 +29,7 @@ TOOLS (available and how to use them)
      ]
    }
 
-2. retrieve_documents
+2. vector_db
    - Search documents belonging to a specific note.
    - Use when the query is related to a note or document in the library.
    - Return only information found in retrieved context.

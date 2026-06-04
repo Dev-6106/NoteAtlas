@@ -12,7 +12,7 @@ import { z } from "zod";
 
 import { queryVectorDB } from "./retreiver.js";
 import { reciprocalRankFusion } from "./RRF.js";
-import { ChatFireworks } from "@langchain/community/chat_models/fireworks";
+import { ChatGroq } from "@langchain/groq";
 import {
   answerPrompt,
   generate_question_prompt,
@@ -24,11 +24,11 @@ import { TavilySearch } from "@langchain/tavily";
 import { title } from "node:process";
 import { AIMessage, HumanMessage } from "@langchain/core/messages";
 
-const llm = new ChatFireworks({
-  model: "accounts/fireworks/models/deepseek-v4-pro",
+const llm = new ChatGroq({
+  model: "llama-3.3-70b-versatile",
   temperature: 0,
   maxRetries: 2,
-  apiKey: process.env.CHATFIREWORK_API_KEY,
+  apiKey: process.env.GROQ_API_KEY,
 });
 
 const StateAnnotation = Annotation.Root({
