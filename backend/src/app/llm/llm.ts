@@ -1,16 +1,16 @@
-import { ChatGroq } from "@langchain/groq";
+import { ChatFireworks } from "@langchain/community/chat_models/fireworks";
 import { env } from "@/config/env";
 
 export class LLM {
   private constructor() {}
-  private static instance: ChatGroq;
+  private static instance: ChatFireworks;
 
-  public static getInstance(): ChatGroq {
+  public static getInstance(): ChatFireworks {
     if (!LLM.instance) {
-      LLM.instance = new ChatGroq({
-        model: "llama-3.3-70b-versatile",
+      LLM.instance = new ChatFireworks({
+        model: "accounts/fireworks/models/deepseek-v4-pro",
         temperature: 0.7,
-        apiKey: env.GROQ_API_KEY,
+        fireworksApiKey: env.CHATFIREWORK_API_KEY,
         maxRetries: 3,
       });
     }
