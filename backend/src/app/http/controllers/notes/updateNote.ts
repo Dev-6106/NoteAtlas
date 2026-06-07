@@ -15,25 +15,18 @@ export async function updateNote(
 
     try {
 
-        const { id, title } = req.body;
+        const { id, title, image, description, isArchived, isPinned } = req.body;
 
-        if (!id || !title) {
-
+        if (!id) {
             return res.status(400).send({
-                message:
-                    "Please provide id and title",
+                message: "Please provide note id",
             });
-
         }
 
-        const noteRepo =
-            NoteRepository.getInstance();
-
-        const updatedNote =
-            await noteRepo.updateNotes({
-                id,
-                title,
-            });
+        const noteRepo = NoteRepository.getInstance();
+        const updatedNote = await noteRepo.updateNotes({
+            id, title, image, description, isArchived, isPinned
+        });
 
         return res.status(200).send({
 

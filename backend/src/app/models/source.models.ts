@@ -2,9 +2,12 @@ import mongoose from "mongoose";
 
 const sourceSchema = new mongoose.Schema({
     title: {type: String},
+    displayName: {type: String},
     total_source: {type: Number},
     content: {type: String},
     source_type: {type: String},
+    status: { type: String, enum: ['uploading', 'parsing', 'embedding', 'indexed', 'failed'], default: 'indexed' },
+    errorMessage: { type: String },
     noteId: {type: mongoose.Schema.Types.ObjectId, ref: "Note",required: true},
     userId: {type: mongoose.Schema.Types.ObjectId, ref: "User",required: true},
 }, {timestamps: true});

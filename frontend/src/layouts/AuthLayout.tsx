@@ -79,7 +79,7 @@ export default function AuthLayout() {
           style={{
             width: 34, height: 34, borderRadius: 9,
             display: "flex", alignItems: "center", justifyContent: "center",
-            background: "rgba(255,255,255,0.04)",
+            background: "var(--bg-surface)",
             border: `1px solid ${T.border}`,
             color: T.text3, textDecoration: "none",
             transition: "all 0.2s", flexShrink: 0,
@@ -90,7 +90,7 @@ export default function AuthLayout() {
             (e.currentTarget as HTMLAnchorElement).style.color = "#a78bfa";
           }}
           onMouseLeave={e => {
-            (e.currentTarget as HTMLAnchorElement).style.background = "rgba(255,255,255,0.04)";
+            (e.currentTarget as HTMLAnchorElement).style.background = "var(--bg-surface)";
             (e.currentTarget as HTMLAnchorElement).style.borderColor = T.border;
             (e.currentTarget as HTMLAnchorElement).style.color = T.text3;
           }}
@@ -101,7 +101,7 @@ export default function AuthLayout() {
         <Link to="/" style={{ display: "flex", alignItems: "center", gap: 9, textDecoration: "none" }}>
           <LogoMark size={28} />
           <span style={{ fontSize: 15, fontWeight: 700, color: T.text1, letterSpacing: "-0.4px", fontFamily: T.fontSans }}>
-            Notebook<span style={{ color: "#8b80f8" }}>LM</span>
+            Note<span style={{ color: "var(--primary-brand)" }}>Atlas</span>
           </span>
         </Link>
       </header>

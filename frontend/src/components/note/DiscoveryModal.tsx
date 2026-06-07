@@ -87,19 +87,19 @@ export const DiscoveryModal = ({ noteId }: { noteId?: string }) => {
               onClick={() => dispatch(toggleDiscoveryModal())}
               style={{
                 padding: "9px 18px", borderRadius: 10,
-                background: "rgba(255,255,255,0.06)",
-                border: "1px solid rgba(255,255,255,0.1)",
-                color: "#94a3b8", fontSize: 13, fontWeight: 600,
+                background: "var(--border-default)",
+                border: "1px solid var(--border-strong)",
+                color: "var(--text-3)", fontSize: 13, fontWeight: 600,
                 cursor: "pointer", transition: "all 0.2s",
                 marginRight: 8,
               }}
               onMouseEnter={e => {
-                (e.currentTarget as HTMLButtonElement).style.background = "rgba(255,255,255,0.1)";
-                (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(255,255,255,0.2)";
+                (e.currentTarget as HTMLButtonElement).style.background = "var(--border-strong)";
+                (e.currentTarget as HTMLButtonElement).style.borderColor = "var(--border-accent)";
               }}
               onMouseLeave={e => {
-                (e.currentTarget as HTMLButtonElement).style.background = "rgba(255,255,255,0.06)";
-                (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(255,255,255,0.1)";
+                (e.currentTarget as HTMLButtonElement).style.background = "var(--border-default)";
+                (e.currentTarget as HTMLButtonElement).style.borderColor = "var(--border-strong)";
               }}
             >
               Cancel
@@ -111,12 +111,12 @@ export const DiscoveryModal = ({ noteId }: { noteId?: string }) => {
                 display: "inline-flex", alignItems: "center", gap: 6,
                 padding: "9px 18px", borderRadius: 10,
                 background: sendWebResultLoading
-                  ? "rgba(99,102,241,0.3)"
-                  : "linear-gradient(135deg,#6366f1,#8b5cf6)",
-                color: "#fff", fontSize: 13, fontWeight: 700,
+                  ? "var(--primary-glow)"
+                  : "linear-gradient(135deg, var(--primary-brand), var(--primary-light))",
+                color: "var(--text-on-primary)", fontSize: 13, fontWeight: 700,
                 border: "none",
                 cursor: sendWebResultLoading ? "not-allowed" : "pointer",
-                boxShadow: sendWebResultLoading ? "none" : "0 4px 14px rgba(99,102,241,0.35)",
+                boxShadow: sendWebResultLoading ? "none" : "var(--shadow-primary)",
                 transition: "all 0.2s",
               }}
             >
@@ -145,15 +145,15 @@ export const DiscoveryModal = ({ noteId }: { noteId?: string }) => {
             }}>
               <div style={{
                 width: 48, height: 48, borderRadius: "50%",
-                background: "rgba(99,102,241,0.12)",
-                border: "1px solid rgba(99,102,241,0.25)",
+                background: "var(--primary-glow)",
+                border: "1px solid var(--primary-border)",
                 display: "flex", alignItems: "center", justifyContent: "center",
                 marginBottom: 12,
               }}>
-                <Search size={20} style={{ color: "#818cf8" }} />
+                <Search size={20} style={{ color: "var(--primary-brand)" }} />
               </div>
               <p style={{
-                fontSize: 15, fontWeight: 600, color: "#f1f5f9",
+                fontSize: 15, fontWeight: 600, color: "var(--text-1)",
                 marginBottom: 8,
               }}>
                 What are you interested in?
@@ -171,9 +171,9 @@ export const DiscoveryModal = ({ noteId }: { noteId?: string }) => {
                   resize: "vertical",
                   padding: "12px 14px",
                   borderRadius: 12,
-                  background: "rgba(255,255,255,0.04)",
-                  border: "1px solid rgba(255,255,255,0.1)",
-                  color: "#e2e8f0",
+                  background: "var(--bg-surface)",
+                  border: "1px solid var(--border-strong)",
+                  color: "var(--text-2)",
                   fontSize: 14,
                   fontFamily: "'DM Sans', system-ui, sans-serif",
                   outline: "none",
@@ -185,8 +185,8 @@ export const DiscoveryModal = ({ noteId }: { noteId?: string }) => {
                   e.currentTarget.style.boxShadow = "0 0 16px rgba(99,102,241,0.1)";
                 }}
                 onBlur={e => {
-                  e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)";
-                  e.currentTarget.style.background = "rgba(255,255,255,0.04)";
+                  e.currentTarget.style.borderColor = "var(--border-strong)";
+                  e.currentTarget.style.background = "var(--bg-surface)";
                   e.currentTarget.style.boxShadow = "none";
                 }}
               />
@@ -209,12 +209,12 @@ export const DiscoveryModal = ({ noteId }: { noteId?: string }) => {
                   display: "flex", alignItems: "center", gap: 6,
                   padding: "9px 20px", borderRadius: 10,
                   background: isSubmitting
-                    ? "rgba(99,102,241,0.3)"
-                    : "linear-gradient(135deg,#6366f1,#8b5cf6)",
-                  color: "#fff", fontSize: 13, fontWeight: 700,
+                    ? "var(--primary-glow)"
+                    : "linear-gradient(135deg, var(--primary-brand), var(--primary-light))",
+                  color: "var(--text-on-primary)", fontSize: 13, fontWeight: 700,
                   border: "none",
                   cursor: isSubmitting ? "not-allowed" : "pointer",
-                  boxShadow: isSubmitting ? "none" : "0 4px 14px rgba(99,102,241,0.35)",
+                  boxShadow: isSubmitting ? "none" : "var(--shadow-primary)",
                   transition: "all 0.2s",
                 }}
               >
@@ -234,10 +234,10 @@ export const DiscoveryModal = ({ noteId }: { noteId?: string }) => {
             {/* Results */}
             <div style={{
               marginTop: 16, paddingTop: 8,
-              borderTop: "1px solid rgba(255,255,255,0.06)",
+              borderTop: "1px solid var(--border-default)",
             }}>
               <h3 style={{
-                fontSize: 13, fontWeight: 600, color: "#94a3b8",
+                fontSize: 13, fontWeight: 600, color: "var(--text-3)",
                 marginBottom: 10,
               }}>
                 Select all sources ({searchResult.length})
@@ -253,8 +253,8 @@ export const DiscoveryModal = ({ noteId }: { noteId?: string }) => {
                     style={{
                       display: "flex", alignItems: "flex-start", gap: 12,
                       padding: 12, borderRadius: 12,
-                      background: "rgba(255,255,255,0.03)",
-                      border: "1px solid rgba(255,255,255,0.07)",
+                      background: "var(--bg-card)",
+                      border: "1px solid var(--border-default)",
                       transition: "all 0.15s",
                     }}
                     onMouseEnter={e => {
@@ -262,8 +262,8 @@ export const DiscoveryModal = ({ noteId }: { noteId?: string }) => {
                       (e.currentTarget as HTMLDivElement).style.borderColor = "rgba(99,102,241,0.2)";
                     }}
                     onMouseLeave={e => {
-                      (e.currentTarget as HTMLDivElement).style.background = "rgba(255,255,255,0.03)";
-                      (e.currentTarget as HTMLDivElement).style.borderColor = "rgba(255,255,255,0.07)";
+                      (e.currentTarget as HTMLDivElement).style.background = "var(--bg-card)";
+                      (e.currentTarget as HTMLDivElement).style.borderColor = "var(--border-default)";
                     }}
                   >
                     <div style={{ minWidth: 0 }}>
@@ -272,7 +272,7 @@ export const DiscoveryModal = ({ noteId }: { noteId?: string }) => {
                         target="_blank"
                         rel="noopener noreferrer"
                         style={{
-                          fontSize: 13, fontWeight: 600, color: "#818cf8",
+                          fontSize: 13, fontWeight: 600, color: "var(--primary-brand)",
                           textDecoration: "none", transition: "color 0.2s",
                         }}
                         onMouseEnter={e => {
@@ -285,7 +285,7 @@ export const DiscoveryModal = ({ noteId }: { noteId?: string }) => {
                         {s.title}
                       </a>
                       <p style={{
-                        fontSize: 12, color: "#475569", marginTop: 2,
+                        fontSize: 12, color: "var(--text-4)", marginTop: 2,
                         overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
                       }}>
                         {s.link}

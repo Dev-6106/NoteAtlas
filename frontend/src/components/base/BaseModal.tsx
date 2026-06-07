@@ -38,12 +38,12 @@ export function BaseModal({
           width: "500vw",
           maxWidth: width + "px",
           height: height + "px",
-          background: background ?? "rgba(10,13,26,0.95)",
+          background: background ?? "var(--bg-elevated)",
           backdropFilter: "blur(24px)",
-          border: "1px solid rgba(99,102,241,0.2)",
+          border: "1px solid var(--primary-border)",
           borderRadius: "20px",
           boxShadow:
-            "0 0 0 1px rgba(99,102,241,0.1), 0 24px 60px rgba(0,0,0,0.6), 0 0 80px rgba(99,102,241,0.08)",
+            "0 0 0 1px var(--primary-border), 0 24px 60px rgba(0,0,0,0.6), var(--shadow-primary)",
           fontFamily: "'DM Sans', system-ui, sans-serif",
           display: "flex",
           flexDirection: "column",
@@ -64,8 +64,8 @@ export function BaseModal({
         <div style={{
           height: 2,
           flexShrink: 0,
-          background: "linear-gradient(90deg, transparent, #6366f1 40%, #8b5cf6 60%, transparent)",
-          opacity: 0.8,
+          background: "linear-gradient(90deg, transparent, var(--primary-brand) 40%, var(--primary-brand) 60%, transparent)",
+          opacity: 0.6,
         }} />
 
         {/* Header */}
@@ -79,7 +79,7 @@ export function BaseModal({
                 <DialogTitle style={{
                   fontSize: "17px",
                   fontWeight: 700,
-                  color: "#f1f5f9",
+                  color: "var(--text-1)",
                   letterSpacing: "-0.3px",
                   margin: 0,
                 }}>
@@ -89,7 +89,7 @@ export function BaseModal({
               {description && (
                 <DialogDescription style={{
                   fontSize: "13px",
-                  color: "#64748b",
+                  color: "var(--text-3)",
                   marginTop: 5,
                   lineHeight: 1.6,
                 }}>
@@ -101,7 +101,7 @@ export function BaseModal({
             {/* Divider */}
             <div style={{
               height: 1,
-              background: "rgba(255,255,255,0.06)",
+              background: "var(--border-default)",
               marginTop: 18,
             }} />
           </div>
@@ -112,7 +112,7 @@ export function BaseModal({
           flex: 1,
           overflowY: "auto",
           padding: "20px 28px",
-          color: "#cbd5e1",
+          color: "var(--text-2)",
           fontSize: "14px",
           lineHeight: 1.7,
         }}
@@ -130,9 +130,9 @@ export function BaseModal({
         {footer && (
           <div style={{
             flexShrink: 0,
-            borderTop: "1px solid rgba(255,255,255,0.06)",
+            borderTop: "1px solid var(--border-default)",
             padding: "16px 28px",
-            background: "rgba(255,255,255,0.02)",
+            background: "var(--primary-surface)",
           }}>
             <DialogFooter>{footer}</DialogFooter>
           </div>

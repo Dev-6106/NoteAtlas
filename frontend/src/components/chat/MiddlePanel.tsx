@@ -7,21 +7,26 @@ import {
   SendHorizonal,
   ArrowDown,
   Sparkles,
+  BookOpen,
+  FileText,
 } from "lucide-react";
 import { memo, useEffect, useRef, useState } from "react";
 import {
-  sendChatMessage,
+  sendChatMessageStream,
+  createConversationApi,
   type chatHistoryType,
   type messageType,
   type questionAndDocOverviewType,
 } from "@/api/notes";
-import { addMessageInChatHistory } from "@/store/chatHistorySlice";
+import { addMessageInChatHistory, fetchConversations, setActiveConversation } from "@/store/chatHistorySlice";
 import type { NoteType } from "@/types/note-types";
 import { showError } from "@/util/toast-notification";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { SuggestedInput } from "./SuggestedInput";
 import { ChatInput } from "./ChatInput";
+import { SourceViewerModal, type Citation } from "./SourceViewerModal";
+import { togglePaymentModal } from "@/store/chatSlice";
 
 const MiddlePannel = ({
   chatHistory,
@@ -40,10 +45,16 @@ const MiddlePannel = ({
     (state: RootState) => state.chat
   );
   const { docIds } = useSelector((state: RootState) => state.rightPanel);
+  const { activeConversationId } = useSelector((state: RootState) => state.chatHistory);
   const [inputValue, setInputValue] = useState("");
   const [loading, setLoading] = useState(false);
+  const [isStreaming, setIsStreaming] = useState(false);
+  const [streamingMessage, setStreamingMessage] = useState("");
   const chatContainerRef = useRef<HTMLElement>(null);
   const [showScrollButton, setShowScrollButton] = useState(false);
+  // Citation state: maps message index → citations array
+  const [citationsMap, setCitationsMap] = useState<Record<number, Citation[]>>({});
+  const [sourceModal, setSourceModal] = useState<{ citations: Citation[]; initialDocId?: string } | null>(null);
 
   async function sendUserMessage({
     newMessage,
@@ -51,16 +62,75 @@ const MiddlePannel = ({
     newMessage: messageType;
   }) {
     setLoading(true);
+    
+    let targetConversationId = activeConversationId;
+    
+    if (!targetConversationId) {
+      const promptText = inputValue || newMessage?.content || "New Chat";
+      const newTitle = promptText.length > 30 ? promptText.substring(0, 30) + '...' : promptText;
+      try {
+        const res = await createConversationApi(noteId, newTitle);
+        if (res && res.conversation) {
+          targetConversationId = res.conversation._id;
+          newMessage.conversationId = targetConversationId;
+          dispatch(fetchConversations(noteId));
+          dispatch(setActiveConversation(targetConversationId));
+        }
+      } catch (error) {
+        console.error("Failed to auto-create conversation", error);
+      }
+    }
+    
     dispatch(addMessageInChatHistory(newMessage));
-    const data = await sendChatMessage({
-      userId,
-      noteId,
-      query: inputValue || newMessage?.content,
-    });
-    setLoading(false);
-    setTimeout(scrollToBottom, 100);
-    if (data?.message) {
-      dispatch(addMessageInChatHistory(data.message));
+    
+    setIsStreaming(true);
+    setStreamingMessage("");
+    let fullResponse = "";
+    let streamCitations: Citation[] = [];
+
+    try {
+      await sendChatMessageStream({
+        userId,
+        noteId,
+        docIds,
+        query: inputValue || newMessage?.content,
+        conversationId: targetConversationId || undefined
+      }, (chunk) => {
+          fullResponse += chunk;
+          setStreamingMessage(fullResponse);
+          scrollToBottom();
+      }, (citations) => {
+          streamCitations = citations;
+      });
+
+      if (fullResponse) {
+        const msgIndex = (chatHistory?.chatHistory?.length ?? 0);
+        // Store citations keyed by the AI message index (after user msg)
+        if (streamCitations.length > 0) {
+          setCitationsMap(prev => ({ ...prev, [msgIndex]: streamCitations }));
+        }
+        dispatch(addMessageInChatHistory({
+          role: "ai",
+          content: fullResponse,
+          userId,
+          noteId,
+          conversationId: targetConversationId
+        }));
+      }
+    } catch (error: any) {
+      // 402 = insufficient credits
+      if (error?.message?.includes('402') || error?.status === 402) {
+        showError("You have run out of credits. Please buy more to continue.");
+        dispatch(togglePaymentModal());
+      } else {
+        console.error("Streaming error:", error);
+        showError("Failed to fetch response");
+      }
+    } finally {
+      setIsStreaming(false);
+      setStreamingMessage("");
+      setLoading(false);
+      setTimeout(scrollToBottom, 100);
     }
   }
 
@@ -71,6 +141,7 @@ const MiddlePannel = ({
       content: inputValue,
       userId,
       noteId,
+      conversationId: activeConversationId || undefined
     };
     await sendUserMessage({ newMessage });
   };
@@ -81,6 +152,7 @@ const MiddlePannel = ({
       content: question,
       userId,
       noteId,
+      conversationId: activeConversationId || undefined
     };
     await sendUserMessage({ newMessage });
   }
@@ -93,6 +165,7 @@ const MiddlePannel = ({
         content: inputValue,
         userId,
         noteId,
+        conversationId: activeConversationId || undefined
       };
       setInputValue("");
       await sendUserMessage({ newMessage });
@@ -123,6 +196,7 @@ const MiddlePannel = ({
   }, []);
 
   return (
+    <>
     <div
       style={{
         width: "100%",
@@ -184,12 +258,22 @@ const MiddlePannel = ({
         />
 
         {/* Messages */}
-        {chatHistory?.chatHistory?.filter(Boolean).map((msg, index) => (
-          <ChatMessage key={index} msg={msg} />
+        {activeConversationId && chatHistory?.chatHistory?.filter(Boolean).map((msg, index) => (
+          <ChatMessage
+            key={index}
+            msg={msg}
+            citations={citationsMap[index]}
+            onOpenSource={(citations, docId) => setSourceModal({ citations, initialDocId: docId })}
+          />
         ))}
 
+        {/* Streaming Message */}
+        {isStreaming && streamingMessage && (
+          <ChatMessage msg={{ role: "ai", content: streamingMessage }} />
+        )}
+
         {/* Loading indicator */}
-        {loading && (
+        {loading && !isStreaming && (
           <div
             style={{
               display: "flex",
@@ -210,7 +294,7 @@ const MiddlePannel = ({
                 justifyContent: "center",
               }}
             >
-              <Sparkles size={14} style={{ color: "#fff" }} />
+              <Sparkles size={14} style={{ color: "var(--text-1)" }} />
             </div>
             <div
               style={{
@@ -228,12 +312,12 @@ const MiddlePannel = ({
                     borderRadius: "50%",
                     background: "var(--primary-brand)",
                     opacity: 0.5,
-                    animation: `pulse 1.2s ease-in-out ${i * 0.2}s infinite`,
+                    animation: `dotPulse 1.2s ease-in-out ${i * 0.2}s infinite`,
                   }}
                 />
               ))}
             </div>
-            <style>{`@keyframes pulse{0%,100%{opacity:.3;transform:scale(.85)}50%{opacity:1;transform:scale(1.1)}}`}</style>
+            <style>{`@keyframes dotPulse{0%,100%{opacity:.3;transform:scale(.85)}50%{opacity:1;transform:scale(1.1)}}`}</style>
           </div>
         )}
       </div>
@@ -255,7 +339,7 @@ const MiddlePannel = ({
               gap: 6,
               padding: "6px 16px",
               borderRadius: 20,
-              border: "1px solid var(--border-accent)",
+              border: `1px solid var(--border-accent)`,
               background: "var(--primary-glow)",
               color: "var(--primary-brand)",
               fontSize: 12,
@@ -266,7 +350,7 @@ const MiddlePannel = ({
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.background = "var(--primary-brand)";
-              e.currentTarget.style.color = "#fff";
+              e.currentTarget.style.color = "var(--text-1)";
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.background = "var(--primary-glow)";
@@ -311,7 +395,7 @@ const MiddlePannel = ({
           <span
             style={{
               fontSize: 11,
-              color: "var(--text-3)",
+              color: "var(--text-4)",
               whiteSpace: "nowrap",
               fontWeight: 500,
             }}
@@ -334,13 +418,13 @@ const MiddlePannel = ({
               cursor: loading ? "not-allowed" : "pointer",
               flexShrink: 0,
               background: loading
-                ? "var(--text-3)"
+                ? "var(--text-4)"
                 : "linear-gradient(135deg, var(--primary-brand) 0%, var(--primary-light) 100%)",
               transition: "all 0.25s",
               transform: "scale(1)",
               boxShadow: loading
                 ? "none"
-                : "0 2px 8px rgba(109, 95, 246, 0.3)",
+                : "var(--shadow-primary)",
             }}
             onMouseEnter={(e) => {
               if (!loading)
@@ -354,10 +438,10 @@ const MiddlePannel = ({
               <Loader2
                 className="spin"
                 size={16}
-                style={{ color: "#fff" }}
+                style={{ color: "var(--text-1)" }}
               />
             ) : (
-              <SendHorizonal size={15} style={{ color: "#fff" }} />
+              <SendHorizonal size={15} style={{ color: "var(--text-1)" }} />
             )}
           </button>
         </div>
@@ -369,6 +453,16 @@ const MiddlePannel = ({
         />
       </div>
     </div>
+
+    {/* Source Viewer Modal */}
+    {sourceModal && (
+      <SourceViewerModal
+        citations={sourceModal.citations}
+        initialDocId={sourceModal.initialDocId}
+        onClose={() => setSourceModal(null)}
+      />
+    )}
+  </>
   );
 };
 
@@ -384,21 +478,20 @@ const NoteHeader = ({
   docIds: string[];
   aiResult: questionAndDocOverviewType;
 }) => {
-  const [copied, setCopied] = useState(false);
-
-  const handleCopy = () => {
-    const text = aiResult?.aiResult?.doc_overview || "";
-    navigator.clipboard.writeText(text);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
-
   return (
     <div style={{ marginBottom: 16 }} className="fade-in-up">
       {note?.image && (
-        <span style={{ fontSize: "3rem", lineHeight: 1.2 }}>
-          {note.image}
-        </span>
+        note.image.startsWith("http") ? (
+          <img
+            src={note.image}
+            alt=""
+            style={{ width: 64, height: 64, borderRadius: 12, opacity: 0.9, objectFit: "cover", marginBottom: 12 }}
+          />
+        ) : (
+          <span style={{ fontSize: "3rem", lineHeight: 1.2 }}>
+            {note.image}
+          </span>
+        )
       )}
 
       <h1
@@ -436,35 +529,6 @@ const NoteHeader = ({
         </p>
       )}
 
-      <button
-        onClick={handleCopy}
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 6,
-          padding: "6px 12px",
-          borderRadius: 8,
-          border: "1px solid var(--border-default)",
-          background: "transparent",
-          color: "var(--text-3)",
-          fontSize: 12,
-          fontWeight: 500,
-          cursor: "pointer",
-          transition: "all 0.2s",
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.borderColor = "var(--border-accent)";
-          e.currentTarget.style.color = "var(--primary-brand)";
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.borderColor = "var(--border-default)";
-          e.currentTarget.style.color = "var(--text-3)";
-        }}
-      >
-        <Copy size={13} />
-        {copied ? "Copied!" : "Copy"}
-      </button>
-
       <div
         style={{
           height: 1,
@@ -481,9 +545,18 @@ const NoteHeader = ({
    ═══════════════════════════════════════ */
 type Msg = { role: "ai" | "user"; content: string };
 
-const ChatMessage = memo(({ msg }: { msg: Msg }) => {
+const ChatMessage = memo(({ msg, citations, onOpenSource }: {
+  msg: Msg;
+  citations?: Citation[];
+  onOpenSource?: (citations: Citation[], docId?: string) => void;
+}) => {
   if (!msg || !msg.content) return null;
   const isAI = msg.role === "ai";
+
+  // Strip citation markers from displayed content for cleaner rendering
+  const cleanContent = isAI
+    ? msg.content.replace(/\[Source:\s*[^|]+\|\s*ID:\s*[^\]]+\]/g, "")
+    : msg.content;
 
   return (
     <div
@@ -501,12 +574,12 @@ const ChatMessage = memo(({ msg }: { msg: Msg }) => {
           background: isAI
             ? "transparent"
             : "linear-gradient(135deg, var(--primary-brand) 0%, var(--primary-light) 100%)",
-          color: isAI ? "var(--text-1)" : "#fff",
+          color: isAI ? "var(--text-1)" : "var(--text-1)",
           fontSize: 14,
           lineHeight: 1.65,
           boxShadow: isAI
             ? "none"
-            : "0 2px 8px rgba(109, 95, 246, 0.18)",
+            : "var(--shadow-primary)",
         }}
       >
         <div
@@ -593,11 +666,12 @@ const ChatMessage = memo(({ msg }: { msg: Msg }) => {
                     padding: 10,
                     borderRadius: 8,
                     background: isAI
-                      ? "var(--bg-card)"
+                      ? "var(--bg-elevated)"
                       : "rgba(0,0,0,0.15)",
                     overflowX: "auto",
                     margin: "6px 0",
                     fontSize: 13,
+                    border: isAI ? "1px solid var(--border-default)" : "none",
                   }}
                   {...props}
                 />
@@ -610,9 +684,60 @@ const ChatMessage = memo(({ msg }: { msg: Msg }) => {
               ),
             }}
           >
-            {msg.content}
+            {cleanContent}
           </ReactMarkdown>
         </div>
+
+        {/* Citation chips (AI messages only) */}
+        {isAI && citations && citations.length > 0 && (
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 10 }}>
+            {citations.map((c) => (
+              <button
+                key={c.docId}
+                onClick={() => onOpenSource?.(citations, c.docId)}
+                style={{
+                  display: "flex", alignItems: "center", gap: 5,
+                  padding: "4px 10px", borderRadius: 999,
+                  background: "var(--primary-glow)",
+                  border: "1px solid var(--primary-border)",
+                  color: "var(--primary-brand)", fontSize: 11.5, fontWeight: 600,
+                  cursor: "pointer", transition: "all 0.15s",
+                }}
+                onMouseEnter={e => {
+                  (e.currentTarget as HTMLButtonElement).style.background = "var(--primary-mid)";
+                }}
+                onMouseLeave={e => {
+                  (e.currentTarget as HTMLButtonElement).style.background = "var(--primary-glow)";
+                }}
+              >
+                <FileText size={11} />
+                {c.title.length > 28 ? c.title.substring(0, 28) + "…" : c.title}
+              </button>
+            ))}
+            <button
+              onClick={() => onOpenSource?.(citations)}
+              style={{
+                display: "flex", alignItems: "center", gap: 5,
+                padding: "4px 10px", borderRadius: 999,
+                background: "transparent",
+                border: "1px solid var(--border-default)",
+                color: "var(--text-4)", fontSize: 11.5, fontWeight: 500,
+                cursor: "pointer", transition: "all 0.15s",
+              }}
+              onMouseEnter={e => {
+                (e.currentTarget as HTMLButtonElement).style.color = "var(--text-2)";
+                (e.currentTarget as HTMLButtonElement).style.borderColor = "var(--border-accent)";
+              }}
+              onMouseLeave={e => {
+                (e.currentTarget as HTMLButtonElement).style.color = "var(--text-4)";
+                (e.currentTarget as HTMLButtonElement).style.borderColor = "var(--border-default)";
+              }}
+            >
+              <BookOpen size={11} />
+              View all sources
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -1,7 +1,7 @@
 import { Document } from "@langchain/core/documents";
 import { ChatPromptTemplate } from "@langchain/core/prompts";
 import { Runnable } from "@langchain/core/runnables";
-import * as googleTTS from 'google-tts-api';
+import { getAllAudioBase64 } from 'google-tts-api';
 import { invokeWithRetry } from "@/util/invokeWithRetry";
 import { env } from "@/config/env";
 
@@ -33,7 +33,7 @@ export async function generateAudio<T extends Runnable>(llm: T, splitDocs: Docum
   console.log("Generated Audio Overview Script:", audioPrompt);
 
   // 2. Call Google TTS API
-  const chunks = await googleTTS.getAllAudioBase64(audioPrompt, {
+  const chunks = await getAllAudioBase64(audioPrompt, {
     lang: 'en',
     slow: false,
     host: 'https://translate.google.com',
@@ -83,7 +83,7 @@ Return ONLY the narration text, nothing else.`,
   console.log("Generated Narration Script:", narrationScript.slice(0, 100) + "...");
 
   // 2. Call Google TTS API for TTS
-  const chunks = await googleTTS.getAllAudioBase64(narrationScript, {
+  const chunks = await getAllAudioBase64(narrationScript, {
     lang: 'en',
     slow: false,
     host: 'https://translate.google.com',

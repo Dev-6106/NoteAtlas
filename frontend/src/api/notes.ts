@@ -2,10 +2,7 @@ import { getUserData } from "@/helper/getUserData";
 import { makeHttpReq } from "@/helper/makeHttpReq";
 import type { NoteServerData, NoteType } from "@/types/note-types";
 import { showError, showSuccess } from "@/util/toast-notification";
-
-
-
-
+import { apiUrl } from "@/config/get-env";
 
 export async function getNotes(page = 1, search: string = ''): Promise<NoteServerData> {
 
@@ -109,11 +106,11 @@ export const searchWeb = async (query: string,userId:string) => {
 
 
 
-export const updateNote = async (noteId: string, title: string) => {
+export const updateNote = async (noteId: string, title?: string, isArchived?: boolean) => {
     try {
 
         const data = await makeHttpReq('PUT', `notes`,
-            { title, id: noteId })
+            { title, id: noteId, isArchived })
         console.log('note updated : ', data)
         showSuccess(data?.message as string)
 
@@ -282,6 +279,50 @@ export const generateBriefingDoc = async (userId: string, noteId: string, docIds
 
 }
 
+// flashcards
+
+export const createFlashcards = async (noteId: string, docIds: string[], count: number = 10) => {
+    try {
+        const userData = getUserData();
+        const userId = userData?._id;
+
+        const data = await makeHttpReq('POST', `notes/flashcards/generate`,
+            { userId, noteId, docIds, count });
+        showSuccess(data?.message || 'Flashcards generated successfully');
+        return data;
+    } catch (error) {
+        console.log('error : ', error);
+        throw error;
+    }
+};
+
+export const getFlashcards = async (noteId: string) => {
+    try {
+        const data = await makeHttpReq('GET', `notes/flashcards?noteId=${noteId}`);
+        return data;
+    } catch (error) {
+        console.log('error : ', error);
+        throw error;
+    }
+};
+
+// ppt
+
+export const createPPT = async (noteId: string, docIds: string[]) => {
+    try {
+        const userData = getUserData();
+        const userId = userData?._id;
+
+        const data = await makeHttpReq('POST', `notes/ppt/generate`,
+            { userId, noteId, docIds });
+        showSuccess(data?.message || 'Presentation generated successfully');
+        return data;
+    } catch (error) {
+        console.log('error : ', error);
+        throw error;
+    }
+};
+
 
 
 
@@ -408,12 +449,14 @@ export const generatePodcast = async (userId: string, noteId: string, docIds: st
 // chats
 
 
-export type messageType={ role: 'ai' | 'user', noteId: string, userId: string, content: string }
+export type messageType={ role: 'ai' | 'user', noteId: string, userId: string, content: string, conversationId?: string }
 export type chatHistoryType = { chatHistory: Array<messageType> }
-export const getNoteChats = async (userId: string, noteId: string) => {
+export const getNoteChats = async (userId: string, noteId: string, conversationId?: string) => {
     try {
-
-        const data = await makeHttpReq('GET', `chats/history?userId=${userId}&noteId=${noteId}`) as chatHistoryType
+        let url = `chats/history?userId=${userId}&noteId=${noteId}`;
+        if (conversationId) url += `&conversationId=${conversationId}`;
+        
+        const data = await makeHttpReq('GET', url) as chatHistoryType;
         return data
 
     } catch (error) {
@@ -423,17 +466,106 @@ export const getNoteChats = async (userId: string, noteId: string) => {
 }
 
 
-export const sendChatMessage = async ({userId,noteId,query}:{userId: string, noteId: string,query:string}) => {
+export const sendChatMessage = async ({userId,noteId,docIds,query, conversationId}:{userId: string, noteId: string, docIds?: string[], query:string, conversationId?: string}) => {
     try {
 
         const data = await makeHttpReq('POST', `chats`,
-            { userId, noteId,query }) as {message:messageType}
+            { userId, noteId, docIds, query, conversationId }) as {message:messageType}
             return data
     } catch (error) {
         console.log('error : ', error)
     }
 
 }
+
+export const sendChatMessageStream = async (
+    {userId,noteId,docIds,query, conversationId}: {userId: string, noteId: string, docIds?: string[], query:string, conversationId?: string},
+    onChunk: (chunk: string) => void,
+    onCitations?: (citations: Array<{ title: string; docId: string }>) => void,
+) => {
+    const url = `${apiUrl}/api/v1/chats`;
+    const res = await fetch(url, {
+        method: "POST",
+        credentials: "include",
+        headers: {
+            "Content-Type": "application/json",
+            "Accept": "text/event-stream",
+        },
+        body: JSON.stringify({userId, noteId, docIds, query, conversationId}),
+    });
+
+    if (!res.ok) {
+        const err: any = new Error("Failed to start chat stream");
+        err.status = res.status;
+        throw err;
+    }
+
+    if (!res.body) {
+        throw new Error("No response body");
+    }
+
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let done = false;
+
+    while (!done) {
+        const { value, done: readerDone } = await reader.read();
+        done = readerDone;
+        if (value) {
+            const chunkText = decoder.decode(value, { stream: true });
+            const lines = chunkText.split("\n");
+            for (const line of lines) {
+                if (line.startsWith("data: ")) {
+                    try {
+                        const data = JSON.parse(line.substring(6));
+                        if (data.chunk) {
+                            onChunk(data.chunk);
+                        }
+                        if (data.done) {
+                            done = true;
+                            if (data.citations && onCitations) {
+                                onCitations(data.citations);
+                            }
+                        }
+                        if (data.error && data.code === 402) {
+                            const err: any = new Error(data.error);
+                            err.status = 402;
+                            throw err;
+                        }
+                    } catch (e: any) {
+                        if (e?.status === 402) throw e;
+                        console.error("Error parsing SSE line", e);
+                    }
+                }
+            }
+        }
+    }
+}
+
+// Multi-chat Conversation APIs
+export const createConversationApi = async (noteId: string, title: string) => {
+    const userData = getUserData();
+    const userId = userData?._id;
+    return await makeHttpReq('POST', `chats/conversations`, { userId, noteId, title });
+};
+
+export const getConversationsApi = async (noteId: string) => {
+    const userData = getUserData();
+    const userId = userData?._id;
+    return await makeHttpReq('GET', `chats/conversations?userId=${userId}&noteId=${noteId}`);
+};
+
+export const renameConversationApi = async (conversationId: string, title: string) => {
+    return await makeHttpReq('PUT', `chats/conversations/${conversationId}/rename`, { title });
+};
+
+export const deleteConversationApi = async (conversationId: string) => {
+    return await makeHttpReq('DELETE', `chats/conversations/${conversationId}`);
+};
+
+export const duplicateConversationApi = async (conversationId: string) => {
+    return await makeHttpReq('POST', `chats/conversations/${conversationId}/duplicate`);
+};
 
 export type questionAndDocOverviewType= {aiResult:{questions:string[],doc_overview:string}}
 
@@ -466,8 +598,81 @@ export const createBlankNote = async () => {
 
 };
 
+export const deleteNoteApi = async (noteId: string) => {
+    try {
+        const data = await makeHttpReq('DELETE', `notes/${noteId}`);
+        showSuccess(data?.message || 'Note deleted successfully');
+        return data;
+    } catch (error) {
+        console.log('error : ', error);
+        throw error;
+    }
+};
 
+export const duplicateNoteApi = async (noteId: string) => {
+    try {
+        const userData = getUserData()
+        const userId = userData?._id
 
+        const data = await makeHttpReq('POST', `notes/${noteId}/duplicate`, { userId });
+        showSuccess(data?.message || 'Note duplicated successfully');
+        return data;
+    } catch (error) {
+        console.log('error : ', error);
+        throw error;
+    }
+};
 
+export const deleteSourceApi = async (docId: string) => {
+    try {
+        const data = await makeHttpReq('DELETE', `notes/sources/${docId}`);
+        showSuccess(data?.message || 'Source deleted successfully');
+        return data;
+    } catch (error) {
+        console.log('error : ', error);
+        throw error;
+    }
+};
 
+export const renameSourceApi = async (docId: string, displayName: string) => {
+    try {
+        const data = await makeHttpReq('PUT', `notes/sources/${docId}/rename`, { displayName });
+        showSuccess(data?.message || 'Source renamed successfully');
+        return data;
+    } catch (error) {
+        console.log('error : ', error);
+        throw error;
+    }
+};
 
+export const uploadFilesApi = async (files: FileList, noteId: string) => {
+    const formData = new FormData();
+    const userData = getUserData();
+    const userId = userData?._id;
+    Array.from(files).forEach((file) => {
+        formData.append("doc", file);
+        formData.append("userId", userId);
+        formData.append("noteId", noteId);
+    });
+
+    try {
+        const response = await fetch(`${apiUrl}/api/v1/notes/upload-files`, {
+            method: "POST",
+            body: formData,
+        });
+
+        if (!response.ok) {
+            throw new Error(`Upload failed: ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        showSuccess('File(s) uploaded successfully');
+        return data;
+    } catch (error) {
+        console.error("Error uploading files:", error);
+        showError('Failed to upload file(s)');
+        throw error;
+    }
+};
+
+// Trigger Vite HMR

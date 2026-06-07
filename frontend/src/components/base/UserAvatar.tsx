@@ -33,27 +33,27 @@ const UserAvatar = () => {
         onClick={() => setMenuOpen(!menuOpen)}
         style={{
           width: 34, height: 34, borderRadius: "50%", padding: 0,
-          border: menuOpen ? "2px solid #6366f1" : "2px solid rgba(99,102,241,0.3)",
-          cursor: "pointer", background: "none",
-          boxShadow: menuOpen ? "0 0 14px rgba(99,102,241,0.45)" : "none",
-          transition: "all 0.2s",
-          overflow: "hidden", flexShrink: 0,
+          border: menuOpen ? "2px solid var(--primary-brand)" : "2px solid var(--primary-border)",
+          background: menuOpen ? "var(--primary-glow)" : "transparent",
+          cursor: "pointer", transition: "all 0.2s"
         }}
         onMouseEnter={e => {
-          (e.currentTarget as HTMLButtonElement).style.borderColor = "#6366f1";
-          (e.currentTarget as HTMLButtonElement).style.boxShadow = "0 0 14px rgba(99,102,241,0.4)";
+          if(!menuOpen){
+            (e.currentTarget as HTMLButtonElement).style.background = "var(--primary-glow)";
+            (e.currentTarget as HTMLButtonElement).style.borderColor = "var(--primary-brand)";
+          }
         }}
         onMouseLeave={e => {
           if (!menuOpen) {
-            (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(99,102,241,0.3)";
-            (e.currentTarget as HTMLButtonElement).style.boxShadow = "none";
+            (e.currentTarget as HTMLButtonElement).style.background = "transparent";
+            (e.currentTarget as HTMLButtonElement).style.borderColor = "var(--primary-border)";
           }
         }}
       >
         <img
           src={userData?.image}
           alt="User"
-          style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+          style={{ width: "100%", height: "100%", borderRadius: "50%", objectFit: "cover", display: "block" }}
         />
       </button>
 
@@ -62,26 +62,26 @@ const UserAvatar = () => {
         <div style={{
           position: "absolute", right: 0, top: "calc(100% + 10px)",
           width: 240, zIndex: 200,
-          background: "rgba(10,13,26,0.97)",
-          border: "1px solid rgba(99,102,241,0.2)",
+          background: "var(--dropdown-bg)",
+          border: "1px solid var(--primary-border)",
           borderRadius: 16,
-          boxShadow: "0 0 0 1px rgba(99,102,241,0.08), 0 20px 48px rgba(0,0,0,0.65), 0 0 40px rgba(99,102,241,0.08)",
+          boxShadow: "0 0 0 1px var(--primary-border), 0 20px 48px rgba(0,0,0,0.65), var(--shadow-primary)",
           backdropFilter: "blur(20px)",
           overflow: "hidden",
           animation: "avatarDropIn 0.18s ease forwards",
         }}>
 
-          {/* Top accent */}
+          {/* Top accent line */}
           <div style={{
-            height: 2,
-            background: "linear-gradient(90deg, transparent, #6366f1 40%, #8b5cf6 60%, transparent)",
+            height: 3,
+            background: "linear-gradient(90deg, transparent, var(--primary-brand) 40%, var(--primary-light) 60%, transparent)",
           }} />
 
           {/* User Info */}
           <div style={{
             display: "flex", alignItems: "center", gap: 12,
             padding: "16px 18px",
-            borderBottom: "1px solid rgba(255,255,255,0.06)",
+            borderBottom: "1px solid var(--border-default)",
           }}>
             <img
               src={userData?.image}
@@ -94,14 +94,14 @@ const UserAvatar = () => {
             />
             <div style={{ minWidth: 0 }}>
               <p style={{
-                fontSize: 14, fontWeight: 700, color: "#f1f5f9",
+                fontSize: 14, fontWeight: 700, color: "var(--text-1)",
                 letterSpacing: "-0.2px", whiteSpace: "nowrap",
                 overflow: "hidden", textOverflow: "ellipsis",
               }}>
                 {userData?.name}
               </p>
               <p style={{
-                fontSize: 12, color: "#475569", marginTop: 2,
+                fontSize: 12, color: "var(--text-4)", marginTop: 2,
                 whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
               }}>
                 {userData?.email}
@@ -117,7 +117,7 @@ const UserAvatar = () => {
                 width: "100%", display: "flex", alignItems: "center", gap: 9,
                 padding: "10px 12px", borderRadius: 10,
                 background: "transparent", border: "none",
-                color: "#94a3b8", fontSize: 13, fontWeight: 600,
+                color: "var(--text-3)", fontSize: 13, fontWeight: 600,
                 cursor: "pointer", textAlign: "left",
                 transition: "all 0.15s",
               }}
@@ -127,7 +127,7 @@ const UserAvatar = () => {
               }}
               onMouseLeave={e => {
                 (e.currentTarget as HTMLButtonElement).style.background = "transparent";
-                (e.currentTarget as HTMLButtonElement).style.color = "#94a3b8";
+                (e.currentTarget as HTMLButtonElement).style.color = "var(--text-3)";
               }}
             >
               <LogOut size={14} />

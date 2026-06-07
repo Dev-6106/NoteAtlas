@@ -5,11 +5,14 @@ import { router } from './router';
 import './index.css'
 import { Provider } from 'react-redux'
 import { store } from './store';
+import { ErrorBoundary } from './components/base/ErrorBoundary';
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-<Provider store={store}>
-  <RouterProvider router={router} />,
-</Provider>
-  
+    <Provider store={store}>
+      <ErrorBoundary>
+        <RouterProvider router={router} />
+      </ErrorBoundary>
+    </Provider>
   </StrictMode>,
 )

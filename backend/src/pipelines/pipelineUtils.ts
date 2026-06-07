@@ -33,11 +33,11 @@ export function lengthFunction(documents: Document[]): number {
 // ─────────────────────────────────────────────────────────────────────────────
 // 2.  REQUEST THROTTLE  (proactive — fires BEFORE each request)
 //
-//  MIN_REQUEST_GAP_MS = 4000 → max 15 req/min, safe for Gemini free tier.
+//  MIN_REQUEST_GAP_MS = 12000 → max 5 req/min, safe for Fireworks free tier.
 //  Lower values risk 429s; higher values are always safe.
 // ─────────────────────────────────────────────────────────────────────────────
 
-const MIN_REQUEST_GAP_MS = 4_000; // 15 RPM ceiling (Gemini free tier)
+const MIN_REQUEST_GAP_MS = 12_000; // 5 RPM ceiling (Fireworks free tier)
 let   lastRequestAt      = 0;     // epoch ms of the last dispatched request
 let   throttlePromise: Promise<void> = Promise.resolve();
 
@@ -132,10 +132,10 @@ export async function withRetry<T>(fn: () => Promise<T>): Promise<T> {
       attempt++;
       const status: number = err?.response?.status ?? err?.status ?? 0;
 
-      if (status !== 429 && status < 500 && status !== 0) throw err; // non-retryable
+      if (status !== 429 && status !== 413 && status < 500 && status !== 0) throw err; // non-retryable
       if (attempt >= MAX_ATTEMPTS) throw err;
 
-      if (status === 429) {
+      if (status === 429 || status === 413) {
         // Read exact Retry-After; fall back to 60 s if header missing
         const retryAfterMs = parseRetryAfter(err) || 60_000;
         const until = Date.now() + retryAfterMs;

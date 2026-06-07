@@ -36,7 +36,7 @@ function LoginPage() {
         .la2{animation:fadeUp 0.5s 0.2s ease both}
         .la3{animation:fadeUp 0.5s 0.32s ease both}
         .google-btn:hover{
-          background:rgba(255,255,255,0.07) !important;
+          background:var(--border-default) !important;
           border-color:rgba(109,95,246,0.45) !important;
           transform:translateY(-1px) !important;
           box-shadow:0 8px 24px rgba(109,95,246,0.15) !important;
@@ -65,7 +65,7 @@ function LoginPage() {
         <div className="la0" style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 10, marginBottom: 32 }}>
           <LogoMark size={36} />
           <span style={{ fontSize: 18, fontWeight: 700, color: T.text1, letterSpacing: "-0.5px" }}>
-            Notebook<span style={{ color: "#8b80f8" }}>LM</span>
+            Note<span style={{ color: "var(--primary-brand)" }}>Atlas</span>
           </span>
         </div>
 
@@ -99,7 +99,7 @@ function LoginPage() {
               width: "100%",
               display: "flex", alignItems: "center", justifyContent: "center", gap: 11,
               padding: "13px 20px", borderRadius: 11,
-              background: "rgba(255,255,255,0.04)",
+              background: "var(--bg-surface)",
               border: `1px solid ${T.border}`,
               color: T.text1, fontSize: 14, fontWeight: 600,
               cursor: "pointer",

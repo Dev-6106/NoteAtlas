@@ -1,42 +1,28 @@
 /**
- * generateSummary.ts  — OPTIMISED
+ * generateSummary.ts  — SEQUENTIAL
  * ─────────────────────────────────────────────────────────────────────────────
- * Map-reduce summarisation pipeline built on LangGraph.
+ * Map-reduce summarisation pipeline.
  *
- * Changes from the original
- * ──────────────────────────
- * ┌─ LATENCY ──────────────────────────────────────────────────────────────────
- * │  • MAX_TOKENS raised 10 k → 32 k  ➜ collapse rounds drop from ~5 to ~1-2
- * │  • collapseSummaries now runs ALL groups in parallel (Promise.all via pLimit)
- * │    instead of sequential for…of  ➜ linear speedup with group count
- * │  • maxConcurrency raised 2 → 12  ➜ map phase 6× faster on large docs
- * │  • Cached LLM invocations: identical chunks never hit the API twice
- * └────────────────────────────────────────────────────────────────────────────
- * ┌─ RELIABILITY ──────────────────────────────────────────────────────────────
- * │  • Exponential-backoff retry with jitter (replaces bare invokeWithRetry)
- * │  • Chunk deduplication before map phase
- * │  • Guard against empty splitDocs input
- * └────────────────────────────────────────────────────────────────────────────
- * ┌─ QUALITY ───────────────────────────────────────────────────────────────────
- * │  • Tighter map prompt: instructs the model to be concise + structured
- * │    → shorter per-chunk outputs → fewer collapse rounds needed
- * │  • Reduce prompt: asks for a single coherent narrative, not a list dump
- * └────────────────────────────────────────────────────────────────────────────
+ * Replaces the LangGraph Send-based fan-out with a simple sequential loop
+ * so that only ONE LLM request is in-flight at a time.  This is slower but
+ * completely eliminates rate-limit avalanches on free-tier APIs.
+ *
+ * Flow:
+ *   1. MAP   — summarise each chunk one-by-one (sequential)
+ *   2. COLLAPSE — if combined summaries exceed MAX_TOKENS, merge groups
+ *   3. REDUCE — produce the final summary
  */
 
 import "dotenv/config";
 
-import { Annotation, Send, StateGraph } from "@langchain/langgraph";
-import { Document }                     from "@langchain/core/documents";
-import { ChatPromptTemplate }           from "@langchain/core/prompts";
-import { Runnable }                     from "@langchain/core/runnables";
+import { Document }           from "@langchain/core/documents";
+import { ChatPromptTemplate } from "@langchain/core/prompts";
+import { Runnable }           from "@langchain/core/runnables";
 
 import {
-  approximateTokens,
   lengthFunction,
   splitListOfDocs,
   deduplicateDocs,
-  pLimit,
   cachedInvoke,
 } from "./pipelineUtils";
 
@@ -44,29 +30,12 @@ import {
 // CONSTANTS
 // ─────────────────────────────────────────────────────────────────────────────
 
-/**
- * 32 k tokens per collapse group.
- * Most models accept 8–128 k context; 32 k is a safe ceiling that keeps
- * collapse rounds to 1 for typical Wikipedia-sized inputs (~20–40 chunks).
- */
-const MAX_TOKENS     = 32_000;
-/**
- * Gemini free tier: 15 RPM. With the 4s throttle gap in pipelineUtils,
- * sequential processing (1 worker) stays safely within limits.
- * Gemini's 1M TPM means tokens are never the bottleneck.
- */
-const MAP_CONCURRENCY = 1;
+const MAX_TOKENS = 32_000;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // PROMPTS
 // ─────────────────────────────────────────────────────────────────────────────
 
-/**
- * Map prompt: keep output SHORT.
- * The single biggest lever on latency/collapse-rounds is how large each
- * per-chunk summary is.  Instructing "≤150 words" shrinks the reduce input
- * dramatically without losing fidelity.
- */
 const mapPrompt = ChatPromptTemplate.fromMessages([
   [
     "user",
@@ -79,9 +48,6 @@ PASSAGE:
   ],
 ]);
 
-/**
- * Reduce prompt: produce a single flowing narrative, not a bullet dump.
- */
 const reducePrompt = ChatPromptTemplate.fromMessages([
   [
     "user",
@@ -96,6 +62,19 @@ SUMMARIES:
 ]);
 
 // ─────────────────────────────────────────────────────────────────────────────
+// HELPERS
+// ─────────────────────────────────────────────────────────────────────────────
+
+async function reduceDocs<T extends Runnable>(
+  llm: T,
+  docs: Document[],
+): Promise<string> {
+  const docsText = docs.map((d) => d.pageContent).join("\n\n");
+  const prompt   = await reducePrompt.invoke({ docs: docsText });
+  return cachedInvoke(llm, prompt);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // MAIN EXPORT
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -106,136 +85,45 @@ export async function generateSummary<T extends Runnable>(
 
   if (!rawDocs.length) throw new Error("[generateSummary] No documents provided.");
 
-  // Deduplicate before anything else
   const splitDocs = deduplicateDocs(rawDocs);
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // STATE
-  // ─────────────────────────────────────────────────────────────────────────
+  // ── MAP: summarise each chunk ONE AT A TIME ──────────────────────────────
+  console.log(`[summary] MAP phase: ${splitDocs.length} chunks (sequential)…`);
+  const summaries: string[] = [];
 
-  const OverallState = Annotation.Root({
-    contents: Annotation<string[]>({
-      reducer: (s, u) => s.concat(u),
-      default: () => [],
-    }),
-    summaries: Annotation<string[]>({
-      reducer: (s, u) => s.concat(u),
-      default: () => [],
-    }),
-    collapsedSummaries: Annotation<Document[]>({
-      reducer: (_, u) => u,
-      default: () => [],
-    }),
-    finalSummary: Annotation<string>({
-      reducer: (_, u) => u,
-      default: () => "",
-    }),
-  });
-
-  interface SummaryState { content: string }
-
-  // ─────────────────────────────────────────────────────────────────────────
-  // NODES
-  // ─────────────────────────────────────────────────────────────────────────
-
-  /** MAP: summarise one chunk */
-  async function generateSummaryChunk(
-    state: SummaryState,
-  ): Promise<{ summaries: string[] }> {
-    const prompt = await mapPrompt.invoke({ context: state.content });
+  for (let i = 0; i < splitDocs.length; i++) {
+    console.log(`[summary]   chunk ${i + 1}/${splitDocs.length}…`);
+    const prompt = await mapPrompt.invoke({ context: splitDocs[i].pageContent });
     const text   = await cachedInvoke(llm, prompt);
-    return { summaries: [text] };
+    summaries.push(text);
   }
 
-  /** Fan-out: one Send per chunk */
-  const mapSummaries = (state: typeof OverallState.State) =>
-    state.contents.map((content) =>
-      new Send("generateSummaryChunk", { content }),
-    );
+  // ── COLLAPSE: merge groups until they fit in MAX_TOKENS ──────────────────
+  let collapsedDocs = summaries.map((s) => new Document({ pageContent: s }));
 
-  /** Collect individual summaries into Documents */
-  async function collectSummaries(state: typeof OverallState.State) {
-    return {
-      collapsedSummaries: state.summaries.map(
-        (s) => new Document({ pageContent: s }),
-      ),
-    };
-  }
+  let collapseRound = 0;
+  while (lengthFunction(collapsedDocs) > MAX_TOKENS) {
+    collapseRound++;
+    const groups = splitListOfDocs(collapsedDocs, MAX_TOKENS);
+    console.log(`[summary] COLLAPSE round ${collapseRound}: ${groups.length} group(s)…`);
 
-  /** Reduce a list of Documents → single string via LLM */
-  async function reduceDocs(docs: Document[]): Promise<string> {
-    const docsText = docs.map((d) => d.pageContent).join("\n\n");
-    const prompt   = await reducePrompt.invoke({ docs: docsText });
-    return cachedInvoke(llm, prompt);
-  }
-
-  /**
-   * COLLAPSE: run all groups in PARALLEL instead of sequentially.
-   * This is the biggest single-node latency win.
-   */
-  async function collapseSummaries(state: typeof OverallState.State) {
-    const docLists = splitListOfDocs(state.collapsedSummaries, MAX_TOKENS);
-
-    const tasks = docLists.map(
-      (group) => async () =>
-        new Document({ pageContent: await reduceDocs(group) }),
-    );
-
-    const results = await pLimit(tasks, MAP_CONCURRENCY);
-    return { collapsedSummaries: results };
-  }
-
-  /** Route: another collapse pass needed, or go straight to final? */
-  function shouldCollapse(state: typeof OverallState.State): string {
-    return lengthFunction(state.collapsedSummaries) > MAX_TOKENS
-      ? "collapseSummaries"
-      : "generateFinalSummary";
-  }
-
-  /** Final reduce */
-  async function generateFinalSummary(state: typeof OverallState.State) {
-    return { finalSummary: await reduceDocs(state.collapsedSummaries) };
-  }
-
-  // ─────────────────────────────────────────────────────────────────────────
-  // GRAPH
-  // ─────────────────────────────────────────────────────────────────────────
-
-  const graph = new StateGraph(OverallState)
-    .addNode("generateSummaryChunk",  generateSummaryChunk)
-    .addNode("collectSummaries",      collectSummaries)
-    .addNode("collapseSummaries",     collapseSummaries)
-    .addNode("generateFinalSummary",  generateFinalSummary)
-
-    .addConditionalEdges("__start__",         mapSummaries,    ["generateSummaryChunk"])
-    .addEdge(            "generateSummaryChunk", "collectSummaries")
-    .addConditionalEdges("collectSummaries",   shouldCollapse,  ["collapseSummaries", "generateFinalSummary"])
-    .addConditionalEdges("collapseSummaries",  shouldCollapse,  ["collapseSummaries", "generateFinalSummary"])
-    .addEdge(            "generateFinalSummary", "__end__");
-
-  const app = graph.compile();
-
-  // ─────────────────────────────────────────────────────────────────────────
-  // RUN
-  // ─────────────────────────────────────────────────────────────────────────
-
-  let finalSummary = "";
-
-  for await (const step of await app.stream(
-    { contents: splitDocs.map((d) => d.pageContent) },
-    {
-      recursionLimit: 100,
-      configurable: { maxConcurrency: MAP_CONCURRENCY }, // matches pLimit above
-    },
-  )) {
-    if (step.generateFinalSummary?.finalSummary) {
-      finalSummary = step.generateFinalSummary.finalSummary;
+    const newDocs: Document[] = [];
+    for (let i = 0; i < groups.length; i++) {
+      console.log(`[summary]   group ${i + 1}/${groups.length}…`);
+      const text = await reduceDocs(llm, groups[i]);
+      newDocs.push(new Document({ pageContent: text }));
     }
+    collapsedDocs = newDocs;
   }
+
+  // ── REDUCE: final summary ────────────────────────────────────────────────
+  console.log("[summary] REDUCE phase…");
+  const finalSummary = await reduceDocs(llm, collapsedDocs);
 
   if (!finalSummary) {
     throw new Error("[generateSummary] Pipeline completed but produced no output.");
   }
 
+  console.log("[summary] Done.");
   return finalSummary;
 }

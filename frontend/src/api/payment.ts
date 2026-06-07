@@ -1,42 +1,44 @@
 import { makeHttpReq } from "@/helper/makeHttpReq";
 import { showError } from "@/util/toast-notification";
 
-export async function addPaymentMethod({ userId, email }: { userId: string, email: string }) {
+// ─── Plan types ───────────────────────────────────────────
+export type PlanId = "pro" | "premium";
 
-    try {
-
-        const data = await makeHttpReq('POST', `notes/payment/create-setup-session`, { userId, email }) as { url: string }
-        window.open(data?.url)
-
-    } catch (error: any) {
-        console.log('error :', error?.message)
-        throw error;
-    }
+export interface RazorpayOrderResponse {
+    orderId: string;
+    amount: number;
+    currency: string;
+    keyId: string;
+    plan: { id: string; name: string; priceInr: number; credits: number };
 }
 
-
-
-export async function buyCredit({ userId, email, amount }: { userId: string, email: string, amount: number }) {
-
-    try {
-
-        const data = await makeHttpReq('POST', `notes/payment/charge-customer`, { userId, email, amount }) as { message: string }
-        return data
-    } catch (error: any) {
-        showError(error?.message)
-        throw error;
-    }
+export interface VerifyPaymentPayload {
+    razorpay_order_id: string;
+    razorpay_payment_id: string;
+    razorpay_signature: string;
+    userId: string;
+    planId: PlanId;
 }
 
+// ─── Create Razorpay order ────────────────────────────────
+export async function createRazorpayOrder(userId: string, planId: PlanId): Promise<RazorpayOrderResponse> {
+    const data = await makeHttpReq('POST', 'payment/create-order', { userId, planId }) as RazorpayOrderResponse;
+    return data;
+}
 
+// ─── Verify payment after checkout ───────────────────────
+export async function verifyRazorpayPayment(payload: VerifyPaymentPayload): Promise<{ success: boolean; message: string; credits: number }> {
+    const data = await makeHttpReq('POST', 'payment/verify', payload) as { success: boolean; message: string; credits: number };
+    return data;
+}
+
+// ─── Get user credits + payment status ───────────────────
 export const getUserCreditAndPaymentMethod = async (userId: string) => {
     try {
-
-        const data = await makeHttpReq('GET', `notes/payment/user-credits?userId=${userId}`)
-        return data
+        const data = await makeHttpReq('GET', `payment/user-credits?userId=${userId}`);
+        return data;
     } catch (error: any) {
-        showError(error?.error?.message || error?.message)
+        showError(error?.error?.message || error?.message);
         throw error;
     }
-
 };

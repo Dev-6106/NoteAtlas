@@ -16,6 +16,7 @@ const sourceNoteResultState = {
     error: null,
     sourceModal: { modal: false, title: "", content: "", source_type: "" },
     mindMapModal: { modal: false, title: "", content: "", source_type: "" },
+    audioCard: { show: false, content: "", title: "" },
 
 };
 
@@ -38,20 +39,30 @@ export const rightPanelSlice = createSlice({
         },
 
         closeSourceModal: (state) => {
-            state.sourceModal.modal = false
-            state.sourceModal.title = ''
-            state.sourceModal.content = ''
+            state.sourceModal.modal = false;
+            state.sourceModal.title = '';
+            state.sourceModal.content = '';
+            state.sourceModal.source_type = '';
+        },
+
+        showAudioPlayer: (state, action: PayloadAction<{ title: string, content: string }>) => {
+            state.audioCard.show = true;
+            state.audioCard.title = action.payload.title;
+            state.audioCard.content = action.payload.content;
+        },
+
+        closeAudioPlayer: (state) => {
+            state.audioCard.show = false;
         },
 
 
 
 
         showSourceModalContent: (state, action: PayloadAction<{ title: string, content: string, source_type: string }>) => {
-
-            if (action.payload.source_type.includes('mindMap')) {
-
+            if (action.payload.source_type.includes('mindmap') || action.payload.source_type.includes('mindMap')) {
                 state.mindMapModal.content = action.payload?.content
                 state.mindMapModal.modal = true
+                state.mindMapModal.source_type = action.payload?.source_type
             }
 
 
@@ -74,6 +85,9 @@ export const rightPanelSlice = createSlice({
                 state.docIds.push(action.payload)
             }
 
+        },
+        setDocIds: (state, action: PayloadAction<string[]>) => {
+            state.docIds = action.payload;
         }
     },
     extraReducers: (builder) => {
@@ -93,7 +107,7 @@ export const rightPanelSlice = createSlice({
     },
 })
 
-export const { addDocIds, showSourceModalContent, closeSourceModal, closeMindMap } = rightPanelSlice.actions
+export const { addDocIds, setDocIds, showSourceModalContent, closeSourceModal, closeMindMap, showAudioPlayer, closeAudioPlayer } = rightPanelSlice.actions
 
 
 export default rightPanelSlice.reducer

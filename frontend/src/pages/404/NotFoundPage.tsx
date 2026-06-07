@@ -63,13 +63,13 @@ export default function NotFoundPage() {
         <div className="anim-d0" style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 9, marginBottom: 48 }}>
           <div style={{
             width: 32, height: 32, borderRadius: 9,
-            background: "linear-gradient(135deg,#6366f1,#8b5cf6)",
+            background: "linear-gradient(135deg, var(--primary-brand), var(--primary-light))",
             display: "flex", alignItems: "center", justifyContent: "center",
             boxShadow: "0 0 16px rgba(99,102,241,0.45)",
           }}>
-            <Sparkles size={15} color="#fff" />
+            <Sparkles size={15} color="var(--text-1)" />
           </div>
-          <span style={{ fontSize: 16, fontWeight: 800, color: "#f1f5f9", letterSpacing: "-0.4px" }}>NotebookLM</span>
+          <span style={{ fontSize: 16, fontWeight: 800, color: "var(--text-1)", letterSpacing: "-0.4px" }}>NoteAtlas</span>
         </div>
 
         {/* 404 */}
@@ -78,10 +78,10 @@ export default function NotFoundPage() {
           fontWeight: 800,
           letterSpacing: "-6px",
           lineHeight: 1,
-          color: "#f1f5f9",
+          color: "var(--text-1)",
           animation: "flicker 5s ease-in-out infinite",
           marginBottom: 8,
-          background: "linear-gradient(135deg, #a5b4fc 0%, #818cf8 40%, #c084fc 100%)",
+          background: "linear-gradient(135deg, var(--text-1) 0%, var(--primary-brand) 40%, #c084fc 100%)",
           WebkitBackgroundClip: "text",
           WebkitTextFillColor: "transparent",
           backgroundClip: "text",
@@ -99,12 +99,12 @@ export default function NotFoundPage() {
         {/* Text */}
         <h1 className="anim-d2" style={{
           fontSize: "clamp(18px, 3vw, 22px)", fontWeight: 700,
-          color: "#f1f5f9", letterSpacing: "-0.4px", marginBottom: 12,
+          color: "var(--text-1)", letterSpacing: "-0.4px", marginBottom: 12,
         }}>
           Page Not Found
         </h1>
         <p className="anim-d2" style={{
-          fontSize: 15, color: "#475569", lineHeight: 1.7, marginBottom: 36,
+          fontSize: 15, color: "var(--text-4)", lineHeight: 1.7, marginBottom: 36,
         }}>
           Oops! The page you're looking for doesn't exist or may have been moved.
         </p>
@@ -115,9 +115,9 @@ export default function NotFoundPage() {
             <button
               style={{
                 display: "inline-flex", alignItems: "center", gap: 8,
-                padding: "13px 28px", borderRadius: 12,
-                background: "linear-gradient(135deg,#6366f1,#8b5cf6)",
-                color: "#fff", fontSize: 14, fontWeight: 700,
+                padding: "16px 36px", borderRadius: 14,
+                background: "linear-gradient(135deg, var(--primary-brand), var(--primary-light))",
+                color: "var(--text-on-primary)", fontSize: 15, fontWeight: 700,
                 border: "none", cursor: "pointer",
                 boxShadow: "0 8px 28px rgba(99,102,241,0.38)",
                 transition: "all 0.2s",

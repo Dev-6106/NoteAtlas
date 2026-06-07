@@ -4,13 +4,25 @@
 import { getNotes } from "@/api/notes";
 import type { NoteServerData } from "@/types/note-types";
 import { createSlice, createAsyncThunk, type PayloadAction, } from "@reduxjs/toolkit";
+import { makeHttpReq } from "@/helper/makeHttpReq";
 
 
 // Wrap API call in an async thunk
 export const fetchNotes = createAsyncThunk(
   "notes/fetchNotes",
-
-  async ({ page = 1, search = "" }: { page: number, search: string }) => getNotes(page, search)
+  async ({ page = 1, search = "", isArchived = false, sortBy = "updatedAt", sortOrder = "desc" }: 
+    { page: number, search: string, isArchived?: boolean, sortBy?: string, sortOrder?: string }) => {
+      const query = new URLSearchParams({
+          page: page.toString(),
+          search,
+          isArchived: isArchived.toString(),
+          sortBy,
+          sortOrder
+      }).toString();
+      
+      const data = await makeHttpReq('GET', `notes?${query}`) as NoteServerData;
+      return data;
+  }
 );
 
 interface NotesState extends NoteServerData {

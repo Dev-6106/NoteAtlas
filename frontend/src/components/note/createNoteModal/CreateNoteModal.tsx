@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { BaseModal } from "../../base/BaseModal";
-import { ClipboardMinus, HardDrive, Link2, Loader2, Newspaper, Upload } from "lucide-react";
+import { ClipboardMinus, HardDrive, Link2, Loader2, Newspaper, Upload, CheckCircle2, FileText, Database, Zap } from "lucide-react";
 import type { AppDispatch, RootState } from "@/store";
 import { useDispatch, useSelector } from "react-redux";
 import { toggleAddSourceNoteModal } from "@/store/addSourceSlice";
@@ -89,7 +89,7 @@ const CreateNoteModal = ({ noteId }: { noteId?: string }) => {
             <BaseModal
                 open={modal}
                 onOpenChange={() => dispatch(toggleAddSourceNoteModal())}
-                title="NotebookLM"
+                title="NoteAtlas"
                 description=""
                 width={850}
                 height={600}
@@ -101,7 +101,7 @@ const CreateNoteModal = ({ noteId }: { noteId?: string }) => {
                     alignItems: "center", marginBottom: 24,
                 }}>
                     <h2 style={{
-                        fontSize: 18, fontWeight: 700, color: "#f1f5f9",
+                        fontSize: 18, fontWeight: 700, color: "var(--text-1)",
                         letterSpacing: "-0.3px",
                     }}>
                         Add Sources
@@ -110,10 +110,10 @@ const CreateNoteModal = ({ noteId }: { noteId?: string }) => {
 
                 {/* Description */}
                 <p style={{
-                    fontSize: 14, color: "#64748b", lineHeight: 1.7,
+                    fontSize: 14, color: "var(--text-3)", lineHeight: 1.7,
                     marginBottom: 16,
                 }}>
-                    Sources let NotebookLM base its responses on the information that matters most to you.
+                    Sources let NoteAtlas base its responses on the information that matters most to you.
                     (Examples: marketing plans, course reading, research notes, meeting transcripts, sales documents, etc.)
                 </p>
 
@@ -128,12 +128,12 @@ const CreateNoteModal = ({ noteId }: { noteId?: string }) => {
                     {/* Google Workspace */}
                     <div style={{
                         flex: 1, borderRadius: 14, padding: 16,
-                        background: "rgba(255,255,255,0.03)",
-                        border: "1px solid rgba(255,255,255,0.07)",
+                        background: "var(--bg-card)",
+                        border: "1px solid var(--border-default)",
                         transition: "all 0.2s",
                     }}>
                         <p style={{
-                            fontSize: 14, fontWeight: 600, color: "#f1f5f9",
+                            fontSize: 14, fontWeight: 600, color: "var(--text-1)",
                             marginBottom: 16,
                         }}>
                             Google Workspace
@@ -143,18 +143,18 @@ const CreateNoteModal = ({ noteId }: { noteId?: string }) => {
                             style={{
                                 display: "flex", alignItems: "center", gap: 8,
                                 padding: "8px 14px", borderRadius: 10,
-                                background: "rgba(99,102,241,0.1)",
-                                border: "1px solid rgba(99,102,241,0.25)",
-                                color: "#a5b4fc", fontSize: 13, fontWeight: 600,
+                                background: "var(--primary-glow)",
+                                border: "1px solid var(--primary-border)",
+                                color: "var(--primary-brand)", fontSize: 13, fontWeight: 600,
                                 cursor: "pointer", transition: "all 0.2s",
                             }}
                             onMouseEnter={e => {
-                                (e.currentTarget as HTMLButtonElement).style.background = "rgba(99,102,241,0.18)";
-                                (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(99,102,241,0.4)";
+                                (e.currentTarget as HTMLButtonElement).style.background = "var(--primary-glow)";
+                                (e.currentTarget as HTMLButtonElement).style.borderColor = "var(--primary-brand)";
                             }}
                             onMouseLeave={e => {
-                                (e.currentTarget as HTMLButtonElement).style.background = "rgba(99,102,241,0.1)";
-                                (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(99,102,241,0.25)";
+                                (e.currentTarget as HTMLButtonElement).style.background = "transparent";
+                                (e.currentTarget as HTMLButtonElement).style.borderColor = "var(--primary-border)";
                             }}
                         >
                             <HardDrive size={15} />
@@ -165,34 +165,34 @@ const CreateNoteModal = ({ noteId }: { noteId?: string }) => {
                     {/* Link */}
                     <div style={{
                         flex: 1, borderRadius: 14, padding: 16,
-                        background: "rgba(255,255,255,0.03)",
-                        border: "1px solid rgba(255,255,255,0.07)",
+                        background: "var(--bg-card)",
+                        border: "1px solid var(--border-default)",
                         transition: "all 0.2s",
                     }}>
                         <div style={{
                             display: "flex", alignItems: "center", gap: 6,
                             marginBottom: 16,
                         }}>
-                            <Link2 size={16} style={{ color: "#818cf8" }} />
-                            <p style={{ fontSize: 14, fontWeight: 600, color: "#f1f5f9" }}>Link</p>
+                            <Link2 size={16} style={{ color: "var(--primary-brand)" }} />
+                            <p style={{ fontSize: 14, fontWeight: 600, color: "var(--text-1)" }}>Link</p>
                         </div>
                         <button
                             onClick={showWebLinkForm}
                             style={{
                                 display: "flex", alignItems: "center", gap: 8,
                                 padding: "8px 14px", borderRadius: 10,
-                                background: "rgba(99,102,241,0.1)",
-                                border: "1px solid rgba(99,102,241,0.25)",
-                                color: "#a5b4fc", fontSize: 13, fontWeight: 600,
+                                background: "var(--primary-glow)",
+                                border: "1px solid var(--primary-border)",
+                                color: "var(--primary-brand)", fontSize: 13, fontWeight: 600,
                                 cursor: "pointer", transition: "all 0.2s",
                             }}
                             onMouseEnter={e => {
-                                (e.currentTarget as HTMLButtonElement).style.background = "rgba(99,102,241,0.18)";
-                                (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(99,102,241,0.4)";
+                                (e.currentTarget as HTMLButtonElement).style.background = "var(--primary-glow)";
+                                (e.currentTarget as HTMLButtonElement).style.borderColor = "var(--primary-brand)";
                             }}
                             onMouseLeave={e => {
-                                (e.currentTarget as HTMLButtonElement).style.background = "rgba(99,102,241,0.1)";
-                                (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(99,102,241,0.25)";
+                                (e.currentTarget as HTMLButtonElement).style.background = "transparent";
+                                (e.currentTarget as HTMLButtonElement).style.borderColor = "var(--primary-border)";
                             }}
                         >
                             <Newspaper size={15} />
@@ -203,33 +203,33 @@ const CreateNoteModal = ({ noteId }: { noteId?: string }) => {
                     {/* Paste text */}
                     <div style={{
                         flex: 1, borderRadius: 14, padding: 16,
-                        background: "rgba(255,255,255,0.03)",
-                        border: "1px solid rgba(255,255,255,0.07)",
+                        background: "var(--bg-card)",
+                        border: "1px solid var(--border-default)",
                         transition: "all 0.2s",
                     }}>
                         <div style={{
                             display: "flex", alignItems: "center", gap: 6,
                             marginBottom: 16,
                         }}>
-                            <ClipboardMinus size={16} style={{ color: "#818cf8" }} />
-                            <p style={{ fontSize: 14, fontWeight: 600, color: "#f1f5f9" }}>Paste text</p>
+                            <ClipboardMinus size={16} style={{ color: "var(--primary-brand)" }} />
+                            <p style={{ fontSize: 14, fontWeight: 600, color: "var(--text-1)" }}>Paste text</p>
                         </div>
                         <button
                             onClick={showPasteTextForm}
                             style={{
                                 padding: "8px 14px", borderRadius: 10,
-                                background: "rgba(99,102,241,0.1)",
-                                border: "1px solid rgba(99,102,241,0.25)",
-                                color: "#a5b4fc", fontSize: 13, fontWeight: 600,
+                                background: "var(--primary-glow)",
+                                border: "1px solid var(--primary-border)",
+                                color: "var(--primary-brand)", fontSize: 13, fontWeight: 600,
                                 cursor: "pointer", transition: "all 0.2s",
                             }}
                             onMouseEnter={e => {
-                                (e.currentTarget as HTMLButtonElement).style.background = "rgba(99,102,241,0.18)";
-                                (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(99,102,241,0.4)";
+                                (e.currentTarget as HTMLButtonElement).style.background = "var(--primary-glow)";
+                                (e.currentTarget as HTMLButtonElement).style.borderColor = "var(--primary-brand)";
                             }}
                             onMouseLeave={e => {
-                                (e.currentTarget as HTMLButtonElement).style.background = "rgba(99,102,241,0.1)";
-                                (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(99,102,241,0.25)";
+                                (e.currentTarget as HTMLButtonElement).style.background = "transparent";
+                                (e.currentTarget as HTMLButtonElement).style.borderColor = "var(--primary-border)";
                             }}
                         >
                             Copied text
@@ -246,6 +246,7 @@ const UploadFileSection = ({ noteId }: { noteId?: string }) => {
     const [isDragging, setIsDragging] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [loading, setLoading] = useState(false);
+    const [ingestStep, setIngestStep] = useState(0);
 
     const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
         e.preventDefault();
@@ -286,8 +287,22 @@ const UploadFileSection = ({ noteId }: { noteId?: string }) => {
         });
 
         try {
+            setIngestStep(0);
+            
+            // Start simulation of ingestion steps
+            const stepInterval = setInterval(() => {
+                setIngestStep(prev => {
+                    if (prev >= 3) {
+                        clearInterval(stepInterval);
+                        return 3;
+                    }
+                    return prev + 1;
+                });
+            }, 1200);
+
             const response = await fetch(`${apiUrl}/api/v1/notes/upload-files`, {
                 method: "POST",
+                credentials: "include",
                 body: formData,
             });
 
@@ -295,12 +310,17 @@ const UploadFileSection = ({ noteId }: { noteId?: string }) => {
                 throw new Error(`Upload failed: ${response.statusText}`);
             }
 
-            const data = await response.json();
-            console.log("Upload successful:", data);
-            showInfo('File uploaded successfully');
-            setLoading(false);
+            clearInterval(stepInterval);
+            setIngestStep(4); // Finished
+            
+            setTimeout(() => {
+                showInfo('File uploaded successfully');
+                setLoading(false);
+                setIngestStep(0);
+            }, 800);
         } catch (error) {
             setLoading(false);
+            setIngestStep(0);
             console.error("Error uploading files:", error);
         }
     };
@@ -322,57 +342,84 @@ const UploadFileSection = ({ noteId }: { noteId?: string }) => {
                 alignItems: "center", justifyContent: "center",
                 textAlign: "center", cursor: "pointer",
                 border: isDragging
-                    ? "2px solid rgba(99,102,241,0.6)"
-                    : "2px dashed rgba(255,255,255,0.12)",
+                    ? "2px solid var(--primary-brand)"
+                    : "2px dashed var(--primary-border)",
                 background: isDragging
-                    ? "rgba(99,102,241,0.08)"
-                    : "rgba(255,255,255,0.02)",
+                    ? "var(--primary-glow)"
+                    : "var(--primary-surface)",
                 transition: "all 0.2s",
             }}
             onMouseEnter={e => {
                 if (!isDragging) {
-                    (e.currentTarget as HTMLDivElement).style.borderColor = "rgba(99,102,241,0.3)";
-                    (e.currentTarget as HTMLDivElement).style.background = "rgba(99,102,241,0.04)";
+                    (e.currentTarget as HTMLDivElement).style.borderColor = "var(--primary-brand)";
+                    (e.currentTarget as HTMLDivElement).style.background = "var(--primary-glow)";
                 }
             }}
             onMouseLeave={e => {
                 if (!isDragging) {
-                    (e.currentTarget as HTMLDivElement).style.borderColor = "rgba(255,255,255,0.12)";
-                    (e.currentTarget as HTMLDivElement).style.background = "rgba(255,255,255,0.02)";
+                    (e.currentTarget as HTMLDivElement).style.borderColor = "var(--primary-border)";
+                    (e.currentTarget as HTMLDivElement).style.background = "var(--primary-surface)";
                 }
             }}
         >
-            {loading && (
+            {loading ? (
                 <div style={{
-                    display: "flex", alignItems: "center", gap: 8,
-                    marginBottom: 12, color: "#818cf8",
+                    display: "flex", flexDirection: "column", gap: 12,
+                    marginBottom: 20, width: "100%", maxWidth: 280
                 }}>
-                    <Loader2 size={16} style={{ animation: "spin 1s linear infinite" }} />
-                    <span style={{ fontSize: 14, fontWeight: 500 }}>Uploading...</span>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", color: ingestStep >= 0 ? "var(--primary-brand)" : "var(--text-3)" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                            {ingestStep > 0 ? <CheckCircle2 size={16} /> : (ingestStep === 0 ? <Loader2 size={16} className="spin" /> : <Upload size={16} />)}
+                            <span style={{ fontSize: 13, fontWeight: 500 }}>Uploading files...</span>
+                        </div>
+                    </div>
+                    
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", color: ingestStep >= 1 ? "var(--primary-brand)" : "var(--text-4)" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                            {ingestStep > 1 ? <CheckCircle2 size={16} /> : (ingestStep === 1 ? <Loader2 size={16} className="spin" /> : <FileText size={16} />)}
+                            <span style={{ fontSize: 13, fontWeight: 500 }}>Parsing documents...</span>
+                        </div>
+                    </div>
+                    
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", color: ingestStep >= 2 ? "var(--primary-brand)" : "var(--text-4)" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                            {ingestStep > 2 ? <CheckCircle2 size={16} /> : (ingestStep === 2 ? <Loader2 size={16} className="spin" /> : <Zap size={16} />)}
+                            <span style={{ fontSize: 13, fontWeight: 500 }}>Chunking & Embedding...</span>
+                        </div>
+                    </div>
+                    
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", color: ingestStep >= 3 ? "var(--primary-brand)" : "var(--text-4)" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                            {ingestStep >= 4 ? <CheckCircle2 size={16} /> : (ingestStep === 3 ? <Loader2 size={16} className="spin" /> : <Database size={16} />)}
+                            <span style={{ fontSize: 13, fontWeight: 500 }}>Indexing to Vector DB...</span>
+                        </div>
+                    </div>
                 </div>
+            ) : (
+                <>
+                    <div style={{
+                        width: 56, height: 56, borderRadius: "50%",
+                        background: "var(--primary-glow)",
+                        border: "1px solid var(--primary-border)",
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                        marginBottom: 12,
+                    }}>
+                        <Upload size={24} style={{ color: "var(--primary-brand)" }} />
+                    </div>
+
+                    <p style={{ fontSize: 15, fontWeight: 600, color: "var(--text-1)", marginBottom: 4 }}>
+                        Upload sources
+                    </p>
+                    <p style={{ fontSize: 13, color: "var(--text-3)", marginBottom: 6 }}>
+                        Drag & drop or{" "}
+                        <span style={{ color: "var(--primary-brand)", fontWeight: 600 }}>choose file</span>{" "}
+                        to upload
+                    </p>
+                    <p style={{ fontSize: 12, color: "var(--text-4)" }}>
+                        Supported file types: PDF, .txt, Markdown
+                    </p>
+                </>
             )}
-
-            <div style={{
-                width: 56, height: 56, borderRadius: "50%",
-                background: "rgba(99,102,241,0.12)",
-                border: "1px solid rgba(99,102,241,0.25)",
-                display: "flex", alignItems: "center", justifyContent: "center",
-                marginBottom: 12,
-            }}>
-                <Upload size={24} style={{ color: "#818cf8" }} />
-            </div>
-
-            <p style={{ fontSize: 15, fontWeight: 600, color: "#f1f5f9", marginBottom: 4 }}>
-                Upload sources
-            </p>
-            <p style={{ fontSize: 13, color: "#64748b", marginBottom: 6 }}>
-                Drag & drop or{" "}
-                <span style={{ color: "#818cf8", fontWeight: 600 }}>choose file</span>{" "}
-                to upload
-            </p>
-            <p style={{ fontSize: 12, color: "#334155" }}>
-                Supported file types: PDF, .txt, Markdown
-            </p>
 
             <input
                 type="file"

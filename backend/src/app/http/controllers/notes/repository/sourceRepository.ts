@@ -33,4 +33,8 @@ export class SourceRepository {
     const sources = await Source.find({...props});
     return sources;
   }
+
+  async deleteSourceByTitleAndNote(title: string, noteId: string) {
+    return Source.findOneAndDelete({ title, noteId });
+  }
 }

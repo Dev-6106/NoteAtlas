@@ -1,148 +1,44 @@
+/**
+ * generateBriefingDoc.ts  — SEQUENTIAL
+ * ─────────────────────────────────────────────────────────────────────────────
+ * Map-reduce briefing-doc pipeline.
+ *
+ * Replaces the LangGraph Send-based fan-out with a simple sequential loop
+ * so that only ONE LLM request is in-flight at a time.
+ *
+ * Flow:
+ *   1. MAP   — generate briefing sections from each chunk one-by-one
+ *   2. COLLAPSE — if combined sections exceed MAX_TOKENS, merge groups
+ *   3. REDUCE — produce the final briefing document
+ */
+
 import "dotenv/config";
 
-import { Annotation, Send, StateGraph } from "@langchain/langgraph";
-import { Document } from "@langchain/core/documents";
+import { Document }           from "@langchain/core/documents";
 import { ChatPromptTemplate } from "@langchain/core/prompts";
-import { RecursiveCharacterTextSplitter } from "@langchain/textsplitters";
+import { Runnable }           from "@langchain/core/runnables";
 
-import { CheerioWebBaseLoader } from "@langchain/community/document_loaders/web/cheerio";
-import { Runnable } from "@langchain/core/runnables";
-import { invokeWithRetry } from "@/util/invokeWithRetry";
+import {
+  lengthFunction,
+  splitListOfDocs,
+  deduplicateDocs,
+  cachedInvoke,
+} from "./pipelineUtils";
 
+// ─────────────────────────────────────────────────────────────────────────────
+// CONSTANTS
+// ─────────────────────────────────────────────────────────────────────────────
 
-// -------------------- LOAD DOCS --------------------
+const MAX_TOKENS = 32_000;
 
+// ─────────────────────────────────────────────────────────────────────────────
+// PROMPTS
+// ─────────────────────────────────────────────────────────────────────────────
 
-// const docs = await loader.load();
-
-// const textSplitter = new RecursiveCharacterTextSplitter({
-//   chunkSize: 3000,
-//   chunkOverlap: 200,
-// });
-
-// const splitDocs = await textSplitter.splitDocuments(docs);
-
-
-// // -------------------- LLM --------------------
-
-// const llm = new ChatFireworks({
-//   model:
-//     "accounts/fireworks/models/deepseek-v4-pro",
-//   temperature: 0,
-//   maxRetries: 5,
-//   apiKey: process.env.CHATFIREWORK_API_KEY,
-// });
-
-
-// -------------------- RETRY UTILITY --------------------
-export async function generateBriefingDoc<T extends Runnable>(llm: T, splitDocs: Document[]) {
-
-
-
-  // -------------------- TOKEN UTILS --------------------
-
-  const MAX_TOKENS = 10000;
-
-  function approximateTokens(text: string): number {
-    return Math.ceil(text.length / 4);
-  }
-
-  function lengthFunction(
-    documents: Document[]
-  ): number {
-    return documents.reduce(
-      (sum, doc) =>
-        sum + approximateTokens(doc.pageContent),
-      0
-    );
-  }
-
-
-  // -------------------- CUSTOM HELPERS --------------------
-
-  async function splitListOfDocs(
-    docs: Document[],
-    lengthFunction: (docs: Document[]) => number,
-    tokenMax: number
-  ): Promise<Document[][]> {
-    const chunks: Document[][] = [];
-
-    let currentChunk: Document[] = [];
-
-    for (const doc of docs) {
-      const testChunk = [...currentChunk, doc];
-
-      if (lengthFunction(testChunk) > tokenMax) {
-        if (currentChunk.length > 0) {
-          chunks.push(currentChunk);
-        }
-
-        currentChunk = [doc];
-      } else {
-        currentChunk = testChunk;
-      }
-    }
-
-    if (currentChunk.length > 0) {
-      chunks.push(currentChunk);
-    }
-
-    return chunks;
-  }
-
-  async function collapseDocs(
-    docs: Document[],
-    reducer: (
-      docs: Document[]
-    ) => Promise<string>
-  ): Promise<Document> {
-    const reduced = await reducer(docs);
-
-    return new Document({
-      pageContent: reduced,
-    });
-  }
-
-
-  // -------------------- STATE --------------------
-
-  const OverallState = Annotation.Root({
-    contents: Annotation<string[]>({
-      reducer: (state, update) =>
-        state.concat(update),
-      default: () => [],
-    }),
-
-    briefingChunks: Annotation<string[]>({
-      reducer: (state, update) =>
-        state.concat(update),
-      default: () => [],
-    }),
-
-    collapsedBriefings: Annotation<Document[]>({
-      reducer: (_, update) => update,
-      default: () => [],
-    }),
-
-    finalBriefing: Annotation<string>({
-      reducer: (_, update) => update,
-      default: () => "",
-    }),
-  });
-
-  interface BriefingState {
-    content: string;
-  }
-
-
-  // -------------------- PROMPTS --------------------
-
-  const mapPrompt =
-    ChatPromptTemplate.fromMessages([
-      [
-        "user",
-        `
-Create a professional briefing document for the following text.
+const mapPrompt = ChatPromptTemplate.fromMessages([
+  [
+    "user",
+    `Create a professional briefing document for the following text.
 
 Include:
 - Summary of main ideas
@@ -153,247 +49,85 @@ Include:
 Format as concise, clear paragraphs.
 
 TEXT:
-{context}
-      `,
-      ],
-    ]);
+{context}`,
+  ],
+]);
 
-  const reducePrompt =
-    ChatPromptTemplate.fromMessages([
-      [
-        "user",
-        `
-The following are sections of a briefing document.
+const reducePrompt = ChatPromptTemplate.fromMessages([
+  [
+    "user",
+    `The following are sections of a briefing document.
 
 Combine them into one polished professional briefing document.
 
 CONTENT:
-{docs}
-      `,
-      ],
-    ]);
+{docs}`,
+  ],
+]);
 
+// ─────────────────────────────────────────────────────────────────────────────
+// HELPERS
+// ─────────────────────────────────────────────────────────────────────────────
 
-  // -------------------- NODES --------------------
+async function reduceBriefings<T extends Runnable>(
+  llm: T,
+  docs: Document[],
+): Promise<string> {
+  const docsText = docs.map((d) => d.pageContent).join("\n\n");
+  const prompt   = await reducePrompt.invoke({ docs: docsText });
+  return cachedInvoke(llm, prompt);
+}
 
-  // Generate briefing for one chunk
-  async function generateBriefingChunk(
-    state: BriefingState
-  ): Promise<{ briefingChunks: string[] }> {
-    const prompt = await mapPrompt.invoke({
-      context: state.content,
-    });
+// ─────────────────────────────────────────────────────────────────────────────
+// MAIN EXPORT
+// ─────────────────────────────────────────────────────────────────────────────
 
-    const response =
-      await invokeWithRetry(() =>
-        llm.invoke(prompt)
-      );
+export async function generateBriefingDoc<T extends Runnable>(
+  llm: T,
+  splitDocs: Document[],
+): Promise<string> {
 
-    return {
-      briefingChunks: [
-        String(response.content),
-      ],
-    };
+  if (!splitDocs.length) throw new Error("[generateBriefingDoc] No documents provided.");
+
+  const dedupedDocs = deduplicateDocs(splitDocs);
+
+  // ── MAP: generate briefing sections ONE AT A TIME ────────────────────────
+  console.log(`[briefing] MAP phase: ${dedupedDocs.length} chunks (sequential)…`);
+  const briefingChunks: string[] = [];
+
+  for (let i = 0; i < dedupedDocs.length; i++) {
+    console.log(`[briefing]   chunk ${i + 1}/${dedupedDocs.length}…`);
+    const prompt = await mapPrompt.invoke({ context: dedupedDocs[i].pageContent });
+    const text   = await cachedInvoke(llm, prompt);
+    briefingChunks.push(text);
   }
 
+  // ── COLLAPSE: merge groups until they fit in MAX_TOKENS ──────────────────
+  let collapsedDocs = briefingChunks.map((s) => new Document({ pageContent: s }));
 
-  // Map logic
-  const mapBriefingChunks = (
-    state: typeof OverallState.State
-  ) => {
-    return state.contents.map(
-      (content) =>
-        new Send(
-          "generateBriefingChunk",
-          { content }
-        )
-    );
-  };
+  let collapseRound = 0;
+  while (lengthFunction(collapsedDocs) > MAX_TOKENS) {
+    collapseRound++;
+    const groups = splitListOfDocs(collapsedDocs, MAX_TOKENS);
+    console.log(`[briefing] COLLAPSE round ${collapseRound}: ${groups.length} group(s)…`);
 
-
-  // Collect briefing chunks
-  async function collectBriefingChunks(
-    state: typeof OverallState.State
-  ) {
-    return {
-      collapsedBriefings:
-        state.briefingChunks.map(
-          (briefing) =>
-            new Document({
-              pageContent: briefing,
-            })
-        ),
-    };
-  }
-
-
-  // Reduce helper
-  async function reduceBriefings(
-    docs: Document[]
-  ): Promise<string> {
-    const docsText = docs
-      .map((doc) => doc.pageContent)
-      .join("\n\n");
-
-    const prompt = await reducePrompt.invoke({
-      docs: docsText,
-    });
-
-    const response =
-      await invokeWithRetry(() =>
-        llm.invoke(prompt)
-      );
-
-    return String(response.content);
-  }
-
-
-  // Collapse recursively
-  async function collapseBriefings(
-    state: typeof OverallState.State
-  ) {
-    const docLists = await splitListOfDocs(
-      state.collapsedBriefings,
-      lengthFunction,
-      MAX_TOKENS
-    );
-
-    const results: Document[] = [];
-
-    for (const docList of docLists) {
-      const collapsed =
-        await collapseDocs(
-          docList,
-          reduceBriefings
-        );
-
-      results.push(collapsed);
+    const newDocs: Document[] = [];
+    for (let i = 0; i < groups.length; i++) {
+      console.log(`[briefing]   group ${i + 1}/${groups.length}…`);
+      const text = await reduceBriefings(llm, groups[i]);
+      newDocs.push(new Document({ pageContent: text }));
     }
-
-    return {
-      collapsedBriefings: results,
-    };
+    collapsedDocs = newDocs;
   }
 
+  // ── REDUCE: final briefing ───────────────────────────────────────────────
+  console.log("[briefing] REDUCE phase…");
+  const finalBriefing = await reduceBriefings(llm, collapsedDocs);
 
-  // Decide whether to collapse more
-  async function shouldCollapse(
-    state: typeof OverallState.State
-  ) {
-    const numTokens = lengthFunction(
-      state.collapsedBriefings
-    );
-
-    if (numTokens > MAX_TOKENS) {
-      return "collapseBriefings";
-    }
-
-    return "generateFinalBriefing";
+  if (!finalBriefing) {
+    throw new Error("[generateBriefingDoc] Pipeline completed but produced no output.");
   }
 
-
-  // Final briefing generation
-  async function generateFinalBriefing(
-    state: typeof OverallState.State
-  ) {
-    const response =
-      await reduceBriefings(
-        state.collapsedBriefings
-      );
-
-    return {
-      finalBriefing: response,
-    };
-  }
-
-
-  // -------------------- GRAPH --------------------
-
-  const graph = new StateGraph(
-    OverallState
-  )
-    .addNode(
-      "generateBriefingChunk",
-      generateBriefingChunk
-    )
-
-    .addNode(
-      "collectBriefingChunks",
-      collectBriefingChunks
-    )
-
-    .addNode(
-      "collapseBriefings",
-      collapseBriefings
-    )
-
-    .addNode(
-      "generateFinalBriefing",
-      generateFinalBriefing
-    )
-
-    .addConditionalEdges(
-      "__start__",
-      mapBriefingChunks,
-      ["generateBriefingChunk"]
-    )
-
-    .addEdge(
-      "generateBriefingChunk",
-      "collectBriefingChunks"
-    )
-
-    .addConditionalEdges(
-      "collectBriefingChunks",
-      shouldCollapse,
-      [
-        "collapseBriefings",
-        "generateFinalBriefing",
-      ]
-    )
-
-    .addConditionalEdges(
-      "collapseBriefings",
-      shouldCollapse,
-      [
-        "collapseBriefings",
-        "generateFinalBriefing",
-      ]
-    )
-
-    .addEdge(
-      "generateFinalBriefing",
-      "__end__"
-    );
-
-  const app = graph.compile();
-
-
-  // -------------------- RUN --------------------
-
-  let finalBriefing: any = null;
-
-  for await (const step of await app.stream(
-    {
-      contents: splitDocs.map(
-        (doc) => doc.pageContent
-      ),
-    },
-    {
-      recursionLimit: 100,
-
-      configurable: {
-        maxConcurrency: 2,
-      },
-    }
-  )) {
-    console.log(Object.keys(step));
-
-    if (step.generateFinalBriefing) {
-      finalBriefing = step.generateFinalBriefing.finalBriefing;
-    }
-  }
-
-  // console.log("\nFINAL BRIEFING DOCUMENT:\n",finalBriefing);
-  return finalBriefing
+  console.log("[briefing] Done.");
+  return finalBriefing;
 }

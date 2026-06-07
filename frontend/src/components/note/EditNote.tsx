@@ -60,20 +60,20 @@ export const EditNote = ({ note }: EditNoteProps) => {
           style={{
             width: 30, height: 30, borderRadius: 8,
             display: "flex", alignItems: "center", justifyContent: "center",
-            background: "rgba(255,255,255,0.05)",
-            border: "1px solid rgba(255,255,255,0.08)",
-            color: "#64748b", textDecoration: "none",
+            background: "var(--primary-mid)",
+            border: "1px solid var(--border-strong)",
+            color: "var(--text-3)", textDecoration: "none",
             transition: "all 0.2s", flexShrink: 0,
           }}
           onMouseEnter={e => {
             (e.currentTarget as HTMLAnchorElement).style.background = "rgba(99,102,241,0.12)";
             (e.currentTarget as HTMLAnchorElement).style.borderColor = "rgba(99,102,241,0.35)";
-            (e.currentTarget as HTMLAnchorElement).style.color = "#a5b4fc";
+            (e.currentTarget as HTMLAnchorElement).style.color = "var(--text-1)";
           }}
           onMouseLeave={e => {
-            (e.currentTarget as HTMLAnchorElement).style.background = "rgba(255,255,255,0.05)";
-            (e.currentTarget as HTMLAnchorElement).style.borderColor = "rgba(255,255,255,0.08)";
-            (e.currentTarget as HTMLAnchorElement).style.color = "#64748b";
+            (e.currentTarget as HTMLAnchorElement).style.background = "var(--primary-mid)";
+            (e.currentTarget as HTMLAnchorElement).style.borderColor = "var(--border-strong)";
+            (e.currentTarget as HTMLAnchorElement).style.color = "var(--text-3)";
           }}
         >
           <MoveLeft size={15} />
@@ -88,7 +88,7 @@ export const EditNote = ({ note }: EditNoteProps) => {
               height: 42,
               fontSize: 16,
               fontWeight: 700,
-              color: "#f1f5f9",
+              color: "var(--text-1)",
               letterSpacing: "-0.3px",
               background: "transparent",
               border: "none",

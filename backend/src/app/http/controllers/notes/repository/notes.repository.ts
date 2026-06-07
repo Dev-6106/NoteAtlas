@@ -57,15 +57,21 @@ export class NoteRepository {
     return newNote.toObject();
   }
 
-  async updateNotes(props: { id: string; title?: string; image?: string }) {
+  async updateNotes(props: { id: string; title?: string; image?: string; description?: string; isArchived?: boolean; isPinned?: boolean }) {
     const updateData: any = {};
-    if (props.title) updateData.title = props.title;
-    if (props.image) updateData.image = props.image;
+    if (props.title !== undefined) updateData.title = props.title;
+    if (props.image !== undefined) updateData.image = props.image;
+    if (props.description !== undefined) updateData.description = props.description;
+    if (props.isArchived !== undefined) {
+      updateData.isArchived = props.isArchived;
+      updateData.archivedAt = props.isArchived ? new Date() : null;
+    }
+    if (props.isPinned !== undefined) updateData.isPinned = props.isPinned;
 
     const updatedNote = await Note.findByIdAndUpdate(
       props.id,
       { $set: updateData },
-      { new: true, runValidators: true }
+      { returnDocument: 'after', runValidators: true }
     );
 
     if (!updatedNote) {
@@ -80,13 +86,19 @@ export class NoteRepository {
     page = 1,
     limit = 10,
     userId,
+    sortBy = "updatedAt",
+    sortOrder = "desc",
+    isArchived = false,
   }: {
     search?: string;
     page?: number;
     limit?: number;
     userId?: string;
+    sortBy?: string;
+    sortOrder?: string;
+    isArchived?: boolean;
   }) {
-    const query: Record<string, any> = {};
+    const query: Record<string, any> = { isArchived: isArchived ? true : { $ne: true } };
 
     // Filter by user
     if (userId) {
@@ -101,11 +113,24 @@ export class NoteRepository {
 
     const skip = (page - 1) * limit;
 
+    // Handle sorting logic
+    const sortParams: Record<string, 1 | -1> = {};
+    const order = sortOrder === "asc" ? 1 : -1;
+    
+    // Always pin pinned notes first if we aren't explicitly sorting by something else
+    if (sortBy === "updatedAt" || sortBy === "createdAt") {
+        sortParams.isPinned = -1; // true (1) before false (0)
+    }
+    
+    if (sortBy === "title") sortParams.title = order;
+    else if (sortBy === "createdAt") sortParams.createdAt = order;
+    else sortParams.updatedAt = order; // default
+
     const [notes, total] = await Promise.all([
       Note.find(query)
         .skip(skip)
         .limit(limit)
-        .sort({ createdAt: -1 })
+        .sort(sortParams)
         .populate("docs")
         .lean(),
       Note.countDocuments(query),

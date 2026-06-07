@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 
 const userSchema = new mongoose.Schema({
     name: {
-        type:String,
+        type: String,
         required: false
     },
     email: {
@@ -25,8 +25,19 @@ const userSchema = new mongoose.Schema({
     googleId: {
         type: String,
         required: true
-    }
-}, {timestamps: true});
+    },
+    // ─── Credits ─────────────────────────────────────────────
+    credits: {
+        type: Number,
+        default: 50,
+        min: 0,
+    },
+    // ─── Razorpay ────────────────────────────────────────────
+    razorpayCustomerId: {
+        type: String,
+        required: false,
+    },
+}, { timestamps: true });
 
 userSchema.index({ googleId: 1 });
 

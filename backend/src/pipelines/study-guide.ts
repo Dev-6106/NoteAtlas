@@ -1,27 +1,27 @@
 /**
- * generateStudyGuide.ts  — OPTIMISED
+ * generateStudyGuide.ts  — SEQUENTIAL
  * ─────────────────────────────────────────────────────────────────────────────
- * Map-reduce study-guide pipeline built on LangGraph.
+ * Map-reduce study-guide pipeline.
  *
- * Same optimisation story as generateSummary.ts; study-guide specific changes:
- *  • Map prompt: produce COMPACT structured notes (≤200 words per chunk)
- *    to reduce collapse-round counts
- *  • Reduce prompt: outputs a professionally formatted guide with H2 sections
- *  • Parallel collapse identical to the summary pipeline
+ * Replaces the LangGraph Send-based fan-out with a simple sequential loop
+ * so that only ONE LLM request is in-flight at a time.
+ *
+ * Flow:
+ *   1. MAP   — extract study notes from each chunk one-by-one
+ *   2. COLLAPSE — if combined notes exceed MAX_TOKENS, merge groups
+ *   3. REDUCE — produce the final study guide
  */
 
 import "dotenv/config";
 
-import { Annotation, Send, StateGraph } from "@langchain/langgraph";
-import { Document }                     from "@langchain/core/documents";
-import { ChatPromptTemplate }           from "@langchain/core/prompts";
-import { Runnable }                     from "@langchain/core/runnables";
+import { Document }           from "@langchain/core/documents";
+import { ChatPromptTemplate } from "@langchain/core/prompts";
+import { Runnable }           from "@langchain/core/runnables";
 
 import {
   lengthFunction,
   splitListOfDocs,
   deduplicateDocs,
-  pLimit,
   cachedInvoke,
 } from "./pipelineUtils";
 
@@ -29,23 +29,12 @@ import {
 // CONSTANTS
 // ─────────────────────────────────────────────────────────────────────────────
 
-const MAX_TOKENS      = 32_000;
-/**
- * Gemini free tier: 15 RPM. With the 4s throttle gap in pipelineUtils,
- * sequential processing (1 worker) stays safely within limits.
- * Gemini's 1M TPM means tokens are never the bottleneck.
- */
-const MAP_CONCURRENCY = 1;
+const MAX_TOKENS = 32_000;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // PROMPTS
 // ─────────────────────────────────────────────────────────────────────────────
 
-/**
- * Map prompt: dense, compact study notes per chunk.
- * Hard word-count cap keeps each output small so the reduce layer
- * needs fewer passes.
- */
 const mapPrompt = ChatPromptTemplate.fromMessages([
   [
     "user",
@@ -64,9 +53,6 @@ PASSAGE:
   ],
 ]);
 
-/**
- * Reduce prompt: merge into a clean, readable study guide.
- */
 const reducePrompt = ChatPromptTemplate.fromMessages([
   [
     "user",
@@ -86,6 +72,19 @@ SECTIONS:
 ]);
 
 // ─────────────────────────────────────────────────────────────────────────────
+// HELPERS
+// ─────────────────────────────────────────────────────────────────────────────
+
+async function reduceStudyGuides<T extends Runnable>(
+  llm: T,
+  docs: Document[],
+): Promise<string> {
+  const docsText = docs.map((d) => d.pageContent).join("\n\n");
+  const prompt   = await reducePrompt.invoke({ docs: docsText });
+  return cachedInvoke(llm, prompt);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // MAIN EXPORT
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -98,132 +97,43 @@ export async function generateStudyGuide<T extends Runnable>(
 
   const splitDocs = deduplicateDocs(rawDocs);
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // STATE
-  // ─────────────────────────────────────────────────────────────────────────
+  // ── MAP: extract study notes ONE AT A TIME ───────────────────────────────
+  console.log(`[study-guide] MAP phase: ${splitDocs.length} chunks (sequential)…`);
+  const studyGuides: string[] = [];
 
-  const OverallState = Annotation.Root({
-    contents: Annotation<string[]>({
-      reducer: (s, u) => s.concat(u),
-      default: () => [],
-    }),
-    studyGuides: Annotation<string[]>({
-      reducer: (s, u) => s.concat(u),
-      default: () => [],
-    }),
-    collapsedStudyGuides: Annotation<Document[]>({
-      reducer: (_, u) => u,
-      default: () => [],
-    }),
-    finalStudyGuide: Annotation<string>({
-      reducer: (_, u) => u,
-      default: () => "",
-    }),
-  });
-
-  interface StudyGuideState { content: string }
-
-  // ─────────────────────────────────────────────────────────────────────────
-  // NODES
-  // ─────────────────────────────────────────────────────────────────────────
-
-  /** MAP: extract study notes from one chunk */
-  async function generateStudyGuideChunk(
-    state: StudyGuideState,
-  ): Promise<{ studyGuides: string[] }> {
-    const prompt = await mapPrompt.invoke({ context: state.content });
+  for (let i = 0; i < splitDocs.length; i++) {
+    console.log(`[study-guide]   chunk ${i + 1}/${splitDocs.length}…`);
+    const prompt = await mapPrompt.invoke({ context: splitDocs[i].pageContent });
     const text   = await cachedInvoke(llm, prompt);
-    return { studyGuides: [text] };
+    studyGuides.push(text);
   }
 
-  /** Fan-out */
-  const mapStudyGuides = (state: typeof OverallState.State) =>
-    state.contents.map((content) =>
-      new Send("generateStudyGuideChunk", { content }),
-    );
+  // ── COLLAPSE: merge groups until they fit in MAX_TOKENS ──────────────────
+  let collapsedDocs = studyGuides.map((s) => new Document({ pageContent: s }));
 
-  /** Collect per-chunk guides into Documents */
-  async function collectStudyGuides(state: typeof OverallState.State) {
-    return {
-      collapsedStudyGuides: state.studyGuides.map(
-        (g) => new Document({ pageContent: g }),
-      ),
-    };
-  }
+  let collapseRound = 0;
+  while (lengthFunction(collapsedDocs) > MAX_TOKENS) {
+    collapseRound++;
+    const groups = splitListOfDocs(collapsedDocs, MAX_TOKENS);
+    console.log(`[study-guide] COLLAPSE round ${collapseRound}: ${groups.length} group(s)…`);
 
-  /** Reduce a list of Documents → single guide string */
-  async function reduceStudyGuides(docs: Document[]): Promise<string> {
-    const docsText = docs.map((d) => d.pageContent).join("\n\n");
-    const prompt   = await reducePrompt.invoke({ docs: docsText });
-    return cachedInvoke(llm, prompt);
-  }
-
-  /**
-   * COLLAPSE: all groups run in parallel.
-   */
-  async function collapseStudyGuides(state: typeof OverallState.State) {
-    const docLists = splitListOfDocs(state.collapsedStudyGuides, MAX_TOKENS);
-
-    const tasks = docLists.map(
-      (group) => async () =>
-        new Document({ pageContent: await reduceStudyGuides(group) }),
-    );
-
-    const results = await pLimit(tasks, MAP_CONCURRENCY);
-    return { collapsedStudyGuides: results };
-  }
-
-  /** Route */
-  function shouldCollapse(state: typeof OverallState.State): string {
-    return lengthFunction(state.collapsedStudyGuides) > MAX_TOKENS
-      ? "collapseStudyGuides"
-      : "generateFinalStudyGuide";
-  }
-
-  /** Final reduce */
-  async function generateFinalStudyGuide(state: typeof OverallState.State) {
-    return { finalStudyGuide: await reduceStudyGuides(state.collapsedStudyGuides) };
-  }
-
-  // ─────────────────────────────────────────────────────────────────────────
-  // GRAPH
-  // ─────────────────────────────────────────────────────────────────────────
-
-  const graph = new StateGraph(OverallState)
-    .addNode("generateStudyGuideChunk",  generateStudyGuideChunk)
-    .addNode("collectStudyGuides",       collectStudyGuides)
-    .addNode("collapseStudyGuides",      collapseStudyGuides)
-    .addNode("generateFinalStudyGuide",  generateFinalStudyGuide)
-
-    .addConditionalEdges("__start__",              mapStudyGuides,  ["generateStudyGuideChunk"])
-    .addEdge(            "generateStudyGuideChunk", "collectStudyGuides")
-    .addConditionalEdges("collectStudyGuides",      shouldCollapse,  ["collapseStudyGuides", "generateFinalStudyGuide"])
-    .addConditionalEdges("collapseStudyGuides",     shouldCollapse,  ["collapseStudyGuides", "generateFinalStudyGuide"])
-    .addEdge(            "generateFinalStudyGuide", "__end__");
-
-  const app = graph.compile();
-
-  // ─────────────────────────────────────────────────────────────────────────
-  // RUN
-  // ─────────────────────────────────────────────────────────────────────────
-
-  let finalStudyGuide = "";
-
-  for await (const step of await app.stream(
-    { contents: splitDocs.map((d) => d.pageContent) },
-    {
-      recursionLimit: 100,
-      configurable: { maxConcurrency: MAP_CONCURRENCY }, // matches pLimit above
-    },
-  )) {
-    if (step.generateFinalStudyGuide?.finalStudyGuide) {
-      finalStudyGuide = step.generateFinalStudyGuide.finalStudyGuide;
+    const newDocs: Document[] = [];
+    for (let i = 0; i < groups.length; i++) {
+      console.log(`[study-guide]   group ${i + 1}/${groups.length}…`);
+      const text = await reduceStudyGuides(llm, groups[i]);
+      newDocs.push(new Document({ pageContent: text }));
     }
+    collapsedDocs = newDocs;
   }
+
+  // ── REDUCE: final study guide ────────────────────────────────────────────
+  console.log("[study-guide] REDUCE phase…");
+  const finalStudyGuide = await reduceStudyGuides(llm, collapsedDocs);
 
   if (!finalStudyGuide) {
     throw new Error("[generateStudyGuide] Pipeline completed but produced no output.");
   }
 
+  console.log("[study-guide] Done.");
   return finalStudyGuide;
 }

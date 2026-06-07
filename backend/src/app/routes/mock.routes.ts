@@ -19,11 +19,11 @@ export function mockRoutes(router: Router) {
     });
 
     // Return empty chat history to prevent 404
-    router.get("/chats/history", (req, res) => {
-        res.json({
-            chatHistory: []
-        });
-    });
+    // router.get("/chats/history", (req, res) => {
+    //     res.json({
+    //         chatHistory: []
+    //     });
+    // });
 
     // Return empty doc overview to prevent 404
     router.get("/notes/docs/overview", (req, res) => {

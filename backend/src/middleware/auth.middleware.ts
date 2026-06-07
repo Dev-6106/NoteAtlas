@@ -72,3 +72,27 @@ export function optionalAuth(
   }
   next();
 }
+
+/**
+ * Middleware to ensure a user is authenticated via Passport.js session.
+ */
+export function ensureAuthenticated(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): void {
+  if (req.isAuthenticated && req.isAuthenticated()) {
+    // Ensure req.user has an ID, and we can map it to req.userId for consistency if needed
+    const userObj = req.user as any;
+    if (userObj) {
+      const id = userObj._id || userObj.authData?._id;
+      if (id) {
+        req.userId = id.toString();
+      }
+    }
+    return next();
+  }
+  
+  // For API endpoints, we return JSON. The frontend should handle the 401.
+  next(new UnauthorizedError("You must be logged in to access this resource"));
+}

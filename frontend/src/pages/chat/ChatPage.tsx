@@ -12,12 +12,17 @@ import UserAvatar from '@/components/base/UserAvatar'
 import DiscoveryModal from '@/components/note/DiscoveryModal'
 import { EditNote } from '@/components/note/EditNote'
 import { fetchNoteSourceResult } from '@/store/rightPanelSlice'
+import { fetchQuizHistoryAction } from '@/store/quizSlice'
 import { CreditMenu } from '@/components/base/CreditMenu'
-import { fetchChats } from '@/store/chatHistorySlice'
+import { fetchChats, fetchConversations } from '@/store/chatHistorySlice'
+import { fetchUserCreditAndPayment } from '@/store/creditMenuSlice'
 import { getUserData } from '@/helper/getUserData'
 import BuyCreditModal from '@/components/payment/BuyCreditModal'
-import { fetchUserCreditAndPayment } from '@/store/creditMenuSlice'
 import { ThemeToggle } from '@/components/ThemeToggle'
+import { ChatSidebar } from '@/components/chat/ChatSidebar'
+import { useIsMobile } from '@/hooks/useMediaQuery'
+import { MobileNav } from '@/components/base/MobileNav'
+import { useState } from 'react'
 
 import { T } from "@/components/ThemeTokens";
 
@@ -25,20 +30,30 @@ function ChatPage() {
   const { id } = useParams<{ id: string }>()
   const dispatch = useDispatch<AppDispatch>()
   const { note, loading, aiResult } = useSelector((state: RootState) => state.chat)
-  const { chatHistory } = useSelector((state: RootState) => state.chatHistory)
+  const { chatHistory, activeConversationId } = useSelector((state: RootState) => state.chatHistory)
   const { result } = useSelector((state: RootState) => state.creditMenu)
   const { leftPanelOpen, rightPanelOpen } = useSelector((state: RootState) => state.chat)
   const userData = getUserData()
 
+  const isMobile = useIsMobile()
+  const [mobileTab, setMobileTab] = useState<"left" | "middle" | "right">("middle")
+
   useEffect(() => {
-    if (id) {
+    if (id && userData?._id) {
       dispatch(fetchSingleNote(id))
       dispatch(fetchNoteSourceResult(id))
-      dispatch(fetchChats({ userId: userData?._id as string, noteId: id }))
+      dispatch(fetchQuizHistoryAction(id))
+      dispatch(fetchConversations(id))
       dispatch(fetchDocOverviewAndQuestions(id))
-      dispatch(fetchUserCreditAndPayment(userData?._id))
+      dispatch(fetchUserCreditAndPayment(userData._id))
     }
-  }, [dispatch, id])
+  }, [dispatch, id, userData?._id])
+
+  useEffect(() => {
+    if (id && userData?._id && activeConversationId) {
+        dispatch(fetchChats({ userId: userData._id, noteId: id, conversationId: activeConversationId }))
+    }
+  }, [dispatch, id, userData?._id, activeConversationId])
 
   return (
     <div style={{
@@ -53,9 +68,6 @@ function ChatPage() {
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;0,9..40,800;1,9..40,400&family=Instrument+Serif:ital@0;1&family=DM+Mono&display=swap');
         *{box-sizing:border-box}
-        ::-webkit-scrollbar{width:5px;height:5px}
-        ::-webkit-scrollbar-track{background:transparent}
-        ::-webkit-scrollbar-thumb{background:var(--primary-brand);border-radius:4px;opacity:0.5}
         @keyframes spin{to{transform:rotate(360deg)}}
         
         /* ── Responsive overrides ── */
@@ -66,7 +78,7 @@ function ChatPage() {
             bottom: 0 !important;
             z-index: 50 !important;
             background: var(--bg-surface) !important;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.25) !important;
+            box-shadow: var(--shadow-xl) !important;
             border-radius: 0 !important;
             border: none !important;
             width: auto !important;
@@ -100,35 +112,12 @@ function ChatPage() {
         padding: "0 18px",
         height: 52,
         flexShrink: 0,
-        background: "var(--bg-surface)",
-        borderBottom: `1px solid var(--border-default)`,
+        background: T.bgSurface,
+        borderBottom: `1px solid ${T.border}`,
         zIndex: 60,
       }}>
         {/* Left */}
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <Link
-            to="/"
-            style={{
-              width: 32, height: 32, borderRadius: 9,
-              display: "flex", alignItems: "center", justifyContent: "center",
-              background: "rgba(255,255,255,0.04)",
-              border: `1px solid ${T.border}`,
-              color: T.text3, textDecoration: "none",
-              transition: "all 0.2s", flexShrink: 0,
-            }}
-            onMouseEnter={e => {
-              (e.currentTarget as HTMLAnchorElement).style.background = "rgba(109,95,246,0.12)";
-              (e.currentTarget as HTMLAnchorElement).style.borderColor = "rgba(109,95,246,0.4)";
-              (e.currentTarget as HTMLAnchorElement).style.color = "#a78bfa";
-            }}
-            onMouseLeave={e => {
-              (e.currentTarget as HTMLAnchorElement).style.background = "rgba(255,255,255,0.04)";
-              (e.currentTarget as HTMLAnchorElement).style.borderColor = T.border;
-              (e.currentTarget as HTMLAnchorElement).style.color = T.text3;
-            }}
-          >
-            <MoveLeft size={14} />
-          </Link>
           <EditNote note={note} />
         </div>
 
@@ -147,39 +136,57 @@ function ChatPage() {
         display: "flex",
         flex: 1,
         gap: 10,
-        padding: 10,
+        padding: isMobile ? 0 : 10,
+        paddingBottom: isMobile ? 60 : 10, // space for mobile nav
         overflow: "hidden",
         minHeight: 0,
-        background: "var(--bg-base)",
+        background: T.bg,
         position: "relative",
       }}>
         {/* Left Panel */}
+        {(!isMobile || mobileTab === "left") && (
         <div
-          className={`chat-side-panel left-panel ${!leftPanelOpen ? 'collapsed' : ''}`}
+          className={`chat-side-panel left-panel ${!leftPanelOpen && !isMobile ? 'collapsed' : ''}`}
           style={{
-            borderRadius: 16,
-            border: "1px solid var(--border-default)",
-            background: "var(--bg-surface)",
+            borderRadius: isMobile ? 0 : 16,
+            border: `1px solid ${T.border}`,
+            background: T.bgSurface,
             overflow: "hidden",
             flexShrink: 0,
             transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-            width: leftPanelOpen ? "22%" : 56,
-            minWidth: leftPanelOpen ? 240 : 56,
-            maxWidth: leftPanelOpen ? 340 : 56,
+            width: isMobile ? "100%" : (leftPanelOpen ? "22%" : 56),
+            minWidth: isMobile ? "100%" : (leftPanelOpen ? 240 : 56),
+            maxWidth: isMobile ? "100%" : (leftPanelOpen ? 340 : 56),
           }}
         >
           <LeftPanel loading={loading} note={note} />
         </div>
+        )}
+
+        {/* Chat Sidebar (New Multi-Chat panel) */}
+        {userData && id && (!isMobile || mobileTab === "left") && (
+          <div style={{
+            borderRadius: isMobile ? 0 : 16,
+            border: `1px solid ${T.border}`,
+            background: T.bgSurface,
+            overflow: "hidden",
+            flexShrink: 0,
+            display: "flex"
+          }}>
+            <ChatSidebar noteId={id} userId={userData._id} />
+          </div>
+        )}
 
         {/* Middle Panel */}
+        {(!isMobile || mobileTab === "middle") && (
         <div style={{
           flex: 1,
-          borderRadius: 16,
-          border: "1px solid var(--border-default)",
-          background: "var(--bg-surface)",
+          borderRadius: isMobile ? 0 : 16,
+          border: isMobile ? "none" : `1px solid ${T.border}`,
+          background: T.bgSurface,
           overflow: "hidden",
           minWidth: 0,
-          boxShadow: "0 4px 20px rgba(0,0,0,0.02)",
+          boxShadow: T.shadowCard,
         }}>
           <MiddlePanel
             aiResult={aiResult}
@@ -188,25 +195,30 @@ function ChatPage() {
             userId={userData?._id}
           />
         </div>
+        )}
 
         {/* Right Panel */}
+        {(!isMobile || mobileTab === "right") && (
         <div
-          className={`chat-side-panel right-panel ${!rightPanelOpen ? 'collapsed' : ''}`}
+          className={`chat-side-panel right-panel ${!rightPanelOpen && !isMobile ? 'collapsed' : ''}`}
           style={{
-            borderRadius: 16,
-            border: "1px solid var(--border-default)",
-            background: "var(--bg-surface)",
+            borderRadius: isMobile ? 0 : 16,
+            border: `1px solid ${T.border}`,
+            background: T.bgSurface,
             overflow: "hidden",
             flexShrink: 0,
             transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-            width: rightPanelOpen ? "22%" : 56,
-            minWidth: rightPanelOpen ? 240 : 56,
-            maxWidth: rightPanelOpen ? 340 : 56,
+            width: isMobile ? "100%" : (rightPanelOpen ? "22%" : 56),
+            minWidth: isMobile ? "100%" : (rightPanelOpen ? 240 : 56),
+            maxWidth: isMobile ? "100%" : (rightPanelOpen ? 340 : 56),
           }}
         >
           <RightPanel noteId={id} />
         </div>
+        )}
       </div>
+
+      {isMobile && <MobileNav activeTab={mobileTab} setActiveTab={setMobileTab} />}
 
       <CreateNoteModal noteId={id} />
       <DiscoveryModal noteId={id} />

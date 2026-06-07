@@ -1,70 +1,117 @@
 import { LLM } from "@/app/llm/llm";
 import { NextFunction, Request, Response } from "express";
-import { DocSummaryTool, libraryTool, vectorDBTool } from "./agent-tools";
+import { getAgentTools } from "./agent-tools";
 import { SystemMessage, HumanMessage, AIMessage } from "@langchain/core/messages";
 import { REACT_AGENT_SYSTEM_PROMPT } from "./agent-system-prompts";
 import { storeConversation, getConversationHistory } from "./chat-history";
 import { createReactAgent } from "@langchain/langgraph/prebuilt";
+import { DocRepository } from "../repository/DocRepository";
+import { deductCredits } from "@/app/helpers/credits";
 
+// Parse [Source: Title | ID: docId] markers from LLM response
+function extractCitations(text: string): Array<{ title: string; docId: string }> {
+    const regex = /\[Source:\s*([^\|]+)\|\s*ID:\s*([^\]]+)\]/g;
+    const citations: Array<{ title: string; docId: string }> = [];
+    const seen = new Set<string>();
+    let match;
+    while ((match = regex.exec(text)) !== null) {
+        const docId = match[2].trim();
+        if (!seen.has(docId)) {
+            seen.add(docId);
+            citations.push({ title: match[1].trim(), docId });
+        }
+    }
+    return citations;
+}
 
-export async function ChatOverDoc(req: Request, res: Response, next: NextFunction){
+export async function ChatOverDoc(req: Request, res: Response, next: NextFunction) {
     try {
-        const { query, userId, noteId } = req.body;
+        const { query, userId, noteId, docIds, conversationId } = req.body;
 
         if (!query || !userId || !noteId) {
             return res.status(400).send({ error: "query, userId, and noteId are required" });
         }
 
+        // ─── Deduct credits before calling LLM ─────────────────
+        await deductCredits(userId, 2);
+
         const llm = LLM.getInstance();
-        const tools = [libraryTool, vectorDBTool, DocSummaryTool];
+        const tools = getAgentTools(userId as string, noteId as string);
+
+        let selectedDocsMsg = "";
+        if (docIds && docIds.length > 0) {
+            const docRepo = DocRepository.getInstance();
+            const docs = await docRepo.getDocsByIds({ docIds, userId, noteId });
+
+            let summariesContext = "";
+            for (const doc of docs) {
+                summariesContext += `\n- Document ID: ${doc._id}\n  Title: ${doc.title}\n  Summary: ${doc.summary || "No summary available."}\n`;
+            }
+
+            selectedDocsMsg = `\nThe user has selected specific documents to focus on. Their document IDs are: ${docIds.join(', ')}.
+Here are their summaries for immediate context:
+${summariesContext}
+Use this context to answer the user's questions. If you need more details, you can use the vector_db tool.`;
+        }
 
         const modifyMessages = (messages: any[]) => {
             const systemMsg = new SystemMessage(`${REACT_AGENT_SYSTEM_PROMPT}
 
-CRITICAL INSTRUCTIONS FOR TOOLS:
-You are currently assisting user ID: ${userId} within note ID: ${noteId}.
-Whenever you call a tool (such as user_library, vector_db, or Doc_Summary), you MUST include these exact values for the "userId" and "noteId" arguments. 
-DO NOT ask the user for their note ID or user ID. You already have them!`);
-            return [
-                systemMsg,
-                ...messages
-            ];
+You are currently assisting a user within note ID: ${noteId}. ${selectedDocsMsg}`);
+            return [systemMsg, ...messages];
         };
 
         const appWithMessagesModified = createReactAgent({
             llm, tools, messagesModifier: modifyMessages as any,
         });
 
-        // Store the user message first
-        await storeConversation([{role: 'user', content: query as string, userId, noteId}]);
+        await storeConversation([{ role: 'user', content: query as string, userId, noteId, conversationId }]);
+        const rawHistory = await getConversationHistory(userId as string, noteId as string, conversationId as string);
 
-        // Fetch full history (includes the message we just stored)
-        const rawHistory = await getConversationHistory(userId as string, noteId as string);
-
-        // Convert raw DB objects to proper LangChain message instances
         const chatHistory = rawHistory.map((msg) => {
-            if (msg.role === 'user') {
-                return new HumanMessage(msg.content);
-            } else {
-                return new AIMessage(msg.content);
+            if (msg.role === 'user') return new HumanMessage(msg.content);
+            return new AIMessage(msg.content);
+        });
+
+        // ─── SSE Headers ────────────────────────────────────────
+        res.setHeader('Content-Type', 'text/event-stream');
+        res.setHeader('Cache-Control', 'no-cache');
+        res.setHeader('Connection', 'keep-alive');
+        res.flushHeaders();
+
+        const stream = await appWithMessagesModified.streamEvents({ messages: chatHistory }, { version: "v2" });
+
+        let fullResponse = "";
+
+        for await (const event of stream) {
+            if (event.event === "on_chat_model_stream") {
+                if (event.metadata?.langgraph_node === "agent") {
+                    const chunk = event.data?.chunk?.content;
+                    if (chunk && typeof chunk === "string") {
+                        fullResponse += chunk;
+                        res.write(`data: ${JSON.stringify({ chunk })}\n\n`);
+                    }
+                }
             }
-        });
+        }
 
-        const agentOutput = await appWithMessagesModified.invoke({
-            messages: chatHistory,
-        },{
-            recursionLimit: 30
-        });
+        // ─── Extract + emit citations ────────────────────────────
+        const citations = extractCitations(fullResponse);
+        res.write(`data: ${JSON.stringify({ done: true, citations })}\n\n`);
+        res.end();
 
-        const aiResponse = agentOutput.messages[agentOutput.messages.length-1].content;
-
-        await storeConversation([{role: 'ai', content: aiResponse as string, userId, noteId}]);
-
-        console.log({output: aiResponse});
-        return res.status(200).send({ 
-            message: { role: 'ai', content: aiResponse, userId, noteId } 
-        });
-    } catch (error) {
+        await storeConversation([{ role: 'ai', content: fullResponse, userId, noteId, conversationId }]);
+        return;
+    } catch (error: any) {
+        // Surface credit errors cleanly
+        if (error?.statusCode === 402) {
+            if (!res.headersSent) {
+                return res.status(402).json({ error: error.message });
+            }
+            res.write(`data: ${JSON.stringify({ error: error.message, code: 402 })}\n\n`);
+            res.end();
+            return;
+        }
         next(error);
     }
-}
+}

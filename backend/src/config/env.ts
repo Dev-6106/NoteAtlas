@@ -52,6 +52,10 @@ const envSchema = z.object({
   SUPABASE_URL: z.string().url("SUPABASE_URL must be a valid URL"),
   SUPABASE_SERVICE_ROLE_KEY: z.string().min(1, "SUPABASE_SERVICE_ROLE_KEY is required"),
   SUPABASE_BUCKET: z.string().min(1, "SUPABASE_BUCKET is required"),
+
+  // Razorpay
+  RAZORPAY_KEY_ID: z.string().min(1, "RAZORPAY_KEY_ID is required"),
+  RAZORPAY_KEY_SECRET: z.string().min(1, "RAZORPAY_KEY_SECRET is required"),
 });
 
 export type EnvConfig = z.infer<typeof envSchema>;

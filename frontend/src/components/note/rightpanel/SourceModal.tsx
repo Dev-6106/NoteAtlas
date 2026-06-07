@@ -26,11 +26,11 @@ const AudioPlayer = ({ storageKey }: { storageKey: string }) => {
 
   if (loading) {
     return (
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: 100, color: "#94a3b8" }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: 100, color: "var(--text-3)" }}>
         <span style={{
           width: 24, height: 24,
-          border: "2px solid rgba(255,255,255,0.1)",
-          borderTopColor: "#818cf8",
+          border: "2px solid var(--border-strong)",
+          borderTopColor: "var(--primary-brand)",
           borderRadius: "50%",
           animation: "spin 1s linear infinite",
           display: "inline-block",
@@ -48,15 +48,15 @@ const AudioPlayer = ({ storageKey }: { storageKey: string }) => {
   return (
     <div style={{
       padding: 24,
-      background: "rgba(255,255,255,0.03)",
+      background: "var(--bg-card)",
       borderRadius: 16,
-      border: "1px solid rgba(255,255,255,0.08)",
+      border: "1px solid var(--border-strong)",
       display: "flex",
       flexDirection: "column",
       alignItems: "center",
       gap: 16
     }}>
-      <p style={{ color: "#e2e8f0", fontSize: 16, fontWeight: 600 }}>Audio Overview</p>
+      <p style={{ color: "var(--text-2)", fontSize: 16, fontWeight: 600 }}>Audio Overview</p>
       <audio controls src={url} style={{ width: "100%", borderRadius: 8 }} />
     </div>
   );
@@ -79,10 +79,10 @@ const PodcastPlayer = ({ storageKey }: { storageKey: string }) => {
 
   if (loading) {
     return (
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: 100, color: "#94a3b8" }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: 100, color: "var(--text-3)" }}>
         <span style={{
           width: 24, height: 24,
-          border: "2px solid rgba(255,255,255,0.1)",
+          border: "2px solid var(--border-strong)",
           borderTopColor: "#f97316",
           borderRadius: "50%",
           animation: "spin 1s linear infinite",
@@ -123,7 +123,7 @@ const PodcastPlayer = ({ storageKey }: { storageKey: string }) => {
             <line x1="8" y1="23" x2="16" y2="23" />
           </svg>
         </div>
-        <p style={{ color: "#e2e8f0", fontSize: 16, fontWeight: 600, margin: 0 }}>Podcast Narration</p>
+        <p style={{ color: "var(--text-2)", fontSize: 16, fontWeight: 600, margin: 0 }}>Podcast Narration</p>
       </div>
       <audio controls src={url} style={{ width: "100%", borderRadius: 8 }} />
     </div>
@@ -140,8 +140,11 @@ export const SourceModal = () => {
   return (
     <div>
       <BaseModal
-        open={sourceModal?.modal}
-        onOpenChange={setOpen}
+        open={sourceModal?.modal && !["quiz-generator", "quiz-player", "flashcard-generator", "flashcard-player"].includes(sourceModal?.source_type)}
+        onOpenChange={(isOpen) => {
+          setOpen(isOpen);
+          if (!isOpen) dispatch(closeSourceModal());
+        }}
         title={sourceModal?.source_type}
         description=""
         width={800}
@@ -152,18 +155,18 @@ export const SourceModal = () => {
               onClick={() => dispatch(closeSourceModal())}
               style={{
                 padding: "9px 18px", borderRadius: 10,
-                background: "rgba(255,255,255,0.06)",
-                border: "1px solid rgba(255,255,255,0.1)",
-                color: "#94a3b8", fontSize: 13, fontWeight: 600,
+                background: "var(--border-default)",
+                border: "1px solid var(--border-strong)",
+                color: "var(--text-3)", fontSize: 13, fontWeight: 600,
                 cursor: "pointer", transition: "all 0.2s",
               }}
               onMouseEnter={e => {
-                (e.currentTarget as HTMLButtonElement).style.background = "rgba(255,255,255,0.1)";
-                (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(255,255,255,0.2)";
+                (e.currentTarget as HTMLButtonElement).style.background = "var(--border-strong)";
+                (e.currentTarget as HTMLButtonElement).style.borderColor = "var(--border-accent)";
               }}
               onMouseLeave={e => {
-                (e.currentTarget as HTMLButtonElement).style.background = "rgba(255,255,255,0.06)";
-                (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(255,255,255,0.1)";
+                (e.currentTarget as HTMLButtonElement).style.background = "var(--border-default)";
+                (e.currentTarget as HTMLButtonElement).style.borderColor = "var(--border-strong)";
               }}
             >
               Close Modal
@@ -181,42 +184,42 @@ export const SourceModal = () => {
               remarkPlugins={[remarkGfm]}
               components={{
                 a: ({ node, ...props }) => (
-                  <a style={{ color: "#818cf8", textDecoration: "underline" }} {...props} />
+                  <a style={{ color: "var(--primary-brand)", textDecoration: "underline" }} {...props} />
                 ),
                 ul: ({ node, ...props }) => (
-                  <ul style={{ listStyleType: "disc", paddingLeft: 24, marginBottom: 8, color: "#cbd5e1" }} {...props} />
+                  <ul style={{ listStyleType: "disc", paddingLeft: 24, marginBottom: 8, color: "var(--text-2)" }} {...props} />
                 ),
                 ol: ({ node, ...props }) => (
-                  <ol style={{ listStyleType: "decimal", paddingLeft: 24, marginBottom: 8, color: "#cbd5e1" }} {...props} />
+                  <ol style={{ listStyleType: "decimal", paddingLeft: 24, marginBottom: 8, color: "var(--text-2)" }} {...props} />
                 ),
                 li: ({ node, ...props }) => (
-                  <li style={{ marginBottom: 4, color: "#cbd5e1" }} {...props} />
+                  <li style={{ marginBottom: 4, color: "var(--text-2)" }} {...props} />
                 ),
                 h1: ({ node, ...props }) => (
-                  <h1 style={{ fontSize: 22, fontWeight: 800, color: "#f1f5f9", margin: "8px 0" }} {...props} />
+                  <h1 style={{ fontSize: 22, fontWeight: 800, color: "var(--text-1)", margin: "8px 0" }} {...props} />
                 ),
                 h2: ({ node, ...props }) => (
-                  <h2 style={{ fontSize: 18, fontWeight: 600, color: "#e2e8f0", margin: "8px 0" }} {...props} />
+                  <h2 style={{ fontSize: 18, fontWeight: 600, color: "var(--text-2)", margin: "8px 0" }} {...props} />
                 ),
                 h3: ({ node, ...props }) => (
-                  <h3 style={{ fontSize: 16, fontWeight: 600, color: "#e2e8f0", margin: "6px 0" }} {...props} />
+                  <h3 style={{ fontSize: 16, fontWeight: 600, color: "var(--text-2)", margin: "6px 0" }} {...props} />
                 ),
                 p: ({ node, ...props }) => (
-                  <p style={{ color: "#cbd5e1", lineHeight: 1.7, marginBottom: 4 }} {...props} />
+                  <p style={{ color: "var(--text-2)", lineHeight: 1.7, marginBottom: 4 }} {...props} />
                 ),
                 strong: ({ node, ...props }) => (
-                  <strong style={{ fontWeight: 700, color: "#f1f5f9" }} {...props} />
+                  <strong style={{ fontWeight: 700, color: "var(--text-1)" }} {...props} />
                 ),
                 pre: ({ node, ...props }) => (
                   <pre style={{
                     margin: "4px 0", padding: 12, borderRadius: 10,
-                    background: "rgba(255,255,255,0.04)",
-                    border: "1px solid rgba(255,255,255,0.06)",
+                    background: "var(--bg-surface)",
+                    border: "1px solid var(--border-default)",
                     overflowX: "auto",
                   }} {...props} />
                 ),
                 code: ({ node, ...props }) => (
-                  <code style={{ fontFamily: "'DM Mono', monospace", fontSize: 13, color: "#a5b4fc" }} {...props} />
+                  <code style={{ fontFamily: "'DM Mono', monospace", fontSize: 13, color: "var(--text-1)" }} {...props} />
                 ),
               }}
             >

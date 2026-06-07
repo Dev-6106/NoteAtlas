@@ -97,7 +97,7 @@ function AuthCallbackPage() {
         <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
           <LogoMark size={32} />
           <span style={{ fontSize: 16, fontWeight: 700, color: "#f0eeff", letterSpacing: "-0.4px" }}>
-            Notebook<span style={{ color: "#8b80f8" }}>LM</span>
+            Note<span style={{ color: "var(--primary-brand)" }}>Atlas</span>
           </span>
         </div>
 

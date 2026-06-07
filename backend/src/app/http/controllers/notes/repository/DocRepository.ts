@@ -41,7 +41,7 @@ export class DocRepository {
     const result = await Doc.findOneAndUpdate(
       { userId: filter.userId, noteId: filter.noteId },
       { $set: update },
-      { new: true, runValidators: true }
+      { returnDocument: 'after', runValidators: true }
     );
 
     if (!result) {
@@ -57,7 +57,7 @@ export class DocRepository {
     const { userId, noteId, docId } = props;
     const row = await Doc.findOneAndUpdate({_id: docId, userId, noteId},{
       $set: {summary: props.summary}
-    },{new: true,runValidators: true})
+    },{returnDocument: 'after',runValidators: true})
     if(!row) throw new Error("No doc found");
     return row;
   }
@@ -66,7 +66,7 @@ export class DocRepository {
     const { userId, noteId, docId } = props;
     const row = await Doc.findOneAndUpdate({_id: docId, userId, noteId},{
       $set: {FAQ: props.faq}
-    },{new: true,runValidators: true})
+    },{returnDocument: 'after',runValidators: true})
     if(!row) throw new Error("No doc found");
     return row;
   }
@@ -75,7 +75,7 @@ export class DocRepository {
     const { userId, noteId, docId } = props;
     const row = await Doc.findOneAndUpdate({_id: docId, userId, noteId},{
       $set: {studyGuide: props.studyGuide}
-    },{new: true,runValidators: true})
+    },{returnDocument: 'after',runValidators: true})
     if(!row) throw new Error("No doc found");
     return row;
   }
@@ -84,7 +84,7 @@ export class DocRepository {
     const { userId, noteId, docId } = props;
     const row = await Doc.findOneAndUpdate({_id: docId, userId, noteId},{
       $set: {briefingDoc: props.briefingDoc}
-    },{new: true,runValidators: true})
+    },{returnDocument: 'after',runValidators: true})
     if(!row) throw new Error("No doc found");
     return row;
   }
@@ -121,7 +121,7 @@ export class DocRepository {
     const { userId, noteId, docId } = props;
     const row = await Doc.findOneAndUpdate({_id: docId, userId, noteId},{
       $set: {mindMap: props.mindMap}
-    },{new: true,runValidators: true})
+    },{returnDocument: 'after',runValidators: true})
     if(!row) throw new Error("No doc found");
     return row;
   }
@@ -130,7 +130,7 @@ export class DocRepository {
     const { userId, noteId, docId } = props;
     const row = await Doc.findOneAndUpdate({_id: docId, userId, noteId},{
       $set: {audioOverview: props.audioOverview}
-    },{new: true,runValidators: true})
+    },{returnDocument: 'after',runValidators: true})
     if(!row) throw new Error("No doc found");
     return row;
   }
@@ -157,5 +157,14 @@ export class DocRepository {
       userId: props.userId,
       noteId: props.noteId,
     }).lean();
+  }
+
+  async deleteDoc(id: string) {
+    const deleted = await Doc.findByIdAndDelete(id);
+    if (deleted) {
+      // Remove reference from Note
+      await Note.findByIdAndUpdate(deleted.noteId, { $pull: { docs: deleted._id } });
+    }
+    return deleted;
   }
 }

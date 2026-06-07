@@ -45,21 +45,21 @@ export const AddPasteTextForm = ({ hidePasteTextForm, noteId }: { hidePasteTextF
                     onClick={hidePasteTextForm}
                     style={{
                         background: "none", border: "none",
-                        color: "#64748b", cursor: "pointer",
+                        color: "var(--text-3)", cursor: "pointer",
                         display: "flex", alignItems: "center",
                         transition: "color 0.2s",
                     }}
                     onMouseEnter={e => {
-                        (e.currentTarget as HTMLButtonElement).style.color = "#a5b4fc";
+                        (e.currentTarget as HTMLButtonElement).style.color = "var(--text-1)";
                     }}
                     onMouseLeave={e => {
-                        (e.currentTarget as HTMLButtonElement).style.color = "#64748b";
+                        (e.currentTarget as HTMLButtonElement).style.color = "var(--text-3)";
                     }}
                 >
                     <MoveLeft size={18} />
                 </button>
                 <label style={{
-                    fontSize: 14, fontWeight: 600, color: "#f1f5f9",
+                    fontSize: 14, fontWeight: 600, color: "var(--text-1)",
                 }}>
                     Paste a Text
                 </label>
@@ -75,9 +75,9 @@ export const AddPasteTextForm = ({ hidePasteTextForm, noteId }: { hidePasteTextF
                     resize: "vertical",
                     padding: "12px 14px",
                     borderRadius: 12,
-                    background: "rgba(255,255,255,0.04)",
-                    border: "1px solid rgba(255,255,255,0.1)",
-                    color: "#e2e8f0",
+                    background: "var(--bg-surface)",
+                    border: "1px solid var(--border-strong)",
+                    color: "var(--text-2)",
                     fontSize: 14,
                     fontFamily: "'DM Sans', system-ui, sans-serif",
                     outline: "none",
@@ -90,8 +90,8 @@ export const AddPasteTextForm = ({ hidePasteTextForm, noteId }: { hidePasteTextF
                     e.currentTarget.style.boxShadow = "0 0 16px rgba(99,102,241,0.1)";
                 }}
                 onBlur={e => {
-                    e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)";
-                    e.currentTarget.style.background = "rgba(255,255,255,0.04)";
+                    e.currentTarget.style.borderColor = "var(--border-strong)";
+                    e.currentTarget.style.background = "var(--bg-surface)";
                     e.currentTarget.style.boxShadow = "none";
                 }}
             />
@@ -109,12 +109,12 @@ export const AddPasteTextForm = ({ hidePasteTextForm, noteId }: { hidePasteTextF
                         display: "flex", alignItems: "center", gap: 6,
                         padding: "9px 20px", borderRadius: 10,
                         background: isSubmitting
-                            ? "rgba(99,102,241,0.3)"
-                            : "linear-gradient(135deg,#6366f1,#8b5cf6)",
-                        color: "#fff", fontSize: 13, fontWeight: 700,
+                            ? "var(--primary-glow)"
+                            : "linear-gradient(135deg, var(--primary-brand), var(--primary-light))",
+                        color: "var(--text-on-primary)", fontSize: 13, fontWeight: 700,
                         border: "none",
                         cursor: isSubmitting ? "not-allowed" : "pointer",
-                        boxShadow: isSubmitting ? "none" : "0 4px 16px rgba(99,102,241,0.35)",
+                        boxShadow: isSubmitting ? "none" : "var(--shadow-primary)",
                         transition: "all 0.2s",
                     }}
                     onMouseEnter={e => {

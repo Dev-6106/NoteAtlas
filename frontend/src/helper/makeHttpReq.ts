@@ -47,6 +47,10 @@ export async function makeHttpReq<T>(verb: HttpVerbType, endpoint: string, input
     const data = await res.json();
 
     if (!res.ok) {
+      if (res.status === 401) {
+        localStorage.removeItem("userData");
+        window.location.href = "/auth/login";
+      }
       // Reject with the actual error from server
       return Promise.reject(data);
     }
