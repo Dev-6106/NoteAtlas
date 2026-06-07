@@ -3,10 +3,11 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-# Increase Node heap for tsc (large dependency trees OOM at default 512MB)
-ENV NODE_OPTIONS=--max-old-space-size=4096
+# Allow passing NODE_OPTIONS at build time (e.g. --max-old-space-size=4096)
+ARG NODE_OPTIONS=--max-old-space-size=4096
+ENV NODE_OPTIONS=${NODE_OPTIONS}
 
-# Install dependencies first (layer-cached)
+# Install ALL deps first (layer-cached — only re-runs if package*.json changes)
 COPY package*.json ./
 RUN npm ci
 
@@ -14,19 +15,19 @@ RUN npm ci
 COPY . .
 RUN npm run build
 
-# ─── Stage 2: Production ─────────────────────────────────
+# ─── Stage 2: Production runtime ─────────────────────────
 FROM node:20-alpine AS runner
 
 WORKDIR /app
 
-# Only install production dependencies
+# Install production deps only (no devDependencies)
 COPY package*.json ./
 RUN npm ci --omit=dev
 
-# Copy compiled output
+# Copy compiled JS from builder stage
 COPY --from=builder /app/dist ./dist
 
-# Copy any static public assets
+# Copy public assets if they exist
 COPY public ./public
 
 EXPOSE 8000

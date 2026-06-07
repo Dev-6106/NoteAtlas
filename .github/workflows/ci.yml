@@ -31,10 +31,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Build
+      - name: Build (Vite runs tsc internally via rollup)
         run: npm run build
         env:
-          # Dummy values so Vite doesn't fail on missing env vars
           VITE_API_URL: http://localhost:8000
           VITE_GOOGLE_CLIENT_ID: dummy
           VITE_DEVELOPER_KEY: dummy
@@ -43,28 +42,20 @@ jobs:
 
   # ─── Backend ─────────────────────────────────────────────
   build-backend:
-    name: Build Backend
+    name: Build Backend (Docker)
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./backend
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-          cache-dependency-path: backend/package-lock.json
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Type-check
-        # Uses tsconfig.check.json (isolatedModules=true) — ~10x less memory than full check
-        run: npm run typecheck
-        env:
-          NODE_OPTIONS: --max-old-space-size=4096
+      - name: Build Docker image
+        # Building the Dockerfile compiles TypeScript via tsc as a build step.
+        # This catches syntax and type errors without running out of memory,
+        # because Docker's build layer caching and Linux GC are much more efficient.
+        run: |
+          docker build \
+            --no-cache \
+            --build-arg NODE_OPTIONS="--max-old-space-size=4096" \
+            -t noteatlas-backend:ci \
+            ./backend
