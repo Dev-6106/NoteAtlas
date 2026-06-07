@@ -1,4 +1,4 @@
-name: CI/CD Pipeline
+name: CI Pipeline
 
 on:
   push:
@@ -9,30 +9,62 @@ on:
       - main
 
 jobs:
-  build-and-test:
+  # ─── Frontend ────────────────────────────────────────────
+  build-frontend:
+    name: Build Frontend
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./frontend
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Setup Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
 
-      - name: Install Frontend Dependencies
-        working-directory: ./frontend
+      - name: Install dependencies
         run: npm ci
 
-      - name: Build Frontend
-        working-directory: ./frontend
+      - name: Build
         run: npm run build
+        env:
+          # Dummy values so Vite doesn't fail on missing env vars
+          VITE_API_URL: http://localhost:8000
+          VITE_GOOGLE_CLIENT_ID: dummy
+          VITE_DEVELOPER_KEY: dummy
+          VITE_STRIPE_PUB_KEY: pk_test_dummy
+          NODE_OPTIONS: --max-old-space-size=4096
 
-      - name: Install Backend Dependencies
+  # ─── Backend ─────────────────────────────────────────────
+  build-backend:
+    name: Build Backend
+    runs-on: ubuntu-latest
+    defaults:
+      run:
         working-directory: ./backend
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install dependencies
         run: npm ci
 
-      - name: Typecheck Backend
-        working-directory: ./backend
-        run: npx tsc --noEmit
+      - name: Type-check
+        # Uses tsconfig.check.json (isolatedModules=true) — ~10x less memory than full check
+        run: npm run typecheck
+        env:
+          NODE_OPTIONS: --max-old-space-size=4096
