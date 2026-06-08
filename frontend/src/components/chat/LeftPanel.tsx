@@ -60,8 +60,8 @@ const LeftPanel = ({ note, loading }: LeftPanelProps) => {
     if (files.length > 0) {
       setIsUploading(true);
       try {
-        await uploadFilesApi(files, note._id);
-        dispatch(fetchSingleNote(note._id));
+        await uploadFilesApi(files, note?._id);
+        dispatch(fetchSingleNote(note?._id));
       } finally {
         setIsUploading(false);
       }
@@ -77,7 +77,7 @@ const LeftPanel = ({ note, loading }: LeftPanelProps) => {
   const handleConfirmDeleteSource = async () => {
     if (deleteConfirmSourceId) {
       await deleteSourceApi(deleteConfirmSourceId);
-      dispatch(fetchSingleNote(note._id));
+      dispatch(fetchSingleNote(note?._id));
       setDeleteConfirmSourceId(null);
     }
   };
@@ -92,7 +92,7 @@ const LeftPanel = ({ note, loading }: LeftPanelProps) => {
   const saveRename = async (docId: string, currentName: string) => {
     if (editDocName && editDocName.trim() !== "" && editDocName !== currentName) {
       await renameSourceApi(docId, editDocName.trim());
-      dispatch(fetchSingleNote(note._id));
+      dispatch(fetchSingleNote(note?._id));
     }
     setEditingDocId(null);
   };
@@ -106,7 +106,7 @@ const LeftPanel = ({ note, loading }: LeftPanelProps) => {
     if (docIds.length === 0) return;
     await Promise.all(docIds.map(id => deleteSourceApi(id)));
     dispatch(setDocIds([]));
-    dispatch(fetchSingleNote(note._id));
+    dispatch(fetchSingleNote(note?._id));
     setBulkDeleteConfirmOpen(false);
   };
 

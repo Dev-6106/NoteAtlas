@@ -40,7 +40,7 @@ const MiddlePannel = ({
   note: NoteType;
   aiResult: questionAndDocOverviewType;
 }) => {
-  const { _id: noteId } = note;
+  const noteId = note?._id;
   const dispatch = useDispatch<AppDispatch>();
   const { middlePanelDefaultWidth } = useSelector(
     (state: RootState) => state.chat
