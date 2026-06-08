@@ -58,6 +58,14 @@ export const router = createBrowserRouter([
       ]
    },
    {
+      path: '/privacy',
+      Component: lazy(() => import("@/pages/legal/PrivacyPolicyPage")),
+   },
+   {
+      path: '/terms',
+      Component: lazy(() => import("@/pages/legal/TermsOfServicePage")),
+   },
+   {
       path: "*",
       element: <NotFoundPage />,
    },

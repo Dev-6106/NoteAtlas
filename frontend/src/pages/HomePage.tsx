@@ -778,11 +778,12 @@ export default function HomePage() {
           © {new Date().getFullYear()} NoteAtlas Clone · Built for productivity
         </p>
         <nav style={{ display: "flex", gap: 24 }}>
-          {["Privacy", "Terms", "Status"].map(l => (
-            <a key={l} href="#" style={{ color: "var(--text-3)", fontSize: 12.5, textDecoration: "none", transition: "color 0.2s" }}
+          <Link to="/privacy" style={{ color: "var(--text-3)", fontSize: 12.5, textDecoration: "none", transition: "color 0.2s" }}
               onMouseEnter={e => (e.target as HTMLElement).style.color = "var(--text-1)"}
-              onMouseLeave={e => (e.target as HTMLElement).style.color = "var(--text-3)"}>{l}</a>
-          ))}
+              onMouseLeave={e => (e.target as HTMLElement).style.color = "var(--text-3)"}>Privacy</Link>
+          <Link to="/terms" style={{ color: "var(--text-3)", fontSize: 12.5, textDecoration: "none", transition: "color 0.2s" }}
+              onMouseEnter={e => (e.target as HTMLElement).style.color = "var(--text-1)"}
+              onMouseLeave={e => (e.target as HTMLElement).style.color = "var(--text-3)"}>Terms</Link>
         </nav>
       </footer>
     </div>
