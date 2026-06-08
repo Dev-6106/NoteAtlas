@@ -47,7 +47,6 @@ export function expressServer(app: Express, PORT: number) {
     store: MongoStore.create({
       mongoUrl: env.DB_URL,
       collectionName: "sessions",
-      mongoOptions: { family: 4 },
     }),
     secret: env.COOKIE_KEY,
     resave: false,

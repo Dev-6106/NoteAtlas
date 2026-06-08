@@ -27,4 +27,4 @@ process.on("uncaughtException", (error) => {
 });
 
 // ─── Bootstrap ────────────────────────────────────────────
-bootStrapApp(app, env.PORT);// Trigger restart
+bootStrapApp(app, env.PORT);
