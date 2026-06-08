@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response } from "express";
-import { DocRepository } from "../notes/repository/docRepository";
+import { DocRepository } from "../notes/repository/DocRepository";
 import { SourceRepository } from "../notes/repository/sourceRepository";
 
 export async function renameSource(req: Request, res: Response, next: NextFunction) {
