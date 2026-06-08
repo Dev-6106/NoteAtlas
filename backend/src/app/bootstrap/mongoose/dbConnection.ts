@@ -4,7 +4,10 @@ import { logger } from "@/lib/logger";
 
 export async function dbConnection(): Promise<void> {
   try {
-    await mongoose.connect(env.DB_URL);
+    await mongoose.connect(env.DB_URL, {
+      family: 4, // Force IPv4 to prevent TLS alert 80 on Windows
+      serverSelectionTimeoutMS: 5000,
+    });
     logger.info("Database connected successfully");
 
     mongoose.connection.on("error", (error) => {
