@@ -8,17 +8,35 @@ import { createReactAgent } from "@langchain/langgraph/prebuilt";
 import { DocRepository } from "../repository/DocRepository";
 import { deductCredits } from "@/app/helpers/credits";
 
-// Parse [Source: Title | ID: docId] markers from LLM response
-function extractCitations(text: string): Array<{ title: string; docId: string }> {
-    const regex = /\[Source:\s*([^\|]+)\|\s*ID:\s*([^\]]+)\]/g;
-    const citations: Array<{ title: string; docId: string }> = [];
+interface Citation {
+    title: string;
+    docId: string;
+    page?: number;
+    lines?: string;
+}
+
+// Parse [Source: Title | ID: docId | Page: N | Lines: X-Y] markers from LLM response
+function extractCitations(text: string): Array<Citation> {
+    const regex = /\[Source:\s*([^\|]+)\|\s*ID:\s*([^\|\]]+)(?:\|\s*Page:\s*([^\|\]]+))?(?:\|\s*Lines:\s*([^\|\]]+))?\]/g;
+    const citations: Array<Citation> = [];
     const seen = new Set<string>();
     let match;
     while ((match = regex.exec(text)) !== null) {
+        const title = match[1].trim();
         const docId = match[2].trim();
-        if (!seen.has(docId)) {
-            seen.add(docId);
-            citations.push({ title: match[1].trim(), docId });
+        const pageVal = match[3]?.trim();
+        const page = pageVal ? parseInt(pageVal) : undefined;
+        const lines = match[4]?.trim();
+
+        const key = `${docId}-${page}-${lines}`;
+        if (!seen.has(key)) {
+            seen.add(key);
+            citations.push({ 
+                title, 
+                docId, 
+                page: (page !== undefined && !isNaN(page)) ? page : undefined, 
+                lines 
+            });
         }
     }
     return citations;
@@ -58,11 +76,20 @@ Use this context to answer the user's questions. If you need more details, you c
             const systemMsg = new SystemMessage(`${REACT_AGENT_SYSTEM_PROMPT}
 
 You are currently assisting a user within note ID: ${noteId}. ${selectedDocsMsg}`);
+            
+            const lastMsg = messages[messages.length - 1];
+            if (lastMsg && (lastMsg.constructor.name === 'ToolMessage' || lastMsg._getType() === 'tool')) {
+                const reminderMsg = new SystemMessage(`REMINDER: You must answer the user's question now based on the tool outputs.
+CRITICAL: You MUST include inline citations for any facts from the documents in the EXACT format: [Source: <title> | ID: <id> | Page: <page> | Lines: <from>-<to>] (omit Page/Lines if not available in the tool output).
+DO NOT use other formats. DO NOT append a bibliography/sources list.`);
+                return [systemMsg, ...messages, reminderMsg];
+            }
+            
             return [systemMsg, ...messages];
         };
 
         const appWithMessagesModified = createReactAgent({
-            llm, tools, messagesModifier: modifyMessages as any,
+            llm, tools, messageModifier: modifyMessages as any,
         });
 
         await storeConversation([{ role: 'user', content: query as string, userId, noteId, conversationId }]);
@@ -97,6 +124,10 @@ You are currently assisting a user within note ID: ${noteId}. ${selectedDocsMsg}
 
         // ─── Extract + emit citations ────────────────────────────
         const citations = extractCitations(fullResponse);
+        console.log("=== LLM RESPONSE ===");
+        console.log(fullResponse);
+        console.log("=== EXTRACTED CITATIONS ===", citations);
+        
         res.write(`data: ${JSON.stringify({ done: true, citations })}\n\n`);
         res.end();
 

@@ -3,6 +3,7 @@ import { expressServer } from "./express/expressServer";
 import { dbConnection } from "./mongoose/dbConnection";
 import agenda from "./agenda/agenda";
 import "./agenda/jobs/image.job";
+import "./agenda/jobs/docEmbeddingJob";
 import { logger } from "@/lib/logger";
 
 export async function bootStrapApp(app: Express, PORT: number) {

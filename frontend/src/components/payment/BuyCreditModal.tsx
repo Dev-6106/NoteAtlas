@@ -41,9 +41,9 @@ const PLANS = [
         color: "#6b7280",
         features: [
             "50 credits on signup",
+            "Unlimited notebooks",
+            "No credit expiration",
             "Basic AI chat",
-            "Up to 5 documents",
-            "Community support",
         ],
         isCurrent: true,
     },
@@ -59,10 +59,10 @@ const PLANS = [
         color: "#818cf8",
         features: [
             "3,000 credits added",
+            "Unlimited notebooks",
+            "No credit expiration",
             "Priority AI responses",
-            "Up to 50 documents",
             "Summaries, FAQs, Mind Maps",
-            "Email support",
         ],
         isCurrent: false,
     },
@@ -78,10 +78,10 @@ const PLANS = [
         color: "#f59e0b",
         features: [
             "10,000 credits added",
-            "Fastest AI responses",
+            "All AI features unlocked",
+            "Unlimited notebooks",
             "Unlimited documents",
-            "All Studio tools",
-            "Audio Overviews & PPT",
+            "No credit expiration",
             "Priority support",
         ],
         isCurrent: false,
@@ -187,7 +187,7 @@ export const BuyCreditModal = () => {
                 </div>
 
                 {/* Plans Grid */}
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16, maxWidth: 900, margin: "0 auto" }}>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 16, maxWidth: 900, margin: "0 auto" }}>
                     {PLANS.map((plan) => (
                         <PlanCard
                             key={plan.id}
@@ -322,7 +322,7 @@ const PlanCard = ({ plan, loading, onBuy }: PlanCardProps) => {
                             ? "linear-gradient(135deg, var(--primary-brand), var(--primary-light))"
                             : "var(--bg-elevated)",
                         border: isPopular ? "none" : "1px solid var(--border-strong)",
-                        color: isPopular ? "#fff" : "var(--text-2)",
+                        color: isPopular ? "var(--text-on-primary)" : "var(--text-2)",
                         fontSize: 13.5, fontWeight: 700,
                         cursor: loading ? "not-allowed" : "pointer",
                         display: "flex", alignItems: "center", justifyContent: "center", gap: 8,

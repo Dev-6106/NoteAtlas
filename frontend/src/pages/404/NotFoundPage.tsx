@@ -1,12 +1,13 @@
 import { Link } from "react-router";
-import { Sparkles, MoveLeft } from "lucide-react";
+import { MoveLeft } from "lucide-react";
+import { LogoSvg } from "@/components/base/LogoSvg";
 
 export default function NotFoundPage() {
   return (
     <div style={{
       minHeight: "100vh",
-      background: "#080b14",
-      fontFamily: "'DM Sans', system-ui, sans-serif",
+      background: "var(--bg-base)",
+      fontFamily: "var(--font-sans)",
       display: "flex",
       flexDirection: "column",
       alignItems: "center",
@@ -16,15 +17,14 @@ export default function NotFoundPage() {
       padding: "24px",
     }}>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap');
         * { box-sizing: border-box; }
         @keyframes orbA { 0%,100%{transform:translate(0,0)} 50%{transform:translate(30px,-40px)} }
         @keyframes orbB { 0%,100%{transform:translate(0,0)} 50%{transform:translate(-28px,32px)} }
         @keyframes fadeUp { from{opacity:0;transform:translateY(24px)} to{opacity:1;transform:translateY(0)} }
         @keyframes flicker {
-          0%,100% { opacity: 1; text-shadow: 0 0 40px rgba(99,102,241,0.6), 0 0 80px rgba(99,102,241,0.3); }
-          45%     { opacity: 0.85; text-shadow: 0 0 20px rgba(99,102,241,0.3); }
-          50%     { opacity: 1; text-shadow: 0 0 60px rgba(139,92,246,0.7), 0 0 100px rgba(99,102,241,0.4); }
+          0%,100% { opacity: 1; text-shadow: 0 0 40px var(--primary-glow), 0 0 80px var(--primary-glow); }
+          45%     { opacity: 0.85; text-shadow: 0 0 20px var(--primary-glow); }
+          50%     { opacity: 1; text-shadow: 0 0 60px var(--primary-brand), 0 0 100px var(--primary-light); }
           95%     { opacity: 0.9; }
         }
         .anim-d0 { animation: fadeUp 0.6s 0.0s ease both; }
@@ -37,21 +37,21 @@ export default function NotFoundPage() {
       <div style={{
         position: "absolute", top: "-15%", left: "-10%",
         width: 520, height: 520, borderRadius: "50%", pointerEvents: "none",
-        background: "radial-gradient(circle, rgba(99,102,241,0.13) 0%, transparent 70%)",
+        background: "radial-gradient(circle, var(--primary-glow) 0%, transparent 70%)",
         animation: "orbA 14s ease-in-out infinite",
       }} />
       <div style={{
         position: "absolute", bottom: "-10%", right: "-5%",
         width: 400, height: 400, borderRadius: "50%", pointerEvents: "none",
-        background: "radial-gradient(circle, rgba(139,92,246,0.1) 0%, transparent 70%)",
+        background: "radial-gradient(circle, var(--primary-glow) 0%, transparent 70%)",
         animation: "orbB 18s ease-in-out infinite",
       }} />
 
       {/* Grid */}
       <div style={{
         position: "absolute", inset: 0, pointerEvents: "none",
-        backgroundImage: `linear-gradient(rgba(99,102,241,0.04) 1px, transparent 1px),
-          linear-gradient(90deg, rgba(99,102,241,0.04) 1px, transparent 1px)`,
+        backgroundImage: `linear-gradient(var(--primary-glow) 1px, transparent 1px),
+          linear-gradient(90deg, var(--primary-glow) 1px, transparent 1px)`,
         backgroundSize: "60px 60px",
         maskImage: "radial-gradient(ellipse 70% 60% at 50% 50%, black 30%, transparent 100%)",
       }} />
@@ -61,15 +61,8 @@ export default function NotFoundPage() {
 
         {/* Logo */}
         <div className="anim-d0" style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 9, marginBottom: 48 }}>
-          <div style={{
-            width: 32, height: 32, borderRadius: 9,
-            background: "linear-gradient(135deg, var(--primary-brand), var(--primary-light))",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            boxShadow: "0 0 16px rgba(99,102,241,0.45)",
-          }}>
-            <Sparkles size={15} color="var(--text-1)" />
-          </div>
-          <span style={{ fontSize: 16, fontWeight: 800, color: "var(--text-1)", letterSpacing: "-0.4px" }}>NoteAtlas</span>
+          <LogoSvg size={38} />
+          <span style={{ fontSize: 18, fontWeight: 800, color: "var(--text-1)", letterSpacing: "-0.5px" }}>NoteAtlas</span>
         </div>
 
         {/* 404 */}
@@ -81,7 +74,7 @@ export default function NotFoundPage() {
           color: "var(--text-1)",
           animation: "flicker 5s ease-in-out infinite",
           marginBottom: 8,
-          background: "linear-gradient(135deg, var(--text-1) 0%, var(--primary-brand) 40%, #c084fc 100%)",
+          background: "linear-gradient(135deg, var(--text-1) 0%, var(--primary-brand) 40%, var(--primary-light) 100%)",
           WebkitBackgroundClip: "text",
           WebkitTextFillColor: "transparent",
           backgroundClip: "text",
@@ -92,7 +85,7 @@ export default function NotFoundPage() {
         {/* Divider */}
         <div className="anim-d2" style={{
           width: 48, height: 2, margin: "20px auto 28px",
-          background: "linear-gradient(90deg,#6366f1,#8b5cf6)",
+          background: "linear-gradient(90deg, var(--primary-brand), var(--primary-light))",
           borderRadius: 2,
         }} />
 
@@ -119,16 +112,16 @@ export default function NotFoundPage() {
                 background: "linear-gradient(135deg, var(--primary-brand), var(--primary-light))",
                 color: "var(--text-on-primary)", fontSize: 15, fontWeight: 700,
                 border: "none", cursor: "pointer",
-                boxShadow: "0 8px 28px rgba(99,102,241,0.38)",
+                boxShadow: "var(--shadow-primary)",
                 transition: "all 0.2s",
               }}
               onMouseEnter={e => {
                 (e.currentTarget as HTMLButtonElement).style.transform = "translateY(-2px)";
-                (e.currentTarget as HTMLButtonElement).style.boxShadow = "0 14px 36px rgba(99,102,241,0.52)";
+                (e.currentTarget as HTMLButtonElement).style.boxShadow = "var(--shadow-primary-lg)";
               }}
               onMouseLeave={e => {
                 (e.currentTarget as HTMLButtonElement).style.transform = "translateY(0)";
-                (e.currentTarget as HTMLButtonElement).style.boxShadow = "0 8px 28px rgba(99,102,241,0.38)";
+                (e.currentTarget as HTMLButtonElement).style.boxShadow = "var(--shadow-primary)";
               }}
             >
               <MoveLeft size={15} />

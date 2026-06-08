@@ -16,3 +16,15 @@ export async function downloadFromStorage(key: string, destPath: string): Promis
     
     return fs.promises.writeFile(destPath, buffer);
 }
+
+export async function downloadTextFromStorage(key: string): Promise<string> {
+    const { data, error } = await supabase.storage
+        .from(env.SUPABASE_BUCKET)
+        .download(key);
+    
+    if (error || !data) {
+        throw new Error(`Failed to download text from Supabase: ${error?.message || "No data returned"}`);
+    }
+
+    return data.text();
+}

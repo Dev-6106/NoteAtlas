@@ -4,6 +4,7 @@ import { NoteRepository } from "./repository/notes.repository";
 import { cwd } from "process";
 import path from "path";
 import fs from "fs";
+import agenda from "@/app/bootstrap/agenda/agenda";
 
 import { generateTitle } from "./helpers/TitleGeneration";
 import { generatePrompt } from "./helpers/promptGenerator";
@@ -95,6 +96,7 @@ export async function createNote(
     );
 
     const newDoc = await docRepo.createDoc({fileName, title, userId, noteId: newNote._id})
+    await agenda.now('docEmbedding', { noteId: newNote._id.toString(), userId, filePath: fileName });
 
     return res.status(201).send({
       message: "Note Created Successfully",

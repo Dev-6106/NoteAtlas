@@ -26,12 +26,28 @@ export const rightPanelSlice = createSlice({
     name: 'rightPanel',
     initialState: {
         docIds: [] as string[],
+        activeSourceViewer: null as {
+            citations: Array<{ title: string; docId: string; page?: number; lines?: string }>;
+            initialDocId?: string | null;
+            initialPage?: number;
+            initialLines?: string;
+        } | null,
         ...sourceNoteResultState
 
 
     },
     reducers: {
-
+        openSourceViewer: (state, action: PayloadAction<{
+            citations: Array<{ title: string; docId: string; page?: number; lines?: string }>;
+            initialDocId?: string | null;
+            initialPage?: number;
+            initialLines?: string;
+        }>) => {
+            state.activeSourceViewer = action.payload;
+        },
+        closeSourceViewer: (state) => {
+            state.activeSourceViewer = null;
+        },
 
         closeMindMap: (state) => {
             state.mindMapModal.modal = false
@@ -107,7 +123,17 @@ export const rightPanelSlice = createSlice({
     },
 })
 
-export const { addDocIds, setDocIds, showSourceModalContent, closeSourceModal, closeMindMap, showAudioPlayer, closeAudioPlayer } = rightPanelSlice.actions
+export const { 
+    addDocIds, 
+    setDocIds, 
+    showSourceModalContent, 
+    closeSourceModal, 
+    closeMindMap, 
+    showAudioPlayer, 
+    closeAudioPlayer,
+    openSourceViewer,
+    closeSourceViewer
+} = rightPanelSlice.actions
 
 
 export default rightPanelSlice.reducer

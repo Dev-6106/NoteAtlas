@@ -47,3 +47,7 @@ pnpm-lock.yaml
 
 # Uploads (production uses cloud storage)
 public/uploads/
+
+deployement_guide.md
+
+.gitignore

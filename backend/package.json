@@ -6,7 +6,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "tsx watch src/index.ts",
-    "build": "node --max-old-space-size=4096 ./node_modules/typescript/bin/tsc -p tsconfig.json",
+    "build": "tsup src/index.ts --format cjs --out-dir dist",
     "typecheck": "node --max-old-space-size=4096 ./node_modules/typescript/bin/tsc -p tsconfig.check.json",
     "start": "node -e \"require('tsconfig-paths/register'); require('./dist/index.js')\""
   },
@@ -46,6 +46,7 @@
     "helmet": "^8.2.0",
     "jsonwebtoken": "^9.0.3",
     "mime-types": "^3.0.2",
+    "mongodb": "^7.2.0",
     "mongoose": "^9.6.2",
     "multer": "^2.1.1",
     "node-fetch": "^3.3.2",
@@ -70,7 +71,8 @@
     "nodemon": "^3.1.14",
     "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.2.0",
+    "tsup": "^8.5.1",
     "tsx": "^4.22.3",
-    "typescript": "^6.0.3"
+    "typescript": "^5.9.3"
   }
 }

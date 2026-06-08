@@ -6,8 +6,8 @@ import { queryVectorDB } from "./queryVectorDB";
 import z from "zod";
 import { SearchToolData } from "@/app/tools/SearchToolData";
 
-export const getAgentTools = (userId: string, noteId: string) => {
-    const DocSummaryTool = tool(
+export const getAgentTools = (userId: string, noteId: string): any[] => {
+    const DocSummaryTool: any = tool(
         async ({ docId }) => {
             const docRepo = DocRepository.getInstance();
 
@@ -28,7 +28,7 @@ export const getAgentTools = (userId: string, noteId: string) => {
         }
     );
 
-    const libraryTool = tool(
+    const libraryTool: any = tool(
         async () => {
             const noteRepo = NoteRepository.getInstance();
 
@@ -47,7 +47,7 @@ export const getAgentTools = (userId: string, noteId: string) => {
         }
     );
 
-    const vectorDBTool = tool(
+    const vectorDBTool: any = tool(
         async ({ query }) => {
             const results = await queryVectorDB({
                 query,
@@ -55,25 +55,48 @@ export const getAgentTools = (userId: string, noteId: string) => {
                 userId,
             });
 
+            // Need to map the metadata 'source' (which is fileName) to actual document _id and title for citations
+            const { Doc } = require("@/app/models/doc.models");
+            const docsInNote = await Doc.find({ noteId, userId }).lean();
+            const docMap = new Map();
+            docsInNote.forEach((d: any) => {
+                docMap.set(d.fileName, { _id: d._id.toString(), title: d.title });
+            });
+
             const docs: Document[] = [];
 
             for (const result of results) {
+                const source = result.metadata?.source;
+                const docInfo = docMap.get(source) || { _id: "unknown", title: "Unknown Source" };
+
                 docs.push(
                     new Document({
                         pageContent: result.pageContent ?? "",
                         metadata: {
                             ...(result.metadata ?? {}),
+                            _id: docInfo._id,
+                            title: docInfo.title,
                         },
                     })
                 );
             }
 
-            return JSON.stringify(
-                docs.map((doc) => ({
-                    pageContent: doc.pageContent,
-                    metadata: doc.metadata,
-                }))
-            );
+            let formattedOutput = "";
+            for (const doc of docs) {
+                const pageNum = doc.metadata?.['loc.pageNumber'] || doc.metadata?.pageNumber || doc.metadata?.page;
+                const lineFrom = doc.metadata?.['loc.lines.from'] || doc.metadata?.lineFrom;
+                const lineTo = doc.metadata?.['loc.lines.to'] || doc.metadata?.lineTo;
+
+                formattedOutput += `\nDocument Title: ${doc.metadata?.title || "Unknown Source"}\nDocument ID: ${doc.metadata?._id || "unknown"}\n`;
+                if (pageNum) {
+                    formattedOutput += `Page: ${pageNum}\n`;
+                }
+                if (lineFrom !== undefined && lineTo !== undefined) {
+                    formattedOutput += `Lines: ${lineFrom}-${lineTo}\n`;
+                }
+                formattedOutput += `Content:\n${doc.pageContent}\n---\n`;
+            }
+            return formattedOutput;
         },
         {
             name: "vector_db",
@@ -87,7 +110,7 @@ export const getAgentTools = (userId: string, noteId: string) => {
         }
     );
 
-    const searchTool = tool(
+    const searchTool: any = tool(
         async ({ query }) => {
             const searchTool = new SearchToolData('exa');
             const searchResult = await searchTool.invoke(query);

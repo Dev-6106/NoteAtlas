@@ -124,10 +124,10 @@ const CreateNoteModal = ({ noteId }: { noteId?: string }) => {
                 {pasteTextForm && <AddPasteTextForm noteId={noteId} hidePasteTextForm={hidePasteTextForm} />}
 
                 {/* Action cards */}
-                <div style={{ display: "flex", gap: 12 }}>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 12 }}>
                     {/* Google Workspace */}
                     <div style={{
-                        flex: 1, borderRadius: 14, padding: 16,
+                        flex: 1, minWidth: 140, borderRadius: 14, padding: 16,
                         background: "var(--bg-card)",
                         border: "1px solid var(--border-default)",
                         transition: "all 0.2s",
@@ -164,7 +164,7 @@ const CreateNoteModal = ({ noteId }: { noteId?: string }) => {
 
                     {/* Link */}
                     <div style={{
-                        flex: 1, borderRadius: 14, padding: 16,
+                        flex: 1, minWidth: 140, borderRadius: 14, padding: 16,
                         background: "var(--bg-card)",
                         border: "1px solid var(--border-default)",
                         transition: "all 0.2s",
@@ -202,7 +202,7 @@ const CreateNoteModal = ({ noteId }: { noteId?: string }) => {
 
                     {/* Paste text */}
                     <div style={{
-                        flex: 1, borderRadius: 14, padding: 16,
+                        flex: 1, minWidth: 140, borderRadius: 14, padding: 16,
                         background: "var(--bg-card)",
                         border: "1px solid var(--border-default)",
                         transition: "all 0.2s",

@@ -13,6 +13,7 @@ import { LLM } from "@/app/llm/llm";
 import { getDocChunk } from "@/util/getDocChunk";
 import { uploadToStorage } from "@/services/storage/upload.service";
 import crypto from "crypto";
+import agenda from "@/app/bootstrap/agenda/agenda";
 
 export async function storeUploadFiles(req: Request, res: Response, next: NextFunction) {
     try {
@@ -42,6 +43,7 @@ export async function storeUploadFiles(req: Request, res: Response, next: NextFu
 
         const docRepo = DocRepository.getInstance();
         const newDoc = await docRepo.createDoc({ fileName, userId, noteId, title });
+        await agenda.now('docEmbedding', { noteId, userId, filePath: fileName });
 
         console.log("File saved!");
         return res.status(201).send({message: "Documnet uploaded succesfully"});

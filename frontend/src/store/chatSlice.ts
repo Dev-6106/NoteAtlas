@@ -52,8 +52,10 @@ const chatSlice = createSlice({
         },
     
     togglePaymentModal: state => {
-
       state.payment.modal = !state.payment.modal
+    },
+    openPaymentModal: state => {
+      state.payment.modal = true;
     },
 
     addExtraWidth: state => {
@@ -114,7 +116,7 @@ const chatSlice = createSlice({
   },
 })
 
-export const { addExtraWidth,attribNoteVal, toggleLeftPanel, toggleRightPanel, reduceExtraWidth,togglePaymentModal } = chatSlice.actions
+export const { addExtraWidth,attribNoteVal, toggleLeftPanel, toggleRightPanel, reduceExtraWidth,togglePaymentModal, openPaymentModal } = chatSlice.actions
 
 
 

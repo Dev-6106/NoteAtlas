@@ -13,6 +13,7 @@ import { DocRepository } from "../notes/repository/DocRepository";
 import { LLM } from "@/app/llm/llm";
 import { getDocChunk } from "@/util/getDocChunk";
 import { uploadTextToStorage } from "@/services/storage/upload.service";
+import agenda from "@/app/bootstrap/agenda/agenda";
 
 export async function storeTextData(req: Request, res: Response, next: NextFunction) {
     try {
@@ -25,6 +26,7 @@ export async function storeTextData(req: Request, res: Response, next: NextFunct
         const fileName = storageKey;
         const docRepo = DocRepository.getInstance();
         const newDoc = await docRepo.createDoc({ fileName, userId, noteId, title });
+        await agenda.now('docEmbedding', { noteId, userId, filePath: fileName });
 
         console.log("File Saved to Supabase: ", `${storageKey}`);
         res.status(200).json({ message: "Document was saved successfully" });

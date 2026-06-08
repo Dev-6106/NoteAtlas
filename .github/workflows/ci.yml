@@ -36,8 +36,8 @@ jobs:
         env:
           VITE_API_URL: http://localhost:8000
           VITE_GOOGLE_CLIENT_ID: dummy
-          VITE_DEVELOPER_KEY: dummy
-          VITE_STRIPE_PUB_KEY: pk_test_dummy
+          VITE_DEVELOPPER_KEY: dummy
+          VITE_RAZORPAY_KEY_ID: dummy
           NODE_OPTIONS: --max-old-space-size=4096
 
   # ─── Backend ─────────────────────────────────────────────

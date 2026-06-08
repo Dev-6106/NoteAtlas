@@ -25,8 +25,9 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { SuggestedInput } from "./SuggestedInput";
 import { ChatInput } from "./ChatInput";
-import { SourceViewerModal, type Citation } from "./SourceViewerModal";
+import { type Citation } from "./SourceViewerModal";
 import { togglePaymentModal } from "@/store/chatSlice";
+import { openSourceViewer, closeSourceViewer } from "@/store/rightPanelSlice";
 
 const MiddlePannel = ({
   chatHistory,
@@ -54,7 +55,7 @@ const MiddlePannel = ({
   const [showScrollButton, setShowScrollButton] = useState(false);
   // Citation state: maps message index → citations array
   const [citationsMap, setCitationsMap] = useState<Record<number, Citation[]>>({});
-  const [sourceModal, setSourceModal] = useState<{ citations: Citation[]; initialDocId?: string } | null>(null);
+  const activeSourceViewer = useSelector((state: RootState) => state.rightPanel.activeSourceViewer);
 
   async function sendUserMessage({
     newMessage,
@@ -263,7 +264,9 @@ const MiddlePannel = ({
             key={index}
             msg={msg}
             citations={citationsMap[index]}
-            onOpenSource={(citations, docId) => setSourceModal({ citations, initialDocId: docId })}
+            onOpenSource={(citations, docId, page, lines) => 
+              dispatch(openSourceViewer({ citations, initialDocId: docId, initialPage: page, initialLines: lines }))
+            }
           />
         ))}
 
@@ -438,10 +441,10 @@ const MiddlePannel = ({
               <Loader2
                 className="spin"
                 size={16}
-                style={{ color: "var(--text-1)" }}
+                style={{ color: "var(--text-on-primary)" }}
               />
             ) : (
-              <SendHorizonal size={15} style={{ color: "var(--text-1)" }} />
+              <SendHorizonal size={15} style={{ color: "var(--text-on-primary)" }} />
             )}
           </button>
         </div>
@@ -453,15 +456,6 @@ const MiddlePannel = ({
         />
       </div>
     </div>
-
-    {/* Source Viewer Modal */}
-    {sourceModal && (
-      <SourceViewerModal
-        citations={sourceModal.citations}
-        initialDocId={sourceModal.initialDocId}
-        onClose={() => setSourceModal(null)}
-      />
-    )}
   </>
   );
 };
@@ -478,18 +472,21 @@ const NoteHeader = ({
   docIds: string[];
   aiResult: questionAndDocOverviewType;
 }) => {
+  const [imgError, setImgError] = useState(false);
+
   return (
     <div style={{ marginBottom: 16 }} className="fade-in-up">
       {note?.image && (
-        note.image.startsWith("http") ? (
+        note.image.startsWith("http") && !imgError ? (
           <img
             src={note.image}
             alt=""
+            onError={() => setImgError(true)}
             style={{ width: 64, height: 64, borderRadius: 12, opacity: 0.9, objectFit: "cover", marginBottom: 12 }}
           />
         ) : (
           <span style={{ fontSize: "3rem", lineHeight: 1.2 }}>
-            {note.image}
+            {imgError ? "📓" : note.image}
           </span>
         )
       )}
@@ -548,14 +545,47 @@ type Msg = { role: "ai" | "user"; content: string };
 const ChatMessage = memo(({ msg, citations, onOpenSource }: {
   msg: Msg;
   citations?: Citation[];
-  onOpenSource?: (citations: Citation[], docId?: string) => void;
+  onOpenSource?: (citations: Citation[], docId: string, page?: number, lines?: string) => void;
 }) => {
   if (!msg || !msg.content) return null;
   const isAI = msg.role === "ai";
+  const extractedCitations: Citation[] = [];
 
-  // Strip citation markers from displayed content for cleaner rendering
+  if (isAI && msg.content) {
+    const regex = /\[Source:\s*([^\|]+)\|\s*ID:\s*([^\|\]]+)(?:\|\s*Page:\s*([^\|\]]+))?(?:\|\s*Lines:\s*([^\|\]]+))?\]/g;
+    let match;
+    const seen = new Set<string>();
+    const regexClone = new RegExp(regex);
+    while ((match = regexClone.exec(msg.content)) !== null) {
+        const title = match[1].trim();
+        const docId = match[2].trim();
+        const pageVal = match[3]?.trim();
+        const page = pageVal ? parseInt(pageVal) : undefined;
+        const lines = match[4]?.trim();
+
+        const key = `${docId}-${page}-${lines}`;
+        if (!seen.has(key)) {
+            seen.add(key);
+            extractedCitations.push({ 
+                title, 
+                docId, 
+                page: (page !== undefined && !isNaN(page)) ? page : undefined, 
+                lines 
+            });
+        }
+    }
+  }
+  
+  const finalCitations = citations && citations.length > 0 ? citations : extractedCitations;
+
+  // Convert citation markers to markdown links for inline rendering
   const cleanContent = isAI
-    ? msg.content.replace(/\[Source:\s*[^|]+\|\s*ID:\s*[^\]]+\]/g, "")
+    ? msg.content.replace(/\[Source:\s*([^\|]+)\|\s*ID:\s*([^\|\]]+)(?:\|\s*Page:\s*([^\|\]]+))?(?:\|\s*Lines:\s*([^\|\]]+))?\]/g, (match, title, docId, page, lines) => {
+        let query = `id=${docId.trim()}`;
+        if (page) query += `&page=${page.trim()}`;
+        if (lines) query += `&lines=${lines.trim()}`;
+        return `[${title.trim()}](#cite?${query})`;
+      })
     : msg.content;
 
   return (
@@ -574,7 +604,7 @@ const ChatMessage = memo(({ msg, citations, onOpenSource }: {
           background: isAI
             ? "transparent"
             : "linear-gradient(135deg, var(--primary-brand) 0%, var(--primary-light) 100%)",
-          color: isAI ? "var(--text-1)" : "var(--text-1)",
+          color: isAI ? "var(--text-1)" : "var(--text-on-primary)",
           fontSize: 14,
           lineHeight: 1.65,
           boxShadow: isAI
@@ -592,15 +622,67 @@ const ChatMessage = memo(({ msg, citations, onOpenSource }: {
           <ReactMarkdown
             remarkPlugins={[remarkGfm]}
             components={{
-              a: ({ node, ...props }) => (
-                <a
-                  {...props}
-                  style={{
-                    color: isAI ? "var(--primary-brand)" : "#c4b5fd",
-                    textDecoration: "underline",
-                  }}
-                />
-              ),
+              a: ({ node, href, children, ...props }) => {
+                if (href?.startsWith("#cite?")) {
+                  const urlParams = new URLSearchParams(href.replace("#cite?", ""));
+                  const docId = urlParams.get("id") || "";
+                  const page = urlParams.get("page") ? parseInt(urlParams.get("page")!) : undefined;
+                  const lines = urlParams.get("lines") || undefined;
+                  
+                  if (finalCitations.length === 0) return <span style={{ color: "var(--primary-brand)", fontWeight: 600 }}>[{children}]</span>;
+                  
+                  return (
+                    <button
+                      onClick={() => onOpenSource?.(finalCitations, docId, page, lines)}
+                      style={{
+                        display: "inline-flex", alignItems: "center", justifyContent: "center",
+                        verticalAlign: "middle",
+                        height: 20, padding: "0 6px", margin: "0 2px",
+                        borderRadius: 6,
+                        background: "var(--primary-glow)",
+                        border: "1px solid var(--primary-border)",
+                        color: "var(--primary-brand)",
+                        fontSize: 11, fontWeight: 700,
+                        cursor: "pointer", transition: "all 0.15s",
+                        fontFamily: "var(--font-mono, monospace)",
+                        maxWidth: "140px",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap"
+                      }}
+                      onMouseEnter={e => {
+                        (e.currentTarget as HTMLButtonElement).style.background = "var(--primary-mid)";
+                      }}
+                      onMouseLeave={e => {
+                        (e.currentTarget as HTMLButtonElement).style.background = "var(--primary-glow)";
+                      }}
+                      title="View Source"
+                    >
+                      {children}
+                    </button>
+                  );
+                }
+
+                const isRealLink = href?.startsWith("http") || href?.startsWith("mailto:");
+                if (!isRealLink) {
+                  // If remarkGfm auto-linked something like "file.pdf", render it as plain text
+                  return <span style={{ fontWeight: 600 }} {...props}>{children}</span>;
+                }
+                return (
+                  <a
+                    href={href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    {...props}
+                    style={{
+                      color: isAI ? "var(--primary-brand)" : "#c4b5fd",
+                      textDecoration: "underline",
+                    }}
+                  >
+                    {children}
+                  </a>
+                );
+              },
               ul: ({ node, ...props }) => (
                 <ul
                   style={{
@@ -689,12 +771,12 @@ const ChatMessage = memo(({ msg, citations, onOpenSource }: {
         </div>
 
         {/* Citation chips (AI messages only) */}
-        {isAI && citations && citations.length > 0 && (
+        {isAI && finalCitations && finalCitations.length > 0 && (
           <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 10 }}>
-            {citations.map((c) => (
+            {finalCitations.map((c) => (
               <button
-                key={c.docId}
-                onClick={() => onOpenSource?.(citations, c.docId)}
+                key={`${c.docId}-${c.page}-${c.lines}`}
+                onClick={() => onOpenSource?.(finalCitations, c.docId, c.page, c.lines)}
                 style={{
                   display: "flex", alignItems: "center", gap: 5,
                   padding: "4px 10px", borderRadius: 999,
@@ -702,6 +784,7 @@ const ChatMessage = memo(({ msg, citations, onOpenSource }: {
                   border: "1px solid var(--primary-border)",
                   color: "var(--primary-brand)", fontSize: 11.5, fontWeight: 600,
                   cursor: "pointer", transition: "all 0.15s",
+                  maxWidth: "100%",
                 }}
                 onMouseEnter={e => {
                   (e.currentTarget as HTMLButtonElement).style.background = "var(--primary-mid)";
@@ -710,12 +793,14 @@ const ChatMessage = memo(({ msg, citations, onOpenSource }: {
                   (e.currentTarget as HTMLButtonElement).style.background = "var(--primary-glow)";
                 }}
               >
-                <FileText size={11} />
-                {c.title.length > 28 ? c.title.substring(0, 28) + "…" : c.title}
+                <FileText size={11} style={{ flexShrink: 0 }} />
+                <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  {c.title}
+                </span>
               </button>
             ))}
             <button
-              onClick={() => onOpenSource?.(citations)}
+              onClick={() => onOpenSource?.(finalCitations)}
               style={{
                 display: "flex", alignItems: "center", gap: 5,
                 padding: "4px 10px", borderRadius: 999,

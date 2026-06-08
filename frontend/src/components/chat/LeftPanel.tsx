@@ -18,7 +18,7 @@ import type { NoteType } from "@/types/note-types";
 import { Checkbox } from "../ui/checkbox";
 import { toggleDiscoveryModal } from "@/store/discoveryModalSlice";
 import { useState } from "react";
-import { addDocIds, setDocIds } from "@/store/rightPanelSlice";
+import { addDocIds, setDocIds, openSourceViewer } from "@/store/rightPanelSlice";
 import { setIsNewChatDraft } from "@/store/chatHistorySlice";
 import PdfIcon from "@/assets/pdf.png";
 import { MoreVertical, Trash2, Edit2, UploadCloud, MessageSquare } from "lucide-react";
@@ -115,6 +115,15 @@ const LeftPanel = ({ note, loading }: LeftPanelProps) => {
     setOpenSourceMenuId(null);
     dispatch(setDocIds([docId]));
     dispatch(setIsNewChatDraft(true));
+  };
+
+  const handleViewSourceClick = (e: React.MouseEvent, doc: any) => {
+    e.stopPropagation();
+    setOpenSourceMenuId(null);
+    dispatch(openSourceViewer({
+      citations: [{ title: doc.displayName || doc.title, docId: doc._id }],
+      initialDocId: doc._id
+    }));
   };
 
   function togglePanel() {
@@ -468,6 +477,7 @@ const LeftPanel = ({ note, loading }: LeftPanelProps) => {
                             display: "flex", flexDirection: "column", gap: 2,
                             animation: "fadeUp 0.15s ease-out"
                           }}>
+                            <MenuButton icon={<FileText size={13}/>} label="View source" onClick={(e) => handleViewSourceClick(e, doc)} />
                             <MenuButton icon={<Edit2 size={13}/>} label="Rename" onClick={(e) => handleRenameSource(e, doc._id, doc.displayName || doc.title)} />
                             <MenuButton icon={<MessageSquare size={13}/>} label="Chat about this" onClick={(e) => handleChatAboutSource(e, doc._id)} />
                             <div style={{ height: 1, background: "var(--border-default)", margin: "2px 0" }} />

@@ -1,35 +1,39 @@
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
+import { useDispatch } from "react-redux";
+import { openPaymentModal } from "@/store/chatSlice";
 import { useState, useEffect, useRef } from "react";
 import { Menu, X, Brain, Zap, Lock, MessageSquare, Folder, Search } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { getUserData } from "@/helper/getUserData";
+import { LogoSvg } from "@/components/base/LogoSvg";
+import UserAvatar from "@/components/base/UserAvatar";
 
 // ─── SVG Noise texture ────────────────────────────────────────────────────────
 const NoiseSvg = () => (
-  <svg style={{ position:"fixed", inset:0, width:"100%", height:"100%", opacity:0.03, pointerEvents:"none", zIndex:0 }} xmlns="http://www.w3.org/2000/svg">
-    <filter id="noise"><feTurbulence type="fractalNoise" baseFrequency="0.65" numOctaves="3" stitchTiles="stitch"/><feColorMatrix type="saturate" values="0"/></filter>
-    <rect width="100%" height="100%" filter="url(#noise)"/>
+  <svg style={{ position: "fixed", inset: 0, width: "100%", height: "100%", opacity: 0.03, pointerEvents: "none", zIndex: 0 }} xmlns="http://www.w3.org/2000/svg">
+    <filter id="noise"><feTurbulence type="fractalNoise" baseFrequency="0.65" numOctaves="3" stitchTiles="stitch" /><feColorMatrix type="saturate" values="0" /></filter>
+    <rect width="100%" height="100%" filter="url(#noise)" />
   </svg>
 );
 
 // ─── Gradient mesh bg orbs ────────────────────────────────────────────────────
 const MeshBg = () => (
-  <div style={{ position:"fixed", inset:0, zIndex:0, pointerEvents:"none", overflow:"hidden" }}>
+  <div style={{ position: "fixed", inset: 0, zIndex: 0, pointerEvents: "none", overflow: "hidden" }}>
     <div style={{
-      position:"absolute", top:"-15%", left:"-8%", width:700, height:700, borderRadius:"50%",
-      background:"radial-gradient(circle, var(--primary-glow) 0%, transparent 65%)",
-      filter:"blur(40px)", animation:"orb1 14s ease-in-out infinite",
-    }}/>
+      position: "absolute", top: "-15%", left: "-8%", width: 700, height: 700, borderRadius: "50%",
+      background: "radial-gradient(circle, var(--primary-glow) 0%, transparent 65%)",
+      filter: "blur(40px)", animation: "orb1 14s ease-in-out infinite",
+    }} />
     <div style={{
-      position:"absolute", bottom:"-5%", right:"-5%", width:550, height:550, borderRadius:"50%",
-      background:"radial-gradient(circle, var(--primary-mid) 0%, transparent 65%)",
-      filter:"blur(40px)", animation:"orb2 17s ease-in-out infinite",
-    }}/>
+      position: "absolute", bottom: "-5%", right: "-5%", width: 550, height: 550, borderRadius: "50%",
+      background: "radial-gradient(circle, var(--primary-mid) 0%, transparent 65%)",
+      filter: "blur(40px)", animation: "orb2 17s ease-in-out infinite",
+    }} />
     <div style={{
-      position:"absolute", top:"38%", right:"22%", width:360, height:360, borderRadius:"50%",
-      background:"radial-gradient(circle, var(--primary-mid) 0%, transparent 65%)",
-      filter:"blur(30px)", animation:"orb3 21s ease-in-out infinite",
-    }}/>
+      position: "absolute", top: "38%", right: "22%", width: 360, height: 360, borderRadius: "50%",
+      background: "radial-gradient(circle, var(--primary-mid) 0%, transparent 65%)",
+      filter: "blur(30px)", animation: "orb3 21s ease-in-out infinite",
+    }} />
     <style>{`
       @keyframes orb1{0%,100%{transform:translate(0,0)}50%{transform:translate(50px,-70px)}}
       @keyframes orb2{0%,100%{transform:translate(0,0)}50%{transform:translate(-60px,45px)}}
@@ -38,129 +42,170 @@ const MeshBg = () => (
   </div>
 );
 
-// ─── Subtle grid ──────────────────────────────────────────────────────────────
-const GridLines = ({ opacity = 0.04 }: { opacity?: number }) => (
+// ─── Glowy grid ──────────────────────────────────────────────────────────────
+const GlowyGrid = ({ opacity = 0.25 }: { opacity?: number }) => (
   <div style={{
-    position:"absolute", inset:0, pointerEvents:"none", zIndex:0,
-    backgroundImage:`linear-gradient(var(--primary-glow) 1px, transparent 1px), linear-gradient(90deg, var(--primary-glow) 1px, transparent 1px)`,
-    backgroundSize:"72px 72px",
-    maskImage:"radial-gradient(ellipse 90% 70% at 50% 0%, black 35%, transparent 100%)",
-    opacity,
-  }}/>
+    position: "absolute", inset: 0, pointerEvents: "none", zIndex: 0,
+    overflow: "hidden"
+  }}>
+    <div style={{
+      position: "absolute", inset: "-50%",
+      backgroundImage: `
+        linear-gradient(var(--primary-brand) 1px, transparent 1px),
+        linear-gradient(90deg, var(--primary-brand) 1px, transparent 1px)
+      `,
+      backgroundSize: "72px 72px",
+      opacity: opacity * 0.4,
+      maskImage: "radial-gradient(ellipse 70% 70% at 50% 30%, black 0%, transparent 60%)",
+      animation: "panGrid 30s linear infinite"
+    }}/>
+    <div style={{
+      position: "absolute", inset: "-50%",
+      backgroundImage: `
+        linear-gradient(var(--primary-brand) 2px, transparent 2px),
+        linear-gradient(90deg, var(--primary-brand) 2px, transparent 2px)
+      `,
+      backgroundSize: "72px 72px",
+      opacity: opacity * 0.8,
+      filter: "blur(6px)",
+      maskImage: "radial-gradient(ellipse 70% 70% at 50% 30%, black 0%, transparent 60%)",
+      animation: "panGrid 30s linear infinite"
+    }}/>
+    <style>{`
+      @keyframes panGrid {
+        0% { transform: translateY(0); }
+        100% { transform: translateY(72px); }
+      }
+    `}</style>
+  </div>
 );
 
 // ─── Pill badge ───────────────────────────────────────────────────────────────
 const Pill = ({ children }: { children: React.ReactNode }) => (
   <span style={{
-    display:"inline-flex", alignItems:"center", gap:8,
-    padding:"5px 14px", borderRadius:"999px",
-    border:`1px solid var(--border-accent)`,
-    background:"var(--primary-glow)",
-    color:"var(--primary-light)", fontSize:12, fontWeight:500, letterSpacing:"0.04em",
-    backdropFilter:"blur(12px)",
+    display: "inline-flex", alignItems: "center", gap: 8,
+    padding: "5px 14px", borderRadius: "999px",
+    border: `1px solid var(--border-accent)`,
+    background: "var(--primary-glow)",
+    color: "var(--primary-light)", fontSize: 12, fontWeight: 500, letterSpacing: "0.04em",
+    backdropFilter: "blur(12px)",
   }}>
     <span style={{
-      width:6, height:6, borderRadius:"50%",
-      background:"var(--primary-light)", boxShadow:"0 0 6px var(--primary-light)",
-      animation:"pulse 2.4s infinite",
-    }}/>
+      width: 6, height: 6, borderRadius: "50%",
+      background: "var(--primary-light)", boxShadow: "0 0 6px var(--primary-light)",
+      animation: "pulse 2.4s infinite",
+    }} />
     {children}
   </span>
 );
 
 // ─── Feature icon block ───────────────────────────────────────────────────────
-const FeatureCard = ({ icon, title, desc, delay=0 }: { icon: React.ReactNode; title: string; desc: string; delay?: number }) => {
+const FeatureCard = ({ icon, title, desc, delay = 0 }: { icon: React.ReactNode; title: string; desc: string; delay?: number }) => {
   const [hover, setHover] = useState(false);
   return (
     <div
-      onMouseEnter={()=>setHover(true)}
-      onMouseLeave={()=>setHover(false)}
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
       style={{
-        padding:"28px 24px",
+        padding: "28px 24px",
         borderRadius: 18,
-        border:`1px solid ${hover ? "var(--border-accent)" : "var(--border-default)"}`,
+        border: `1px solid ${hover ? "var(--border-accent)" : "var(--border-default)"}`,
         background: hover ? "var(--primary-glow)" : "var(--bg-card)",
-        backdropFilter:"blur(12px)",
-        transition:"all 0.28s ease",
+        backdropFilter: "blur(12px)",
+        transition: "all 0.28s ease",
         transform: hover ? "translateY(-4px)" : "none",
         boxShadow: hover ? "var(--shadow-primary)" : "none",
-        cursor:"default",
-        animationDelay:`${delay}ms`,
+        cursor: "default",
+        animationDelay: `${delay}ms`,
       }}
     >
       <div style={{
-        width:42, height:42, borderRadius:12,
+        width: 42, height: 42, borderRadius: 12,
         background: hover ? "var(--primary-glow)" : "var(--primary-mid)",
-        border:`1px solid var(--primary-border)`,
-        display:"flex", alignItems:"center", justifyContent:"center",
-        fontSize:20, marginBottom:16,
-        transition:"background 0.2s",
+        border: `1px solid var(--primary-border)`,
+        display: "flex", alignItems: "center", justifyContent: "center",
+        fontSize: 20, marginBottom: 16,
+        transition: "background 0.2s",
       }}>
         {icon}
       </div>
-      <h3 style={{ color:"var(--text-1)", fontWeight:600, fontSize:15, marginBottom:8 }}>{title}</h3>
-      <p style={{ color:"var(--text-3)", fontSize:13.5, lineHeight:1.75 }}>{desc}</p>
+      <h3 style={{ color: "var(--text-1)", fontWeight: 600, fontSize: 15, marginBottom: 8 }}>{title}</h3>
+      <p style={{ color: "var(--text-3)", fontSize: 13.5, lineHeight: 1.75 }}>{desc}</p>
     </div>
   );
 };
 
 // ─── Divider ──────────────────────────────────────────────────────────────────
-const Divider = () => <div style={{ height:1, background:`linear-gradient(90deg, transparent, var(--border-default), transparent)`, margin:"0 auto", width:"100%" }}/>;
+const Divider = () => <div style={{ height: 1, background: `linear-gradient(90deg, transparent, var(--border-default), transparent)`, margin: "0 auto", width: "100%" }} />;
 
 // ─── Pricing Card ─────────────────────────────────────────────────────────────
-const PricingCard = ({ tier, price, period, desc, features, cta, featured=false, badge }: {
-  tier: string; price: string; period: string; desc: string; features: string[]; cta: string; featured?: boolean; badge?: string;
+const PricingCard = ({ tier, price, period, desc, features, cta, featured = false, badge, user }: {
+  tier: string; price: string; period: string; desc: string; features: string[]; cta: string; featured?: boolean; badge?: string; user?: any;
 }) => {
   const [hover, setHover] = useState(false);
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+
+  const handleCTA = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (user) {
+      dispatch(openPaymentModal());
+      navigate("/notes");
+    } else {
+      navigate("/auth/login");
+    }
+  };
+
   return (
     <div
-      onMouseEnter={()=>setHover(true)}
-      onMouseLeave={()=>setHover(false)}
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
       style={{
-        position:"relative",
-        padding:"36px 32px",
-        borderRadius:22,
+        position: "relative",
+        padding: "36px 32px",
+        borderRadius: 22,
         border: featured
           ? `1.5px solid var(--border-accent)`
           : `1px solid ${hover ? "var(--border-hover)" : "var(--border-default)"}`,
         background: featured
           ? "var(--primary-glow)"
           : "var(--bg-card)",
-        backdropFilter:"blur(16px)",
+        backdropFilter: "blur(16px)",
         transform: featured ? "scale(1.03)" : hover ? "translateY(-3px)" : "scale(1)",
         boxShadow: featured
           ? "var(--shadow-primary-lg)"
           : hover ? "var(--shadow-card-hover)" : "none",
-        transition:"all 0.25s ease",
+        transition: "all 0.25s ease",
       }}
     >
       {badge && (
         <div style={{
-          position:"absolute", top:-13, left:"50%", transform:"translateX(-50%)",
-          background:"linear-gradient(90deg,#f59e0b,#f97316)",
-          color:"var(--text-1)", fontSize:10.5, fontWeight:700, padding:"4px 14px",
-          borderRadius:999, letterSpacing:"0.08em", textTransform:"uppercase",
-          boxShadow:"0 4px 14px rgba(245,158,11,0.35)",
+          position: "absolute", top: -13, left: "50%", transform: "translateX(-50%)",
+          background: "linear-gradient(90deg,#f59e0b,#f97316)",
+          color: "var(--text-1)", fontSize: 10.5, fontWeight: 700, padding: "4px 14px",
+          borderRadius: 999, letterSpacing: "0.08em", textTransform: "uppercase",
+          boxShadow: "0 4px 14px rgba(245,158,11,0.35)",
         }}>{badge}</div>
       )}
-      <p style={{ color:"var(--text-3)", fontSize:11, fontWeight:600, letterSpacing:"0.12em", textTransform:"uppercase", marginBottom:10 }}>{tier}</p>
-      <div style={{ marginBottom:8 }}>
-        <span style={{ fontSize:46, fontWeight:800, color:"var(--text-1)", letterSpacing:"-2px" }}>{price}</span>
-        <span style={{ color:"var(--text-3)", fontSize:14 }}>{period}</span>
+      <p style={{ color: "var(--text-3)", fontSize: 11, fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 10 }}>{tier}</p>
+      <div style={{ marginBottom: 8 }}>
+        <span style={{ fontSize: 46, fontWeight: 800, color: "var(--text-1)", letterSpacing: "-2px" }}>{price}</span>
+        <span style={{ color: "var(--text-3)", fontSize: 14 }}>{period}</span>
       </div>
-      <p style={{ color:"var(--text-3)", fontSize:13, marginBottom:28, lineHeight:1.6 }}>{desc}</p>
-      <ul style={{ listStyle:"none", margin:"0 0 32px", padding:0, display:"flex", flexDirection:"column", gap:11 }}>
-        {features.map((f,i) => (
-          <li key={i} style={{ display:"flex", alignItems:"center", gap:10, color: featured ? "var(--primary-light)" : "var(--text-2)", fontSize:13.5 }}>
-            <svg width="15" height="15" viewBox="0 0 15 15" fill="none"><circle cx="7.5" cy="7.5" r="7.5" fill={featured ? "var(--primary-glow)" : "var(--bg-card-hover)"}/><path d="M4.5 7.5L6.5 9.5L10.5 5.5" stroke={featured ? "var(--primary-light)" : "var(--text-3)"} strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/></svg>
+      <p style={{ color: "var(--text-3)", fontSize: 13, marginBottom: 28, lineHeight: 1.6 }}>{desc}</p>
+      <ul style={{ listStyle: "none", margin: "0 0 32px", padding: 0, display: "flex", flexDirection: "column", gap: 11 }}>
+        {features.map((f, i) => (
+          <li key={i} style={{ display: "flex", alignItems: "center", gap: 10, color: featured ? "var(--primary-light)" : "var(--text-2)", fontSize: 13.5 }}>
+            <svg width="15" height="15" viewBox="0 0 15 15" fill="none"><circle cx="7.5" cy="7.5" r="7.5" fill={featured ? "var(--primary-glow)" : "var(--bg-card-hover)"} /><path d="M4.5 7.5L6.5 9.5L10.5 5.5" stroke={featured ? "var(--primary-light)" : "var(--text-3)"} strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" /></svg>
             {f}
           </li>
         ))}
       </ul>
-      <Link to="/auth/login" style={{ display:"block" }}>
-        <button style={{
-          width:"100%", padding:"13px", borderRadius:11, fontWeight:600, fontSize:14,
-          cursor:"pointer", transition:"all 0.2s",
+      <button
+        onClick={handleCTA}
+        style={{
+          width: "100%", padding: "13px", borderRadius: 11, fontWeight: 600, fontSize: 14,
+          cursor: "pointer", transition: "all 0.2s",
           background: featured
             ? "linear-gradient(135deg, var(--primary-brand), var(--primary-light))"
             : "var(--bg-card-hover)",
@@ -168,36 +213,22 @@ const PricingCard = ({ tier, price, period, desc, features, cta, featured=false,
           border: featured ? "none" : `1px solid var(--border-default)`,
           boxShadow: featured ? "var(--shadow-primary)" : "none",
         }}
-        onMouseEnter={e=>{e.currentTarget.style.opacity="0.82"; e.currentTarget.style.transform="translateY(-1px)"}}
-        onMouseLeave={e=>{e.currentTarget.style.opacity="1"; e.currentTarget.style.transform="none"}}
-        >{cta}</button>
-      </Link>
+        onMouseEnter={e => { e.currentTarget.style.opacity = "0.82"; e.currentTarget.style.transform = "translateY(-1px)" }}
+        onMouseLeave={e => { e.currentTarget.style.opacity = "1"; e.currentTarget.style.transform = "none" }}
+      >{cta}</button>
     </div>
   );
 };
 
 // ─── Animated number ──────────────────────────────────────────────────────────
 const Stat = ({ value, label }: { value: string; label: string }) => (
-  <div style={{ textAlign:"center" }}>
-    <div style={{ fontSize:36, fontWeight:800, color:"var(--text-1)", letterSpacing:"-1.5px", lineHeight:1 }}>{value}</div>
-    <div style={{ color:"var(--text-3)", fontSize:11.5, marginTop:7, letterSpacing:"0.1em", textTransform:"uppercase" }}>{label}</div>
+  <div style={{ textAlign: "center" }}>
+    <div style={{ fontSize: 36, fontWeight: 800, color: "var(--text-1)", letterSpacing: "-1.5px", lineHeight: 1 }}>{value}</div>
+    <div style={{ color: "var(--text-3)", fontSize: 11.5, marginTop: 7, letterSpacing: "0.1em", textTransform: "uppercase" }}>{label}</div>
   </div>
 );
 
-// ─── Logo mark ────────────────────────────────────────────────────────────────
-const LogoMark = ({ size=34 }: { size?: number }) => (
-  <div style={{
-    width:size, height:size, borderRadius:Math.round(size*0.28),
-    background:"linear-gradient(135deg,#6d5ff6,#a78bfa)",
-    display:"flex", alignItems:"center", justifyContent:"center",
-    boxShadow:"0 0 24px rgba(109,95,246,0.45)",
-    flexShrink:0,
-  }}>
-    <svg width={size*0.52} height={size*0.52} viewBox="0 0 18 18" fill="none">
-      <path d="M9 2L11.5 7H16.5L12.5 10.5L14 16L9 12.5L4 16L5.5 10.5L1.5 7H6.5L9 2Z" fill="white" fillOpacity="0.9"/>
-    </svg>
-  </div>
-);
+
 
 // ─── MAIN ─────────────────────────────────────────────────────────────────────
 export default function HomePage() {
@@ -244,11 +275,11 @@ export default function HomePage() {
 
   return (
     <div style={{
-      minHeight:"100vh",
-      background:"var(--bg-base)",
-      color:"var(--text-1)",
-      fontFamily:"var(--font-sans)",
-      overflowX:"hidden",
+      minHeight: "100vh",
+      background: "var(--bg-base)",
+      color: "var(--text-1)",
+      fontFamily: "var(--font-sans)",
+      overflowX: "hidden",
     }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;0,9..40,800;1,9..40,400&family=Instrument+Serif:ital@0;1&family=DM+Mono&display=swap');
@@ -313,41 +344,57 @@ export default function HomePage() {
 
       {/* ── NAVBAR ─────────────────────────────────────── */}
       <header style={{
-        position:"sticky", top:0, zIndex:100,
-        padding:"0 40px", height:60,
-        display:"flex", alignItems:"center", justifyContent:"space-between",
+        position: "sticky", top: 0, zIndex: 100,
+        padding: "0 clamp(16px, 5vw, 40px)", height: 60,
+        display: "flex", alignItems: "center", justifyContent: "space-between",
         background: scrolled ? "var(--glass-bg)" : "transparent",
         backdropFilter: scrolled ? "blur(24px)" : "none",
         WebkitBackdropFilter: scrolled ? "blur(24px)" : "none",
         borderBottom: scrolled ? `1px solid var(--border-default)` : "1px solid transparent",
-        transition:"all 0.3s ease",
+        transition: "all 0.3s ease",
         boxShadow: scrolled ? "var(--shadow-sm)" : "none",
       }}>
-        <div style={{ display:"flex", alignItems:"center", gap:10 }}>
-          <LogoMark size={32}/>
-          <span style={{ fontSize:16, fontWeight:700, color:"var(--text-1)", letterSpacing:"-0.5px" }}>
-            Note<span style={{ color:"var(--primary-brand)" }}>Atlas</span>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <LogoSvg size={38} />
+          <span style={{ fontSize: 16, fontWeight: 700, color: "var(--text-1)", letterSpacing: "-0.5px" }}>
+            Note<span style={{ color: "var(--primary-brand)" }}>Atlas</span>
           </span>
         </div>
 
-        <nav className="desktop-nav" style={{ display:"flex", gap:36, alignItems:"center" }}>
+        <nav className="desktop-nav" style={{ display: "flex", gap: 36, alignItems: "center" }}>
           <a href="#features" className="nav-a">Features</a>
           <a href="#pricing" className="nav-a">Pricing</a>
           <a href="#" className="nav-a">Docs</a>
         </nav>
 
-        <div className="desktop-nav" style={{ display:"flex", alignItems:"center", gap:12 }}>
+        <div className="desktop-nav" style={{ display: "flex", alignItems: "center", gap: 12 }}>
           <ThemeToggle />
-          {!user && <Link to="/auth/login" className="nav-a" style={{ marginRight:4 }}>Sign in</Link>}
-          <Link to="/notes">
-            <button className="cta-btn" style={{ padding:"9px 20px", fontSize:13.5, borderRadius:9 }}>
-              {user ? "Dashboard" : "Get Started"}
-              <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 7H12M8 3L12 7L8 11" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/></svg>
-            </button>
-          </Link>
+          {!user ? (
+            <>
+              <Link to="/auth/login" className="nav-a" style={{ marginRight: 4 }}>Sign in</Link>
+              <Link to="/notes">
+                <button className="cta-btn" style={{ padding: "9px 20px", fontSize: 13.5, borderRadius: 9 }}>
+                  Get Started
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 7H12M8 3L12 7L8 11" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                </button>
+              </Link>
+            </>
+          ) : (
+            <>
+              <Link to="/notes">
+                <button className="cta-btn" style={{ padding: "9px 20px", fontSize: 13.5, borderRadius: 9 }}>
+                  Dashboard
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 7H12M8 3L12 7L8 11" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                </button>
+              </Link>
+              <div style={{ marginLeft: 4 }}>
+                <UserAvatar />
+              </div>
+            </>
+          )}
         </div>
 
-        <button 
+        <button
           className="mobile-menu-btn"
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           style={{ background: "transparent", border: "none", color: "var(--text-1)", cursor: "pointer", display: "none" }}
@@ -369,184 +416,189 @@ export default function HomePage() {
           <a href="#" className="nav-a" onClick={() => setMobileMenuOpen(false)}>Docs</a>
           <div style={{ height: 1, background: "var(--border-default)" }} />
           <ThemeToggle />
-          {!user && <Link to="/auth/login" className="nav-a" onClick={() => setMobileMenuOpen(false)}>Sign in</Link>}
-          <Link to="/notes" onClick={() => setMobileMenuOpen(false)}>
-            <button className="cta-btn" style={{ width: "100%", justifyContent: "center" }}>
-              {user ? "Dashboard" : "Get Started"}
-            </button>
-          </Link>
+          {!user ? (
+            <>
+              <Link to="/auth/login" className="nav-a" onClick={() => setMobileMenuOpen(false)}>Sign in</Link>
+              <Link to="/notes" onClick={() => setMobileMenuOpen(false)}>
+                <button className="cta-btn" style={{ width: "100%", justifyContent: "center" }}>
+                  Get Started
+                </button>
+              </Link>
+            </>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                <UserAvatar />
+                <span style={{ fontSize: 14, fontWeight: 600, color: "var(--text-1)" }}>{user.name}</span>
+              </div>
+              <Link to="/notes" onClick={() => setMobileMenuOpen(false)}>
+                <button className="cta-btn" style={{ width: "100%", justifyContent: "center" }}>
+                  Dashboard
+                </button>
+              </Link>
+            </div>
+          )}
         </div>
       )}
 
       {/* ── HERO ────────────────────────────────────────── */}
-      <section style={{ position:"relative", padding:"130px 24px 110px", textAlign:"center", overflow:"hidden" }}>
-        <GridLines opacity={0.045}/>
-        <div style={{ position:"relative", zIndex:1, maxWidth:880, margin:"0 auto" }}>
-
-          <div className="fu fu1" style={{ marginBottom:26 }}>
-            <Pill>AI-powered document intelligence</Pill>
-          </div>
+      <section style={{ position: "relative", padding: "150px 24px 130px", textAlign: "center", overflow: "hidden" }}>
+        <GlowyGrid opacity={0.25} />
+        <div style={{ position: "relative", zIndex: 1, maxWidth: 960, margin: "0 auto" }}>
 
           <h1 className="fu fu2 serif" style={{
-            fontSize:"clamp(46px, 7.5vw, 88px)",
-            fontWeight:400,
-            letterSpacing:"-2.5px",
-            lineHeight:1.06,
-            marginBottom:20,
-            color:"var(--text-1)",
+            fontSize: "clamp(52px, 8vw, 96px)",
+            fontWeight: 400,
+            letterSpacing: "-3px",
+            lineHeight: 1.02,
+            marginBottom: 28,
+            color: "var(--text-1)",
+            textShadow: "0 10px 40px rgba(0,0,0,0.15)"
           }}>
-            Your personal<br/>
-            <em className="grad-text" style={{ fontStyle:"italic" }}>AI research</em> assistant
+            Your documents.<br />
+            <em className="grad-text" style={{ fontStyle: "italic" }}>Infinite</em> possibilities.
           </h1>
 
           <div className="fu fu3" style={{
-            fontSize:"clamp(18px, 2.5vw, 24px)",
-            fontWeight:400,
-            color:"var(--text-3)",
-            marginBottom:18,
-            display:"flex", justifyContent:"center", alignItems:"center", gap:7,
-            minHeight:38,
+            fontSize: "clamp(20px, 2.5vw, 26px)",
+            fontWeight: 400,
+            color: "var(--text-3)",
+            marginBottom: 24,
+            display: "flex", flexWrap: "wrap", justifyContent: "center", alignItems: "center", gap: 9,
+            minHeight: 40,
           }}>
-            <span>Ask questions about your</span>
-            <span style={{ color:"var(--primary-light)", fontWeight:500 }}>{typed}</span>
-            <span className="cursor"/>
+            <span>Generate insights for your</span>
+            <span style={{ color: "var(--primary-light)", fontWeight: 600 }}>{typed}</span>
+            <span className="cursor" />
           </div>
 
           <p className="fu fu3" style={{
-            fontSize:16.5, color:"var(--text-3)", lineHeight:1.85,
-            maxWidth:540, margin:"0 auto 44px",
+            fontSize: 17.5, color: "var(--text-3)", lineHeight: 1.8,
+            maxWidth: 600, margin: "0 auto 50px", fontWeight: 400
           }}>
-            Upload documents, generate instant summaries, and chat directly with your sources. Turn scattered notes into organized knowledge.
+            No subscriptions. No artificial feature limits. No notebook caps.
+            Just top up your credits and unleash the full power of AI on your research.
           </p>
 
-          <div className="fu fu4" style={{ display:"flex", gap:14, justifyContent:"center", flexWrap:"wrap" }}>
+          <div className="fu fu4" style={{ display: "flex", gap: 16, justifyContent: "center", flexWrap: "wrap" }}>
             <Link to="/notes">
-              <button className="cta-btn">
-                {user ? "Go to your dashboard" : "Get started free"}
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8H13M9 4L13 8L9 12" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/></svg>
+              <button className="cta-btn" style={{ padding: "16px 32px", fontSize: 16, borderRadius: 14 }}>
+                {user ? "Go to your dashboard" : "Start with 50 Free Credits"}
+                <svg width="18" height="18" viewBox="0 0 16 16" fill="none"><path d="M3 8H13M9 4L13 8L9 12" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>
               </button>
             </Link>
             {!user && (
               <Link to="/auth/login">
-                <button className="ghost-btn">Sign in to account</button>
+                <button className="ghost-btn" style={{ padding: "16px 32px", fontSize: 16, borderRadius: 14 }}>Sign in</button>
               </Link>
             )}
           </div>
-
-          {/* Trust bar */}
-          {/* <div style={{
-            marginTop:80, paddingTop:52,
-            borderTop:`1px solid var(--border-default)`,
-            display:"flex", gap:56, justifyContent:"center", flexWrap:"wrap",
-          }}>
-            <Stat value="50K+" label="Active users"/>
-            <div style={{ width:1, background:"var(--border-default)", alignSelf:"stretch", margin:"4px 0" }}/>
-            <Stat value="2M+" label="Documents"/>
-            <div style={{ width:1, background:"var(--border-default)", alignSelf:"stretch", margin:"4px 0" }}/>
-            <Stat value="99.9%" label="Uptime"/>
-            <div style={{ width:1, background:"var(--border-default)", alignSelf:"stretch", margin:"4px 0" }}/>
-            <Stat value="<1s" label="Response time"/>
-          </div> */}
         </div>
 
-        {/* Bottom glow bloom */}
+        {/* Dynamic bottom glow bloom */}
         <div style={{
-          position:"absolute", bottom:-40, left:"50%", transform:"translateX(-50%)",
-          width:700, height:180,
-          background:"radial-gradient(ellipse, var(--primary-glow) 0%, transparent 70%)",
-          pointerEvents:"none",
-        }}/>
+          position: "absolute", bottom: -80, left: "50%", transform: "translateX(-50%)",
+          width: 900, height: 250,
+          background: "radial-gradient(ellipse, var(--primary-glow) 0%, transparent 60%)",
+          pointerEvents: "none",
+          filter: "blur(40px)"
+        }} />
       </section>
 
-      <Divider/>
+      <Divider />
 
       {/* ── PRODUCT PREVIEW (mock terminal) ─────────────── */}
-      <section style={{ padding:"90px 24px", maxWidth:920, margin:"0 auto" }}>
+      <section style={{ padding: "90px 24px", maxWidth: 920, margin: "0 auto" }}>
         <div style={{
-          borderRadius:20,
-          border:`1px solid var(--border-default)`,
-          overflow:"hidden",
-          background:"var(--bg-surface)",
-          boxShadow:"var(--shadow-xl)",
+          borderRadius: 24,
+          border: `1px solid var(--border-accent)`,
+          overflow: "hidden",
+          background: "var(--bg-surface)",
+          boxShadow: "0 30px 60px rgba(0,0,0,0.4), 0 0 40px var(--primary-glow)",
         }}>
           {/* Window chrome */}
           <div style={{
-            padding:"14px 18px",
-            borderBottom:`1px solid var(--border-default)`,
-            display:"flex", alignItems:"center", gap:12,
-            background:"var(--bg-elevated)",
+            padding: "16px 20px",
+            borderBottom: `1px solid var(--border-default)`,
+            display: "flex", alignItems: "center", gap: 12,
+            background: "var(--bg-elevated)",
           }}>
-            <div style={{ display:"flex", gap:7 }}>
-              {["#ff5f57","#febc2e","#28c840"].map((c,i)=>(
-                <div key={i} style={{ width:13,height:13,borderRadius:"50%",background:c,opacity:0.85 }}/>
+            <div style={{ display: "flex", gap: 8 }}>
+              {["#ff5f57", "#febc2e", "#28c840"].map((c, i) => (
+                <div key={i} style={{ width: 14, height: 14, borderRadius: "50%", background: c, opacity: 0.9 }} />
               ))}
             </div>
             <div style={{
-              flex:1, textAlign:"center",
-              background:"var(--bg-card)", borderRadius:7,
-              padding:"5px 14px", fontSize:12, color:"var(--text-3)", fontFamily:"var(--font-mono)",
-              maxWidth:260, margin:"0 auto",
-              border:`1px solid var(--border-default)`,
+              flex: 1, textAlign: "center",
+              background: "var(--bg-card)", borderRadius: 8,
+              padding: "6px 16px", fontSize: 12.5, color: "var(--text-2)", fontFamily: "var(--font-mono)",
+              maxWidth: 280, margin: "0 auto",
+              border: `1px solid var(--border-default)`,
+              boxShadow: "inset 0 1px 3px rgba(0,0,0,0.1)"
             }}>app.noteatlas.ai</div>
           </div>
 
           {/* Chat UI mock */}
-          <div style={{ padding:"28px 32px", display:"flex", flexDirection:"column", gap:18, minHeight:280 }}>
+          <div style={{ padding: "32px 36px", display: "flex", flexDirection: "column", gap: 20, minHeight: 300 }}>
             {/* AI message */}
-            <div style={{ display:"flex", gap:12, alignItems:"flex-start", maxWidth:560 }}>
+            <div style={{ display: "flex", gap: 14, alignItems: "flex-start", maxWidth: 580 }}>
               <div style={{
-                width:30, height:30, borderRadius:8,
-                background:"linear-gradient(135deg,#6d5ff6,#a78bfa)",
-                flexShrink:0, display:"flex", alignItems:"center", justifyContent:"center",
+                width: 34, height: 34, borderRadius: 10,
+                background: "linear-gradient(135deg,#6d5ff6,#a78bfa)",
+                flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center",
+                boxShadow: "0 4px 12px rgba(109,95,246,0.3)"
               }}>
-                <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1L8.8 5.4H13.5L9.85 8.1L11.1 12.7L7 9.8L2.9 12.7L4.15 8.1L0.5 5.4H5.2L7 1Z" fill="white" fillOpacity="0.9"/></svg>
+                <svg width="16" height="16" viewBox="0 0 14 14" fill="none"><path d="M7 1L8.8 5.4H13.5L9.85 8.1L11.1 12.7L7 9.8L2.9 12.7L4.15 8.1L0.5 5.4H5.2L7 1Z" fill="white" fillOpacity="0.95" /></svg>
               </div>
               <div style={{
-                background:"var(--primary-glow)", border:`1px solid var(--primary-border)`,
-                borderRadius:"4px 16px 16px 16px", padding:"12px 16px",
+                background: "var(--primary-glow)", border: `1px solid var(--border-accent)`,
+                borderRadius: "6px 20px 20px 20px", padding: "14px 18px",
+                boxShadow: "0 4px 20px rgba(0,0,0,0.05)"
               }}>
-                <p style={{ fontSize:13.5, color:"var(--text-2)", lineHeight:1.7 }}>
-                  I've analyzed your <span style={{ background:"var(--primary-mid)", padding:"1px 7px", borderRadius:5, fontSize:12.5, color:"var(--primary-brand)", fontWeight:500 }}>Q3 Research Report.pdf</span>. The key findings relate to market expansion in APAC — would you like a structured summary or should I highlight the risks section?
+                <p style={{ fontSize: 14, color: "var(--text-1)", lineHeight: 1.75 }}>
+                  I've analyzed your <span style={{ background: "var(--primary-glow)", border: "1px solid var(--primary-border)", padding: "2px 8px", borderRadius: 6, fontSize: 12.5, color: "var(--primary-brand)", fontWeight: 600 }}>Q3 Research Report.pdf</span>. The key findings relate to market expansion in APAC — would you like a structured summary or should I highlight the risks section?
                 </p>
               </div>
             </div>
 
             {/* User message */}
-            <div style={{ display:"flex", gap:12, alignItems:"flex-start", maxWidth:400, alignSelf:"flex-end" }}>
+            <div style={{ display: "flex", gap: 14, alignItems: "flex-start", maxWidth: 420, alignSelf: "flex-end" }}>
               <div style={{
-                background:"var(--bg-card-hover)", border:`1px solid var(--border-default)`,
-                borderRadius:"16px 4px 16px 16px", padding:"12px 16px",
+                background: "var(--bg-card-hover)", border: `1px solid var(--border-default)`,
+                borderRadius: "20px 6px 20px 20px", padding: "14px 18px",
               }}>
-                <p style={{ fontSize:13.5, color:"var(--text-2)", lineHeight:1.7 }}>
+                <p style={{ fontSize: 14, color: "var(--text-1)", lineHeight: 1.75 }}>
                   Give me the top 3 risks from the report.
                 </p>
               </div>
               <div style={{
-                width:30, height:30, borderRadius:8, background:"var(--bg-card-hover)",
-                flexShrink:0, display:"flex", alignItems:"center", justifyContent:"center",
-                color:"var(--text-3)", fontSize:14, fontWeight:700,
-                border:`1px solid var(--border-default)`,
+                width: 34, height: 34, borderRadius: 10, background: "var(--bg-elevated)",
+                flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center",
+                color: "var(--text-2)", fontSize: 15, fontWeight: 700,
+                border: `1px solid var(--border-default)`,
               }}>U</div>
             </div>
 
             {/* AI streaming response */}
-            <div style={{ display:"flex", gap:12, alignItems:"flex-start", maxWidth:580 }}>
+            <div style={{ display: "flex", gap: 14, alignItems: "flex-start", maxWidth: 600 }}>
               <div style={{
-                width:30, height:30, borderRadius:8,
-                background:"linear-gradient(135deg,#6d5ff6,#a78bfa)",
-                flexShrink:0, display:"flex", alignItems:"center", justifyContent:"center",
+                width: 34, height: 34, borderRadius: 10,
+                background: "linear-gradient(135deg,#6d5ff6,#a78bfa)",
+                flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center",
+                boxShadow: "0 4px 12px rgba(109,95,246,0.3)"
               }}>
-                <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1L8.8 5.4H13.5L9.85 8.1L11.1 12.7L7 9.8L2.9 12.7L4.15 8.1L0.5 5.4H5.2L7 1Z" fill="white" fillOpacity="0.9"/></svg>
+                <svg width="16" height="16" viewBox="0 0 14 14" fill="none"><path d="M7 1L8.8 5.4H13.5L9.85 8.1L11.1 12.7L7 9.8L2.9 12.7L4.15 8.1L0.5 5.4H5.2L7 1Z" fill="white" fillOpacity="0.95" /></svg>
               </div>
               <div style={{
-                background:"var(--primary-glow)", border:`1px solid var(--primary-border)`,
-                borderRadius:"4px 16px 16px 16px", padding:"14px 16px",
-                display:"flex", flexDirection:"column", gap:9,
+                background: "var(--primary-glow)", border: `1px solid var(--border-accent)`,
+                borderRadius: "6px 20px 20px 20px", padding: "16px 20px",
+                display: "flex", flexDirection: "column", gap: 12,
+                boxShadow: "0 4px 20px rgba(0,0,0,0.05)"
               }}>
-                {["Regulatory uncertainty in APAC markets (pg. 14)", "Supply chain dependencies — 60% single-source exposure", "Currency volatility impact on Q4 projections"].map((r,i)=>(
-                  <div key={i} style={{ display:"flex", gap:10, alignItems:"flex-start" }}>
-                    <div style={{ width:18,height:18,borderRadius:5,background:"var(--primary-mid)",flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:700,color:"var(--primary-brand)",marginTop:1 }}>{i+1}</div>
-                    <span style={{ fontSize:13, color:"var(--text-2)", lineHeight:1.65 }}>{r}</span>
+                {["Regulatory uncertainty in APAC markets (pg. 14)", "Supply chain dependencies — 60% single-source exposure", "Currency volatility impact on Q4 projections"].map((r, i) => (
+                  <div key={i} style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
+                    <div style={{ width: 20, height: 20, borderRadius: 6, background: "var(--primary-brand)", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700, color: "var(--text-on-primary)", marginTop: 2 }}>{i + 1}</div>
+                    <span style={{ fontSize: 14, color: "var(--text-1)", lineHeight: 1.7 }}>{r}</span>
                   </div>
                 ))}
               </div>
@@ -556,64 +608,70 @@ export default function HomePage() {
       </section>
 
       {/* ── FEATURES ───────────────────────────────────── */}
-      <section id="features" style={{ padding:"100px 24px", maxWidth:1200, margin:"0 auto" }}>
-        <div style={{ textAlign:"center", marginBottom:64 }}>
-          <p style={{ color:"var(--primary-brand)", fontWeight:600, fontSize:12, letterSpacing:"0.14em", textTransform:"uppercase", marginBottom:14 }}>Capabilities</p>
-          <h2 className="serif" style={{ fontSize:"clamp(30px, 4.5vw, 50px)", fontWeight:400, color:"var(--text-1)", letterSpacing:"-1.5px", marginBottom:16 }}>
-            Built for <em style={{ fontStyle:"italic", color:"var(--primary-light)" }}>deep research</em>
+      <section id="features" style={{ padding: "100px 24px", maxWidth: 1200, margin: "0 auto" }}>
+        <div style={{ textAlign: "center", marginBottom: 64 }}>
+          <p style={{ color: "var(--primary-brand)", fontWeight: 600, fontSize: 13, letterSpacing: "0.16em", textTransform: "uppercase", marginBottom: 14 }}>Capabilities</p>
+          <h2 className="serif" style={{ fontSize: "clamp(34px, 4.5vw, 56px)", fontWeight: 400, color: "var(--text-1)", letterSpacing: "-1.5px", marginBottom: 16 }}>
+            Built for <em style={{ fontStyle: "italic", color: "var(--primary-light)" }}>deep research</em>
           </h2>
-          <p style={{ color:"var(--text-3)", fontSize:16, maxWidth:440, margin:"0 auto", lineHeight:1.75 }}>
-            Every feature is designed to make working with documents faster, smarter, and more intuitive.
-          </p>
         </div>
 
-        <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit, minmax(268px, 1fr))", gap:18 }}>
-          <FeatureCard delay={0} icon={<Brain size={22}/>} title="AI chat over your docs" desc="Ask questions in natural language. Get cited, context-aware answers grounded in your uploaded documents."/>
-          <FeatureCard delay={80} icon={<Zap size={22}/>} title="Auto summarization" desc="Generate concise summaries, FAQs, study guides, and briefing docs from your PDFs and notes in seconds."/>
-          <FeatureCard delay={160} icon={<Lock size={22}/>} title="Private & secure" desc="Your documents stay in your account. We never use your content to train AI models."/>
-          <FeatureCard delay={240} icon={<MessageSquare size={22}/>} title="Multi-source chat" desc="Select multiple documents and chat across all of them simultaneously. Cross-reference with ease."/>
-          <FeatureCard delay={320} icon={<Folder size={22}/>} title="Smart notebooks" desc="Organize documents into notebooks with full-text search, source management, and mind map generation."/>
-          <FeatureCard delay={400} icon={<Search size={22}/>} title="Audio overviews" desc="Turn your documents into podcast-style audio discussions. Study on the go with AI-generated audio."/>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 20 }}>
+          <FeatureCard delay={0} icon={<Brain size={24} />} title="AI chat over your docs" desc="Ask questions in natural language. Get cited, context-aware answers grounded in your uploaded documents." />
+          <FeatureCard delay={80} icon={<Zap size={24} />} title="Auto summarization" desc="Generate concise summaries, FAQs, study guides, and briefing docs from your PDFs and notes in seconds." />
+          <FeatureCard delay={160} icon={<Lock size={24} />} title="Private & secure" desc="Your documents stay in your account. We never use your content to train AI models." />
+          <FeatureCard delay={240} icon={<MessageSquare size={24} />} title="Multi-source chat" desc="Select multiple documents and chat across all of them simultaneously. Cross-reference with ease." />
+          <FeatureCard delay={320} icon={<Folder size={24} />} title="Infinite notebooks" desc="Organize unlimited documents into unlimited notebooks with full-text search and source management." />
+          <FeatureCard delay={400} icon={<Search size={24} />} title="Audio overviews" desc="Turn your documents into podcast-style audio discussions. Study on the go with AI-generated audio." />
         </div>
       </section>
 
-      <Divider/>
+      <Divider />
 
       {/* ── HOW IT WORKS ────────────────────────────────── */}
-      <section style={{ padding:"100px 24px", maxWidth:860, margin:"0 auto" }}>
-        <div style={{ textAlign:"center", marginBottom:64 }}>
-          <p style={{ color:"var(--primary-brand)", fontWeight:600, fontSize:12, letterSpacing:"0.14em", textTransform:"uppercase", marginBottom:14 }}>Simple workflow</p>
-          <h2 className="serif" style={{ fontSize:"clamp(28px, 4vw, 46px)", fontWeight:400, color:"var(--text-1)", letterSpacing:"-1.5px" }}>
+      <section style={{ padding: "100px 24px", maxWidth: 860, margin: "0 auto" }}>
+        <div style={{ textAlign: "center", marginBottom: 64 }}>
+          <p style={{ color: "var(--primary-brand)", fontWeight: 600, fontSize: 13, letterSpacing: "0.16em", textTransform: "uppercase", marginBottom: 14 }}>Simple workflow</p>
+          <h2 className="serif" style={{ fontSize: "clamp(32px, 4vw, 50px)", fontWeight: 400, color: "var(--text-1)", letterSpacing: "-1.5px" }}>
             Three steps to clarity
           </h2>
         </div>
 
-        <div style={{ display:"flex", flexDirection:"column", gap:2 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
           {[
-            { n:"01", title:"Upload your documents", desc:"Drop PDFs, text files, or paste content. NoteAtlas parses and indexes everything instantly.", color:"#6d5ff6" },
-            { n:"02", title:"Ask questions naturally", desc:"Use plain language to ask about concepts, compare ideas, or find specific information buried deep in your docs.", color:"#8b5cf6" },
-            { n:"03", title:"Get cited answers", desc:"Every response links back to the exact source passage. Trust but verify — always.", color:"#a78bfa" },
+            { n: "01", title: "Upload your documents", desc: "Drop PDFs, text files, or paste content. NoteAtlas parses and indexes everything instantly.", color: "#6d5ff6" },
+            { n: "02", title: "Ask questions naturally", desc: "Use plain language to ask about concepts, compare ideas, or find specific information buried deep in your docs.", color: "#8b5cf6" },
+            { n: "03", title: "Get cited answers", desc: "Every response links back to the exact source passage. Trust but verify — always.", color: "#a78bfa" },
           ].map((step, i) => (
             <div key={i} style={{
-              display:"flex", gap:28, alignItems:"flex-start",
-              padding:"32px 28px",
-              borderRadius:16,
-              border:`1px solid var(--border-default)`,
-              background:"var(--bg-card)",
-              backdropFilter:"blur(10px)",
-              position:"relative",
-              ...(i < 2 ? { marginBottom:0 } : {}),
-            }}>
+              display: "flex", gap: 28, alignItems: "flex-start",
+              padding: "36px 32px",
+              borderRadius: 20,
+              border: `1px solid var(--border-default)`,
+              background: "var(--bg-card)",
+              backdropFilter: "blur(12px)",
+              position: "relative",
+              transition: "all 0.3s ease",
+            }}
+              onMouseEnter={e => {
+                e.currentTarget.style.borderColor = "var(--border-accent)";
+                e.currentTarget.style.transform = "translateX(8px)";
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.borderColor = "var(--border-default)";
+                e.currentTarget.style.transform = "none";
+              }}>
               <div style={{
-                width:44, height:44, borderRadius:12, flexShrink:0,
-                background:"var(--primary-glow)",
-                border:`1px solid var(--primary-border)`,
-                display:"flex", alignItems:"center", justifyContent:"center",
-                color:step.color, fontWeight:700, fontSize:13, fontFamily:"var(--font-mono)",
+                width: 48, height: 48, borderRadius: 14, flexShrink: 0,
+                background: "var(--primary-glow)",
+                border: `1px solid var(--primary-border)`,
+                display: "flex", alignItems: "center", justifyContent: "center",
+                color: step.color, fontWeight: 800, fontSize: 15, fontFamily: "var(--font-mono)",
+                boxShadow: "inset 0 2px 4px rgba(255,255,255,0.1)"
               }}>{step.n}</div>
               <div>
-                <h3 style={{ color:"var(--text-1)", fontWeight:600, fontSize:16, marginBottom:7 }}>{step.title}</h3>
-                <p style={{ color:"var(--text-3)", fontSize:14, lineHeight:1.75 }}>{step.desc}</p>
+                <h3 style={{ color: "var(--text-1)", fontWeight: 700, fontSize: 18, marginBottom: 8 }}>{step.title}</h3>
+                <p style={{ color: "var(--text-3)", fontSize: 15, lineHeight: 1.7 }}>{step.desc}</p>
               </div>
             </div>
           ))}
@@ -621,76 +679,81 @@ export default function HomePage() {
       </section>
 
       {/* ── PRICING ─────────────────────────────────────── */}
-      <section id="pricing" style={{ padding:"100px 24px" }}>
-        <div style={{ maxWidth:1080, margin:"0 auto" }}>
-          <div style={{ textAlign:"center", marginBottom:64 }}>
-            <p style={{ color:"var(--primary-brand)", fontWeight:600, fontSize:12, letterSpacing:"0.14em", textTransform:"uppercase", marginBottom:14 }}>Pricing</p>
-            <h2 className="serif" style={{ fontSize:"clamp(28px, 4.5vw, 50px)", fontWeight:400, color:"var(--text-1)", letterSpacing:"-1.5px", marginBottom:14 }}>
-              Start free, top up when needed
+      <section id="pricing" style={{ padding: "100px 24px" }}>
+        <div style={{ maxWidth: 1080, margin: "0 auto" }}>
+          <div style={{ textAlign: "center", marginBottom: 64 }}>
+            <p style={{ color: "var(--primary-brand)", fontWeight: 600, fontSize: 13, letterSpacing: "0.16em", textTransform: "uppercase", marginBottom: 14 }}>Fair Pricing</p>
+            <h2 className="serif" style={{ fontSize: "clamp(34px, 4.5vw, 56px)", fontWeight: 400, color: "var(--text-1)", letterSpacing: "-1.5px", marginBottom: 16 }}>
+              Purely <em style={{ fontStyle: "italic", color: "var(--primary-light)" }}>credits-based</em>
             </h2>
-            <p style={{ color:"var(--text-3)", fontSize:16 }}>Credits-based pricing — no subscriptions, no recurring bills. Pay once, use anytime.</p>
+            <p style={{ color: "var(--text-3)", fontSize: 17, maxWidth: 500, margin: "0 auto" }}>
+              Every feature is unlocked from day one. You never hit an artificial limit on notebooks or documents. Just pay for the AI compute you use.
+            </p>
           </div>
 
           <div style={{
-            display:"grid",
-            gridTemplateColumns:"repeat(auto-fit, minmax(290px, 1fr))",
-            gap:22,
-            alignItems:"center",
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(290px, 1fr))",
+            gap: 24,
+            alignItems: "center",
           }}>
             <PricingCard
               tier="Starter"
               price="Free"
               period=""
-              desc="Get started with AI notebooks at no cost."
+              desc="Get a taste of the full NoteAtlas experience with no limits."
               cta="Get started free"
-              features={["50 credits on signup","AI chat over documents","Summarization & FAQs","Up to 5 notebooks","Community support"]}
+              features={["50 free credits", "All AI features unlocked", "Unlimited notebooks", "Unlimited documents", "No credit card required"]}
+              user={user}
             />
             <PricingCard
               tier="Pro"
               price="₹499"
               period="per top-up"
-              desc="For active researchers and students who need more AI power."
-              cta="Buy Pro Credits"
-              featured
-              badge="Most popular"
-              features={["3,000 credits added","All AI features unlocked","Mind maps & Study guides","Audio Overviews","Priority responses","Email support"]}
+              desc="Perfect for a semester of studying or a major research project."
+              cta="Buy 3,000 Credits"
+              features={["3,000 credits added", "All AI features unlocked", "Unlimited notebooks", "Unlimited documents", "Never expires"]}
+              user={user}
             />
             <PricingCard
               tier="Premium"
               price="₹999"
               period="per top-up"
-              desc="For power users and heavy AI research workflows."
-              cta="Buy Premium Credits"
-              features={["10,000 credits added","All Pro features","Flashcards & Quizzes","PPT generation","Fastest AI responses","Priority support"]}
+              desc="For heavy research workflows requiring massive AI processing."
+              cta="Buy 10,000 Credits"
+              featured
+              badge="Most popular"
+              features={["10,000 credits added", "All AI features unlocked", "Unlimited notebooks", "Unlimited documents", "Never expires"]}
+              user={user}
             />
           </div>
         </div>
       </section>
 
       {/* ── CTA STRIP ───────────────────────────────────── */}
-      <section style={{ padding:"80px 24px", maxWidth:800, margin:"0 auto", textAlign:"center" }}>
+      <section style={{ padding: "80px 24px", maxWidth: 800, margin: "0 auto", textAlign: "center" }}>
         <div style={{
-          padding:"64px 48px",
-          borderRadius:24,
-          border:`1px solid var(--border-accent)`,
-          background:"var(--primary-glow)",
-          backdropFilter:"blur(16px)",
-          boxShadow:"var(--shadow-primary-lg)",
-          position:"relative",
-          overflow:"hidden",
+          padding: "64px 48px",
+          borderRadius: 24,
+          border: `1px solid var(--border-accent)`,
+          background: "var(--primary-glow)",
+          backdropFilter: "blur(16px)",
+          boxShadow: "var(--shadow-primary-lg)",
+          position: "relative",
+          overflow: "hidden",
         }}>
-          <GridLines opacity={0.06}/>
-          <div style={{ position:"relative", zIndex:1 }}>
-            <h2 className="serif" style={{ fontSize:"clamp(28px, 4vw, 46px)", fontWeight:400, letterSpacing:"-1.5px", marginBottom:16, color:"var(--text-1)" }}>
-              Ready to think <em style={{ fontStyle:"italic", color:"var(--primary-light)" }}>smarter?</em>
+          <GlowyGrid opacity={0.15} />
+          <div style={{ position: "relative", zIndex: 1 }}>
+            <h2 className="serif" style={{ fontSize: "clamp(28px, 4vw, 46px)", fontWeight: 400, letterSpacing: "-1.5px", marginBottom: 16, color: "var(--text-1)" }}>
+              Ready to think <em style={{ fontStyle: "italic", color: "var(--primary-light)" }}>smarter?</em>
             </h2>
-            <p style={{ color:"var(--text-3)", fontSize:16, lineHeight:1.8, marginBottom:36, maxWidth:420, margin:"0 auto 36px" }}>
+            <p style={{ color: "var(--text-3)", fontSize: 16, lineHeight: 1.8, marginBottom: 36, maxWidth: 420, margin: "0 auto 36px" }}>
               Start free with 50 credits — no card required. Recharge anytime to unlock more AI power.
             </p>
             <Link to="/notes">
-              <button className="cta-btn" style={{ fontSize:16, padding:"16px 36px", borderRadius:13 }}>
+              <button className="cta-btn" style={{ fontSize: 16, padding: "16px 36px", borderRadius: 13 }}>
                 Start for free — no card required
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8H13M9 4L13 8L9 12" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8H13M9 4L13 8L9 12" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>
               </button>
             </Link>
           </div>
@@ -699,26 +762,26 @@ export default function HomePage() {
 
       {/* ── FOOTER ──────────────────────────────────────── */}
       <footer className="footer-container" style={{
-        borderTop:`1px solid var(--border-default)`,
-        padding:"36px 40px",
-        display:"flex",
-        alignItems:"center",
-        justifyContent:"space-between",
-        flexWrap:"wrap",
-        gap:16,
+        borderTop: `1px solid var(--border-default)`,
+        padding: "36px 40px",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        flexWrap: "wrap",
+        gap: 16,
       }}>
-        <div style={{ display:"flex", alignItems:"center", gap:9 }}>
-          <LogoMark size={26}/>
-          <span style={{ fontSize:14, fontWeight:600, color:"var(--text-3)", letterSpacing:"-0.3px" }}>NoteAtlas</span>
+        <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
+          <LogoSvg size={32} />
+          <span style={{ fontSize: 14, fontWeight: 600, color: "var(--text-3)", letterSpacing: "-0.3px" }}>NoteAtlas</span>
         </div>
-        <p style={{ color:"var(--text-4)", fontSize:12.5 }}>
+        <p style={{ color: "var(--text-4)", fontSize: 12.5 }}>
           © {new Date().getFullYear()} NoteAtlas Clone · Built for productivity
         </p>
-        <nav style={{ display:"flex", gap:24 }}>
-          {["Privacy","Terms","Status"].map(l=>(
-            <a key={l} href="#" style={{ color:"var(--text-3)", fontSize:12.5, textDecoration:"none", transition:"color 0.2s" }}
-              onMouseEnter={e=>(e.target as HTMLElement).style.color="var(--text-1)"}
-              onMouseLeave={e=>(e.target as HTMLElement).style.color="var(--text-3)"}>{l}</a>
+        <nav style={{ display: "flex", gap: 24 }}>
+          {["Privacy", "Terms", "Status"].map(l => (
+            <a key={l} href="#" style={{ color: "var(--text-3)", fontSize: 12.5, textDecoration: "none", transition: "color 0.2s" }}
+              onMouseEnter={e => (e.target as HTMLElement).style.color = "var(--text-1)"}
+              onMouseLeave={e => (e.target as HTMLElement).style.color = "var(--text-3)"}>{l}</a>
           ))}
         </nav>
       </footer>

@@ -35,7 +35,8 @@ const UserAvatar = () => {
           width: 34, height: 34, borderRadius: "50%", padding: 0,
           border: menuOpen ? "2px solid var(--primary-brand)" : "2px solid var(--primary-border)",
           background: menuOpen ? "var(--primary-glow)" : "transparent",
-          cursor: "pointer", transition: "all 0.2s"
+          cursor: "pointer", transition: "all 0.2s",
+          display: "flex", alignItems: "center", justifyContent: "center"
         }}
         onMouseEnter={e => {
           if(!menuOpen){
@@ -51,9 +52,12 @@ const UserAvatar = () => {
         }}
       >
         <img
-          src={userData?.image}
+          src={userData?.image || `https://ui-avatars.com/api/?name=${encodeURIComponent(userData?.name || 'User')}&background=random`}
           alt="User"
           style={{ width: "100%", height: "100%", borderRadius: "50%", objectFit: "cover", display: "block" }}
+          onError={(e) => {
+            (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(userData?.name || 'User')}&background=random`;
+          }}
         />
       </button>
 
@@ -84,12 +88,15 @@ const UserAvatar = () => {
             borderBottom: "1px solid var(--border-default)",
           }}>
             <img
-              src={userData?.image}
+              src={userData?.image || `https://ui-avatars.com/api/?name=${encodeURIComponent(userData?.name || 'User')}&background=random`}
               alt="User"
               style={{
                 width: 40, height: 40, borderRadius: "50%", objectFit: "cover", flexShrink: 0,
                 border: "2px solid rgba(99,102,241,0.4)",
                 boxShadow: "0 0 12px rgba(99,102,241,0.25)",
+              }}
+              onError={(e) => {
+                (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(userData?.name || 'User')}&background=random`;
               }}
             />
             <div style={{ minWidth: 0 }}>

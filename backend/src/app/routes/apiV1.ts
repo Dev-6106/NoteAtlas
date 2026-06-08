@@ -21,6 +21,7 @@ import { flashcardRoutes } from "../http/controllers/notes/routes/flashcard.rout
 import { pptRoutes } from "../http/controllers/notes/routes/ppt.routes";
 import { paymentRoutes } from "../http/controllers/notes/payment/payment.routes";
 import { getDocContent } from "../http/controllers/notes/getDocContent";
+import { getDocSource } from "../http/controllers/notes/getDocSource";
 import { ensureAuthenticated } from "@/middleware/auth.middleware";
 
 export function apiV1(app: Express, router: Router) {
@@ -48,6 +49,7 @@ export function apiV1(app: Express, router: Router) {
 
     // ─── Doc content endpoint (for citation source viewer) ──
     router.get("/notes/docs/:docId/content", getDocContent);
+    router.get("/notes/docs/:docId/source", getDocSource);
 
     app.use('/api/v1', ensureAuthenticated,
         driveRouter, noteRouter, updateRouter, deleteRouter, duplicateRouter,

@@ -1,18 +1,6 @@
 import { getAuthUserData } from "@/api/auth"
 import { useEffect } from "react"
-
-const LogoMark = ({ size = 34 }: { size?: number }) => (
-  <div style={{
-    width: size, height: size, borderRadius: Math.round(size * 0.28),
-    background: "linear-gradient(135deg,#6d5ff6,#a78bfa)",
-    display: "flex", alignItems: "center", justifyContent: "center",
-    boxShadow: "0 0 24px rgba(109,95,246,0.48)", flexShrink: 0,
-  }}>
-    <svg width={size * 0.52} height={size * 0.52} viewBox="0 0 18 18" fill="none">
-      <path d="M9 2L11.5 7H16.5L12.5 10.5L14 16L9 12.5L4 16L5.5 10.5L1.5 7H6.5L9 2Z" fill="white" fillOpacity="0.9" />
-    </svg>
-  </div>
-);
+import { LogoSvg } from "@/components/base/LogoSvg";
 
 function AuthCallbackPage() {
   const getUserData = async () => {
@@ -95,7 +83,7 @@ function AuthCallbackPage() {
 
         {/* Logo */}
         <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
-          <LogoMark size={32} />
+          <LogoSvg size={32} />
           <span style={{ fontSize: 16, fontWeight: 700, color: "#f0eeff", letterSpacing: "-0.4px" }}>
             Note<span style={{ color: "var(--primary-brand)" }}>Atlas</span>
           </span>

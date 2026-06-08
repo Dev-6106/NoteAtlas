@@ -119,7 +119,7 @@ const NoteCard = ({ notebooks, viewNoteDetail, isArchiveView = false }: NoteCard
 
           <div style={{ position: "relative", zIndex: 1, display: "flex", flexDirection: "column", flex: 1 }}>
             <div style={{ height: 72, marginBottom: 10, display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
-            {/* Notebook Icon */}
+            {/* Notebook Icon / Image */}
             <div style={{
               width: 52, height: 52,
               borderRadius: 14,
@@ -129,8 +129,25 @@ const NoteCard = ({ notebooks, viewNoteDetail, isArchiveView = false }: NoteCard
               alignItems: "center",
               justifyContent: "center",
               flexShrink: 0,
+              overflow: "hidden",
             }}>
-              <BookOpen size={24} style={{ color: "var(--primary-brand)", opacity: 0.85 }} />
+              {note.image ? (
+                note.image.startsWith("http") ? (
+                  <img 
+                    src={note.image} 
+                    alt={note.title} 
+                    style={{ width: "100%", height: "100%", objectFit: "cover" }} 
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).style.display = "none";
+                      (e.target as HTMLImageElement).parentElement!.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-book-open" style="color: var(--primary-brand); opacity: 0.85;"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>';
+                    }}
+                  />
+                ) : (
+                  <span style={{ fontSize: "1.8rem", lineHeight: 1 }}>{note.image}</span>
+                )
+              ) : (
+                <BookOpen size={24} style={{ color: "var(--primary-brand)", opacity: 0.85 }} />
+              )}
             </div>
             
             {/* Context Menu Button */}

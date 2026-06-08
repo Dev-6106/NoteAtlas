@@ -69,6 +69,7 @@ export async function uploadFiles(
       );
 
       const newDoc = await docRepo.createDoc({fileName, title, userId, noteId});
+      await agenda.now('docEmbedding', { noteId, userId, filePath: fileName });
       createdDocs.push(newDoc);
 
       // If this is a blank/new notebook, set its title and generate profile image

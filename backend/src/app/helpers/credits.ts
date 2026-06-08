@@ -1,11 +1,12 @@
 import { User } from "@/app/models/user.models";
+import mongoose from "mongoose";
 
 /**
  * Deduct credits from a user. Returns false and throws if insufficient balance.
  */
 export async function deductCredits(userId: string, amount: number): Promise<void> {
     const result = await User.findOneAndUpdate(
-        { _id: userId, credits: { $gte: amount } },
+        { _id: new mongoose.Types.ObjectId(userId), credits: { $gte: amount } },
         { $inc: { credits: -amount } },
         { new: true }
     );

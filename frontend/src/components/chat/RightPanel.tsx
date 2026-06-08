@@ -131,13 +131,13 @@ const AudioPlayer = ({ storageKey, onClose, title }: { storageKey: string, onClo
                   width: 44, height: 44, borderRadius: "50%",
                   background: "linear-gradient(135deg, var(--primary-brand) 0%, var(--primary-light) 100%)",
                   border: "none", display: "flex", alignItems: "center", justifyContent: "center",
-                  cursor: "pointer", color: "#ffffff", flexShrink: 0,
+                  cursor: "pointer", color: "var(--text-on-primary)", flexShrink: 0,
                   boxShadow: "var(--shadow-primary)", transition: "transform 0.2s"
                 }}
                 onMouseEnter={e => e.currentTarget.style.transform = "scale(1.05)"}
                 onMouseLeave={e => e.currentTarget.style.transform = "scale(1)"}
               >
-                {isPlaying ? <Pause size={20} fill="currentColor" /> : <Play size={20} fill="currentColor" style={{ marginLeft: 3 }} />}
+                {isPlaying ? <Pause size={20} fill="currentColor" color="var(--text-on-primary)" /> : <Play size={20} fill="currentColor" color="var(--text-on-primary)" style={{ marginLeft: 3 }} />}
               </button>
               
               {/* Waveform Visualization */}

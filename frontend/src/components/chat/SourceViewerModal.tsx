@@ -6,46 +6,121 @@ import { getUserData } from "@/helper/getUserData";
 export interface Citation {
     title: string;
     docId: string;
+    page?: number;
+    lines?: string;
 }
 
 interface SourceViewerModalProps {
     citations: Citation[];
     onClose: () => void;
     initialDocId?: string | null;
+    initialPage?: number;
+    initialLines?: string;
 }
 
 interface DocContent {
     docId: string;
     title: string;
-    content: string;
+    content?: string;
+    sourceUrl?: string;
     source_type?: string;
 }
 
-export const SourceViewerModal = ({ citations, onClose, initialDocId }: SourceViewerModalProps) => {
+export const SourceViewerModal = ({ 
+    citations, 
+    onClose, 
+    initialDocId, 
+    initialPage, 
+    initialLines 
+}: SourceViewerModalProps) => {
     const [activeTab, setActiveTab] = useState<"citations" | "document">("citations");
     const [selectedDocId, setSelectedDocId] = useState<string | null>(initialDocId ?? null);
+    const [activeCitation, setActiveCitation] = useState<{ page?: number; lines?: string } | null>(
+        (initialPage || initialLines) ? { page: initialPage, lines: initialLines } : null
+    );
     const [docContent, setDocContent] = useState<DocContent | null>(null);
+    const [textContent, setTextContent] = useState<string | null>(null);
+    const [fetchingText, setFetchingText] = useState(false);
     const [loading, setLoading] = useState(false);
+
+    useEffect(() => {
+        if (initialDocId) {
+            setSelectedDocId(initialDocId);
+            setActiveCitation({ page: initialPage, lines: initialLines });
+            setActiveTab("document");
+        }
+    }, [initialDocId, initialPage, initialLines]);
 
     useEffect(() => {
         if (selectedDocId) {
             loadDoc(selectedDocId);
-            setActiveTab("document");
         }
     }, [selectedDocId]);
+
+    // Scroll to highlighted lines in plain text rendering
+    useEffect(() => {
+        const linesStr = activeCitation?.lines;
+        const targetText = textContent || docContent?.content;
+        if (activeTab === "document" && linesStr && targetText) {
+            const timer = setTimeout(() => {
+                const parts = linesStr.split("-");
+                const firstLineNum = parseInt(parts[0].trim());
+                const element = document.getElementById(`line-${firstLineNum}`);
+                if (element) {
+                    element.scrollIntoView({ behavior: "smooth", block: "center" });
+                }
+            }, 150);
+            return () => clearTimeout(timer);
+        }
+    }, [activeTab, activeCitation, textContent, docContent]);
 
     const loadDoc = async (docId: string) => {
         try {
             setLoading(true);
             setDocContent(null);
+            setTextContent(null);
             const userData = getUserData();
-            const data = await makeHttpReq("GET", `notes/docs/${docId}/content?userId=${userData?._id}`) as DocContent;
+            const data = await makeHttpReq("GET", `notes/docs/${docId}/source?userId=${userData?._id}`) as DocContent;
             setDocContent(data);
+
+            if (data.sourceUrl && data.source_type !== "pdf") {
+                try {
+                    setFetchingText(true);
+                    const res = await fetch(data.sourceUrl);
+                    if (res.ok) {
+                        const txt = await res.text();
+                        setTextContent(txt);
+                    }
+                } catch (e) {
+                    console.error("Failed to fetch text content:", e);
+                } finally {
+                    setFetchingText(false);
+                }
+            }
         } catch {
-            setDocContent({ docId, title: "Error", content: "Could not load document content.", source_type: undefined });
+            setDocContent({ docId, title: "Error", content: "Could not load document source.", source_type: undefined });
         } finally {
             setLoading(false);
         }
+    };
+
+    const isLineHighlighted = (lineNum: number) => {
+        if (!activeCitation?.lines) return false;
+        const parts = activeCitation.lines.split("-");
+        if (parts.length === 1) {
+            return lineNum === parseInt(parts[0].trim());
+        }
+        const from = parseInt(parts[0].trim());
+        const to = parseInt(parts[1].trim());
+        return lineNum >= from && lineNum <= to;
+    };
+
+    const getSourceUrlWithPage = () => {
+        if (!docContent?.sourceUrl) return "";
+        if (activeCitation?.page) {
+            return `${docContent.sourceUrl}#page=${activeCitation.page}`;
+        }
+        return docContent.sourceUrl;
     };
 
     return (
@@ -63,7 +138,7 @@ export const SourceViewerModal = ({ citations, onClose, initialDocId }: SourceVi
             {/* Panel */}
             <div style={{
                 position: "fixed", right: 0, top: 0, bottom: 0, zIndex: 9001,
-                width: 460, maxWidth: "92vw",
+                width: 480, maxWidth: "92vw",
                 background: "var(--bg-elevated)",
                 borderLeft: "1px solid var(--border-default)",
                 display: "flex", flexDirection: "column",
@@ -142,7 +217,7 @@ export const SourceViewerModal = ({ citations, onClose, initialDocId }: SourceVi
                                 </div>
                             ) : (
                                 citations.map((c) => (
-                                    <div key={c.docId} style={{
+                                    <div key={`${c.docId}-${c.page}-${c.lines}`} style={{
                                         padding: "12px 14px",
                                         borderRadius: 12,
                                         background: "var(--bg-card)",
@@ -150,7 +225,11 @@ export const SourceViewerModal = ({ citations, onClose, initialDocId }: SourceVi
                                         cursor: "pointer",
                                         transition: "all 0.15s",
                                     }}
-                                        onClick={() => { setSelectedDocId(c.docId); setActiveTab("document"); }}
+                                        onClick={() => { 
+                                            setSelectedDocId(c.docId); 
+                                            setActiveCitation({ page: c.page, lines: c.lines });
+                                            setActiveTab("document"); 
+                                        }}
                                         onMouseEnter={e => {
                                             (e.currentTarget as HTMLDivElement).style.borderColor = "var(--border-accent)";
                                             (e.currentTarget as HTMLDivElement).style.background = "var(--bg-card-hover)";
@@ -168,7 +247,10 @@ export const SourceViewerModal = ({ citations, onClose, initialDocId }: SourceVi
                                             <ExternalLink size={12} style={{ color: "var(--text-4)", flexShrink: 0 }} />
                                         </div>
                                         <p style={{ fontSize: 11.5, color: "var(--text-4)", marginTop: 4, marginLeft: 22 }}>
-                                            Click to view document
+                                            {c.page && `Page ${c.page}`}
+                                            {c.page && c.lines && ` • `}
+                                            {c.lines && `Lines ${c.lines}`}
+                                            {(!c.page && !c.lines) && `Click to view document`}
                                         </p>
                                     </div>
                                 ))
@@ -209,17 +291,64 @@ export const SourceViewerModal = ({ citations, onClose, initialDocId }: SourceVi
                                             </span>
                                         )}
                                     </div>
-                                    <div style={{
-                                        fontSize: 13.5, color: "var(--text-2)",
-                                        lineHeight: 1.75,
-                                        whiteSpace: "pre-wrap",
-                                        background: "var(--bg-card)",
-                                        border: "1px solid var(--border-default)",
-                                        borderRadius: 12,
-                                        padding: "16px 18px",
-                                    }}>
-                                        {docContent.content}
-                                    </div>
+                                    {docContent.source_type === "pdf" && docContent.sourceUrl ? (
+                                        <div style={{
+                                            height: "calc(100vh - 200px)", minHeight: 400,
+                                            background: "var(--bg-card)",
+                                            border: "1px solid var(--border-default)",
+                                            borderRadius: 12,
+                                            overflow: "hidden",
+                                        }}>
+                                            <iframe
+                                                key={getSourceUrlWithPage()}
+                                                src={getSourceUrlWithPage()}
+                                                style={{ width: "100%", height: "100%", border: "none" }}
+                                                title={docContent.title}
+                                            />
+                                        </div>
+                                    ) : fetchingText ? (
+                                        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "60px 20px", gap: 10, color: "var(--text-3)" }}>
+                                            <Loader2 size={18} style={{ animation: "spin 1s linear infinite" }} />
+                                            <span style={{ fontSize: 13 }}>Fetching text content…</span>
+                                        </div>
+                                    ) : (textContent || docContent.content) ? (
+                                        <div style={{
+                                            fontSize: 13, color: "var(--text-2)",
+                                            lineHeight: 1.75,
+                                            background: "var(--bg-card)",
+                                            border: "1px solid var(--border-default)",
+                                            borderRadius: 12,
+                                            padding: "16px 18px",
+                                            maxHeight: "calc(100vh - 200px)",
+                                            overflowY: "auto",
+                                        }}>
+                                            {(textContent || docContent.content || "").split("\n").map((line, idx) => {
+                                                const lineNum = idx + 1;
+                                                const isHighlighted = isLineHighlighted(lineNum);
+                                                return (
+                                                    <div 
+                                                        key={lineNum} 
+                                                        id={`line-${lineNum}`}
+                                                        style={{
+                                                            background: isHighlighted ? "rgba(234, 179, 8, 0.15)" : "transparent",
+                                                            borderLeft: isHighlighted ? "3px solid var(--primary-brand)" : "3px solid transparent",
+                                                            paddingLeft: 8,
+                                                            display: "flex",
+                                                            gap: 12,
+                                                            transition: "background 0.3s ease",
+                                                        }}
+                                                    >
+                                                        <span style={{ color: "var(--text-4)", width: 24, textAlign: "right", userSelect: "none" }}>{lineNum}</span>
+                                                        <span>{line}</span>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    ) : (
+                                        <div style={{ textAlign: "center", padding: "40px 20px", color: "var(--text-4)" }}>
+                                            <p style={{ fontSize: 13 }}>No content available for this document.</p>
+                                        </div>
+                                    )}
                                 </div>
                             ) : (
                                 <div style={{ textAlign: "center", padding: "60px 20px", color: "var(--text-4)" }}>

@@ -34,10 +34,12 @@ export function BaseModal({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
+        aria-describedby={description ? undefined : undefined}
         style={{
-          width: "500vw",
+          width: "calc(100vw - 32px)",
           maxWidth: width + "px",
-          height: height + "px",
+          height: height ? height + "px" : "auto",
+          maxHeight: "calc(100vh - 32px)",
           background: background ?? "var(--bg-elevated)",
           backdropFilter: "blur(24px)",
           border: "1px solid var(--primary-border)",

@@ -2,6 +2,7 @@ import LeftPanel from '@/components/chat/LeftPanel'
 import MiddlePanel from '@/components/chat/MiddlePanel'
 import RightPanel from '@/components/chat/RightPanel'
 import { useEffect } from 'react'
+import { SourceViewerModal } from '@/components/chat/SourceViewerModal'
 import CreateNoteModal from '@/components/note/createNoteModal/CreateNoteModal'
 import { Link, useParams } from 'react-router'
 import { useDispatch, useSelector } from 'react-redux'
@@ -11,7 +12,7 @@ import { MoveLeft } from 'lucide-react'
 import UserAvatar from '@/components/base/UserAvatar'
 import DiscoveryModal from '@/components/note/DiscoveryModal'
 import { EditNote } from '@/components/note/EditNote'
-import { fetchNoteSourceResult } from '@/store/rightPanelSlice'
+import { fetchNoteSourceResult, closeSourceViewer } from '@/store/rightPanelSlice'
 import { fetchQuizHistoryAction } from '@/store/quizSlice'
 import { CreditMenu } from '@/components/base/CreditMenu'
 import { fetchChats, fetchConversations } from '@/store/chatHistorySlice'
@@ -34,6 +35,7 @@ function ChatPage() {
   const { result } = useSelector((state: RootState) => state.creditMenu)
   const { leftPanelOpen, rightPanelOpen } = useSelector((state: RootState) => state.chat)
   const userData = getUserData()
+  const activeSourceViewer = useSelector((state: RootState) => state.rightPanel.activeSourceViewer);
 
   const isMobile = useIsMobile()
   const [mobileTab, setMobileTab] = useState<"left" | "middle" | "right">("middle")
@@ -222,6 +224,16 @@ function ChatPage() {
 
       <CreateNoteModal noteId={id} />
       <DiscoveryModal noteId={id} />
+
+      {activeSourceViewer && (
+        <SourceViewerModal
+          citations={activeSourceViewer.citations}
+          initialDocId={activeSourceViewer.initialDocId}
+          initialPage={activeSourceViewer.initialPage}
+          initialLines={activeSourceViewer.initialLines}
+          onClose={() => dispatch(closeSourceViewer())}
+        />
+      )}
     </div>
   )
 }
