@@ -58,7 +58,7 @@ export default function AuthLayout() {
         padding: "0 32px", height: 60, zIndex: 10, position: "relative",
         display: "flex", alignItems: "center", gap: 12,
         borderBottom: `1px solid ${T.border}`,
-        background: "rgba(5,6,13,0.75)",
+        background: T.glassBg,
         backdropFilter: "blur(20px)",
         flexShrink: 0,
       }}>
