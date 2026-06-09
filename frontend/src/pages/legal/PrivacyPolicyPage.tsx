@@ -48,7 +48,7 @@ export default function PrivacyPolicyPage() {
         <section style={{ marginBottom: 40 }}>
           <h2 style={{ fontSize: 24, fontWeight: 700, marginBottom: 16 }}>3. How We Store Your Data</h2>
           <p style={{ fontSize: 16, lineHeight: 1.7, color: T.text2, marginBottom: 16 }}>
-            Your data is stored securely using industry-standard cloud infrastructure (AWS/MongoDB Atlas). 
+            Your data is stored securely using industry-standard cloud infrastructure (MongoDB Atlas). 
             We use encryption in transit and at rest to protect your personal information and documents. 
             We do <strong>not</strong> sell your data, and we do <strong>not</strong> use your private documents to train our AI models.
           </p>
@@ -57,10 +57,10 @@ export default function PrivacyPolicyPage() {
         <section style={{ marginBottom: 40 }}>
           <h2 style={{ fontSize: 24, fontWeight: 700, marginBottom: 16 }}>4. Contact Information</h2>
           <p style={{ fontSize: 16, lineHeight: 1.7, color: T.text2, marginBottom: 16 }}>
-            If you have questions about this privacy policy, how your data is handled, or wish to request data deletion, please contact us at:
+            If you have questions about this privacy policy, how your data is handled, or wish to request data deletion, please contact the developer at:
           </p>
           <p style={{ fontSize: 16, lineHeight: 1.7, color: T.text1, fontWeight: 600 }}>
-            Email: privacy@noteatlas.ai
+            Email: vasudevahir2006@gmail.com
           </p>
         </section>
       </main>

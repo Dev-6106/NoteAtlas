@@ -53,10 +53,10 @@ export default function TermsOfServicePage() {
         <section style={{ marginBottom: 40 }}>
           <h2 style={{ fontSize: 24, fontWeight: 700, marginBottom: 16 }}>4. Contact Information</h2>
           <p style={{ fontSize: 16, lineHeight: 1.7, color: T.text2, marginBottom: 16 }}>
-            For legal inquiries, support requests, or questions regarding these terms, please reach out to us at:
+            For legal inquiries, support requests, or questions regarding these terms, please reach out the developer at:
           </p>
           <p style={{ fontSize: 16, lineHeight: 1.7, color: T.text1, fontWeight: 600 }}>
-            Email: legal@noteatlas.ai
+            Email: vasudevahir2006@gmail.com
           </p>
         </section>
       </main>
