@@ -31,10 +31,11 @@ const envSchema = z.object({
   PINECONE_INDEX: z.string().min(1).default("notebooklm"),
 
   // Google OAuth
-  GOOGLE_CLIENT_ID: z.string().min(1, "GOOGLE_CLIENT_ID is required"),
-  GOOGLE_CLIENT_SECRET: z.string().min(1, "GOOGLE_CLIENT_SECRET is required"),
+  GOOGLE_CLIENT_ID: z.string().trim().min(1, "GOOGLE_CLIENT_ID is required"),
+  GOOGLE_CLIENT_SECRET: z.string().trim().min(1, "GOOGLE_CLIENT_SECRET is required"),
   CALLBACK_URL: z
     .string()
+    .trim()
     .url()
     .default("http://localhost:8000/auth/google/callback"),
 
