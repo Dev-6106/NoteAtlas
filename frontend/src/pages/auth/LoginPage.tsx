@@ -2,11 +2,10 @@ import GoogleIcon from '@/assets/google.png'
 import { T } from "@/components/ThemeTokens";
 
 import { LogoSvg } from "@/components/base/LogoSvg";
+import { apiUrl } from "@/config/get-env";
 
 function LoginPage() {
   const handleGoogleLogin = () => {
-    const rawApiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
-    const apiUrl = rawApiUrl.trim().replace(/\/$/, '');
     window.location.href = `${apiUrl}/auth/google`;
   };
 
