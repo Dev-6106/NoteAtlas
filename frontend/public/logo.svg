@@ -1,0 +1,21 @@
+<svg width="512" height="512" viewBox="330 200 350 380" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <g fill="#000000">
+    <path d="M380 240 C350 240 340 250 340 270 L340 540 C340 560 350 570 370 570 C410 570 450 560 460 540 C460 520 450 510 430 510 L380 510 L380 270 L430 270 C450 270 460 260 460 240 C460 220 450 210 430 210 Z" />
+    <path d="M460 240 L460 540 L380 540 L380 270 Z" fill="#ffffff" />
+    <path d="M430 240 L460 240 L460 540 C460 560 450 570 430 570 Z" />
+    
+    <rect x="385" y="360" width="55" height="12" rx="6" transform="rotate(12 385 360)" />
+    <rect x="385" y="395" width="55" height="12" rx="6" transform="rotate(12 385 395)" />
+    <rect x="385" y="430" width="55" height="12" rx="6" transform="rotate(12 385 430)" />
+    
+    <polygon points="430,240 590,440 610,470 475,275" />
+    
+    <circle cx="640" cy="285" r="24" />
+    <circle cx="645" cy="410" r="20" />
+    <circle cx="645" cy="545" r="20" />
+    <circle cx="565" cy="475" r="20" />
+    <circle cx="505" cy="565" r="20" />
+    
+    <path d="M625 295 L560 350 M642 305 L645 390 M645 430 L645 525 M578 460 L630 420 M578 488 L630 532 M552 462 L525 435 M520 550 L555 490" stroke="#000000" stroke-width="10" stroke-linecap="round" />
+  </g>
+</svg>
