@@ -66,7 +66,7 @@ const UserAvatar = () => {
         <div style={{
           position: "absolute", right: 0, top: "calc(100% + 10px)",
           width: 240, zIndex: 200,
-          background: "var(--dropdown-bg)",
+          background: "var(--bg-elevated)",
           border: "1px solid var(--primary-border)",
           borderRadius: 16,
           boxShadow: "0 0 0 1px var(--primary-border), 0 20px 48px rgba(0,0,0,0.65), var(--shadow-primary)",

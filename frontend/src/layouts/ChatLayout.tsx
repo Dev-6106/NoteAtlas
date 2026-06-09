@@ -1,9 +1,16 @@
 import React from "react";
-import { Link, Outlet } from "react-router";
+import { Link, Outlet, Navigate } from "react-router";
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { getUserData } from "@/helper/getUserData";
 
 export default function ChatLayout() {
+  const userData = getUserData();
+
+  if (!userData) {
+    return <Navigate to="/auth/login" replace />;
+  }
+
   return (
     <div style={{
       minHeight: "100vh",

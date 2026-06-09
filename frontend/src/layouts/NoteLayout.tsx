@@ -1,6 +1,6 @@
 import UserAvatar from "@/components/base/UserAvatar";
 import { getUserData } from "@/helper/getUserData";
-import { Link, Outlet } from "react-router";
+import { Link, Outlet, Navigate } from "react-router";
 import { useDispatch, useSelector } from 'react-redux';
 import type { AppDispatch, RootState } from '@/store';
 import { fetchUserCreditAndPayment } from '@/store/creditMenuSlice';
@@ -21,6 +21,10 @@ export default function NoteLayout() {
   useEffect(() => {
     if (userData?._id) dispatch(fetchUserCreditAndPayment(userData._id));
   }, [dispatch, userData?._id]);
+
+  if (!userData) {
+    return <Navigate to="/auth/login" replace />;
+  }
 
   return (
     <div style={{
