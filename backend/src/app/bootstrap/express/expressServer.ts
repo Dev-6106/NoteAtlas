@@ -25,7 +25,7 @@ export function expressServer(app: Express, PORT: number) {
   // ─── CORS ────────────────────────────────────────────────
   app.use(
     cors({
-      origin: env.FRONTEND_URL,
+      origin: true,
       credentials: true,
     })
   );
