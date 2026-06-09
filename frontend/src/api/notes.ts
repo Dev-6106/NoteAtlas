@@ -658,6 +658,7 @@ export const uploadFilesApi = async (files: FileList, noteId: string) => {
     try {
         const response = await fetch(`${apiUrl}/api/v1/notes/upload-files`, {
             method: "POST",
+            credentials: "include",
             body: formData,
         });
 
