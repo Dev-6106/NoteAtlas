@@ -617,7 +617,7 @@ export default function HomePage() {
         </div>
 
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 20 }}>
-          <FeatureCard delay={0} icon={<Brain size={24} />} title="AI chat over your docs" desc="Ask questions in natural language. Get cited, context-aware answers grounded in your uploaded documents." />
+          <FeatureCard delay={0} icon={<LogoSvg size={24} color="var(--primary-light)" />} title="AI chat over your docs" desc="Ask questions in natural language. Get cited, context-aware answers grounded in your uploaded documents." />
           <FeatureCard delay={80} icon={<Zap size={24} />} title="Auto summarization" desc="Generate concise summaries, FAQs, study guides, and briefing docs from your PDFs and notes in seconds." />
           <FeatureCard delay={160} icon={<Lock size={24} />} title="Private & secure" desc="Your documents stay in your account. We never use your content to train AI models." />
           <FeatureCard delay={240} icon={<MessageSquare size={24} />} title="Multi-source chat" desc="Select multiple documents and chat across all of them simultaneously. Cross-reference with ease." />
