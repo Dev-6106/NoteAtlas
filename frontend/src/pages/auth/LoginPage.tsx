@@ -5,7 +5,8 @@ import { LogoSvg } from "@/components/base/LogoSvg";
 
 function LoginPage() {
   const handleGoogleLogin = () => {
-    window.location.href = `${import.meta.env.VITE_API_URL}/auth/google`;
+    const apiUrl = import.meta.env.VITE_API_URL?.replace(/\/$/, '') || 'http://localhost:8000';
+    window.location.href = `${apiUrl}/auth/google`;
   };
 
   return (
