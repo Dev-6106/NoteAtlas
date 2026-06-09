@@ -7,7 +7,12 @@ const envSchema = z.object({
     .default("development"),
   PORT: z.coerce.number().int().positive().default(8000),
   APP_URL: z.string().url().default("http://localhost:8000"),
-  FRONTEND_URL: z.string().url().default("http://localhost:5173"),
+  FRONTEND_URL: z
+    .string()
+    .trim()
+    .url()
+    .transform((val) => val.replace(/\/$/, ""))
+    .default("http://localhost:5173"),
 
   // Database
   DB_URL: z.string().min(1, "DB_URL is required"),
