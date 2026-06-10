@@ -509,7 +509,7 @@ export default function HomePage() {
       {/* ── HERO ────────────────────────────────────────── */}
       <section style={{ 
         position: "relative", 
-        padding: "120px 24px 60px", 
+        padding: "60px 24px", 
         minHeight: "calc(100vh - 72px)",
         display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
       }}>
