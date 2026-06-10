@@ -17,7 +17,10 @@ import {
   Layers,
   MonitorPlay,
   Play,
-  Pause
+  Pause,
+  Youtube,
+  Globe,
+  FileAudio
 } from "lucide-react";
 import { Button } from "../ui/button";
 import { useDispatch, useSelector } from "react-redux";
@@ -51,6 +54,7 @@ import { apiUrl } from "@/config/get-env";
 import { getAudioUrl } from "@/api/notes";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import PdfIcon from "@/assets/pdf.png";
 
 const AudioPlayer = ({ storageKey, onClose, title }: { storageKey: string, onClose: () => void, title: string }) => {
   const [url, setUrl] = useState<string | null>(null);
@@ -997,7 +1001,12 @@ function SourceIcon({ type = "" }: { type?: string }) {
   if (n.includes("ppt"))
     return <MonitorPlay size={16} style={{ color: "#ef4444" }} />;
 
-  return <FileText size={16} style={{ color: "var(--color-info)" }} />;
+  if (n.includes("youtube")) return <Youtube size={16} style={{ color: "var(--color-error)" }} />;
+  if (n.includes("url") || n.includes("website") || n.includes("link")) return <Globe size={16} style={{ color: "#3b82f6" }} />;
+  if (n.includes("mp3") || n.includes("wav")) return <FileAudio size={16} style={{ color: "#8b5cf6" }} />;
+  if (n.includes("pdf")) return <img src={PdfIcon} alt="PDF" width={18} height={18} style={{ borderRadius: 2, flexShrink: 0 }} />;
+
+  return <FileText size={16} style={{ color: "var(--text-3)" }} />;
 }
 
 export default RightPanel;

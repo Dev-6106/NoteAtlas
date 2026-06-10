@@ -7,7 +7,7 @@
   <img src="https://raw.githubusercontent.com/tandpfun/skill-icons/main/icons/MongoDB.svg" width="52" alt="MongoDB" />
   <img src="https://raw.githubusercontent.com/tandpfun/skill-icons/main/icons/Firebase-Dark.svg" width="52" alt="Firebase" />
 
-  <h1>🌟 NoteAtlas</h1>
+  <h1><img src="./frontend/public/logo_white.svg" height="36" alt="NoteAtlas Logo" /> NoteAtlas</h1>
 
   <p><strong>Your intelligent, AI-powered document workspace — inspired by Google NotebookLM.</strong></p>
 

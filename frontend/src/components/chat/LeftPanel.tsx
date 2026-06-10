@@ -12,6 +12,8 @@ import {
   Plus,
   Search,
   Youtube,
+  Globe,
+  FileAudio,
 } from "lucide-react";
 import { toggleAddSourceNoteModal } from "@/store/addSourceSlice";
 import type { NoteType } from "@/types/note-types";
@@ -803,7 +805,12 @@ function SourceIcon({ type = "" }: { type?: string }) {
   if (normalized.includes("youtube")) {
     return <Youtube size={16} style={{ color: "var(--color-error)" }} />;
   }
-
+  if (normalized.includes("url") || normalized.includes("website") || normalized.includes("link")) {
+    return <Globe size={16} style={{ color: "#3b82f6" }} />;
+  }
+  if (normalized.includes("audio") || normalized.includes("mp3") || normalized.includes("wav")) {
+    return <FileAudio size={16} style={{ color: "#8b5cf6" }} />;
+  }
   if (normalized.includes("pdf")) {
     return (
       <img
@@ -816,7 +823,7 @@ function SourceIcon({ type = "" }: { type?: string }) {
     );
   }
 
-  return <FileText size={16} style={{ color: "var(--color-info)" }} />;
+  return <FileText size={16} style={{ color: "var(--text-3)" }} />;
 }
 
 const MenuButton = ({ icon, label, onClick, danger }: { icon: React.ReactNode, label: string, onClick: (e: React.MouseEvent) => void, danger?: boolean }) => {
