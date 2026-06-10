@@ -1,7 +1,26 @@
 import { apiUrl } from "@/config/get-env"
 import { auth } from "@/config/firebase"
+import { onAuthStateChanged } from "firebase/auth"
 
 export type HttpVerbType = 'GET' | 'POST' | 'PUT' | 'DELETE'
+
+/**
+ * Wait for Firebase to finish restoring auth state after page load.
+ * Returns the current user (or null if not logged in).
+ */
+let authReadyPromise: Promise<import("firebase/auth").User | null> | null = null;
+
+function waitForAuth() {
+  if (!authReadyPromise) {
+    authReadyPromise = new Promise((resolve) => {
+      const unsubscribe = onAuthStateChanged(auth, (user) => {
+        unsubscribe();
+        resolve(user);
+      });
+    });
+  }
+  return authReadyPromise;
+}
 
 export async function makeHttpReq<T>(verb: HttpVerbType, endpoint: string, input?: T) {
   try {
@@ -14,8 +33,10 @@ export async function makeHttpReq<T>(verb: HttpVerbType, endpoint: string, input
       "Content-Type": "application/json",
     };
 
-    if (auth.currentUser) {
-      const token = await auth.currentUser.getIdToken();
+    // Wait for Firebase auth state to be ready before getting token
+    const user = await waitForAuth();
+    if (user) {
+      const token = await user.getIdToken();
       headers["Authorization"] = `Bearer ${token}`;
     }
 
