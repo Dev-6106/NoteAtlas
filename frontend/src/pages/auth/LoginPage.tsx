@@ -113,7 +113,7 @@ function LoginPage() {
         <div className="la0" style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 12, marginBottom: 36 }}>
           <LogoSvg size={48} />
           <span style={{ fontSize: 22, fontWeight: 700, color: T.text1, letterSpacing: "-0.5px" }}>
-            Note<span style={{ color: "var(--primary-light)" }}>Atlas</span>
+            Note<span style={{ color: "#3b82f6" }}>Atlas</span>
           </span>
         </div>
 

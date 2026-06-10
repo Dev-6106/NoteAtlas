@@ -1,115 +1,245 @@
 <div align="center">
-  <img src="https://raw.githubusercontent.com/tandpfun/skill-icons/main/icons/React-Dark.svg" width="60" alt="React" />
-  <img src="https://raw.githubusercontent.com/tandpfun/skill-icons/main/icons/NodeJS-Dark.svg" width="60" alt="NodeJS" />
-  <img src="https://raw.githubusercontent.com/tandpfun/skill-icons/main/icons/TypeScript.svg" width="60" alt="TypeScript" />
-  <img src="https://raw.githubusercontent.com/tandpfun/skill-icons/main/icons/TailwindCSS-Dark.svg" width="60" alt="TailwindCSS" />
-  <br/>
-  
-  <h1>🌟 NoteAtlas (NotebookLM Clone)</h1>
-  <p><strong>Your intelligent, AI-powered document workspace.</strong></p>
+
+  <img src="https://raw.githubusercontent.com/tandpfun/skill-icons/main/icons/React-Dark.svg" width="52" alt="React" />
+  <img src="https://raw.githubusercontent.com/tandpfun/skill-icons/main/icons/NodeJS-Dark.svg" width="52" alt="NodeJS" />
+  <img src="https://raw.githubusercontent.com/tandpfun/skill-icons/main/icons/TypeScript.svg" width="52" alt="TypeScript" />
+  <img src="https://raw.githubusercontent.com/tandpfun/skill-icons/main/icons/TailwindCSS-Dark.svg" width="52" alt="TailwindCSS" />
+  <img src="https://raw.githubusercontent.com/tandpfun/skill-icons/main/icons/MongoDB.svg" width="52" alt="MongoDB" />
+  <img src="https://raw.githubusercontent.com/tandpfun/skill-icons/main/icons/Firebase-Dark.svg" width="52" alt="Firebase" />
+
+  <h1>🌟 NoteAtlas</h1>
+
+  <p><strong>Your intelligent, AI-powered document workspace — inspired by Google NotebookLM.</strong></p>
 
   <p>
-    <a href="#features">Features</a> •
-    <a href="#tech-stack">Tech Stack</a> •
-    <a href="#getting-started">Getting Started</a> •
-    <a href="#environment-variables">Environment Variables</a>
+    <img src="https://img.shields.io/badge/React-19-61DAFB?style=flat-square&logo=react&logoColor=black" alt="React 19" />
+    <img src="https://img.shields.io/badge/Node.js-18%2B-339933?style=flat-square&logo=node.js&logoColor=white" alt="Node.js" />
+    <img src="https://img.shields.io/badge/TypeScript-5-3178C6?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript" />
+    <img src="https://img.shields.io/badge/LangChain-enabled-1C3C3C?style=flat-square&logo=langchain&logoColor=white" alt="LangChain" />
+    <img src="https://img.shields.io/badge/License-ISC-blue?style=flat-square" alt="License" />
   </p>
+
+  <p>
+    <a href="#-overview">Overview</a> •
+    <a href="#-features">Features</a> •
+    <a href="#-tech-stack">Tech Stack</a> •
+    <a href="#-getting-started">Getting Started</a> •
+    <a href="#-environment-variables">Environment Variables</a> •
+    <a href="#-contributing">Contributing</a>
+  </p>
+
+  <br/>
+
+  > Upload documents. Ask questions. Visualize ideas. Listen anywhere.
+
 </div>
 
 ---
 
 ## 📖 Overview
 
-NoteAtlas is a powerful, AI-driven workspace inspired by Google's NotebookLM. It allows users to upload documents, extract meaningful insights, generate mind maps, and even listen to text-to-speech audio representations of their data. 
+**NoteAtlas** is a full-stack, AI-driven document workspace that transforms how you interact with your notes and files. Upload PDFs and text documents, then use the power of Google Gemini and LangChain to chat with your content, auto-generate interactive mind maps, and even listen to audio summaries on the go.
 
-Powered by advanced Large Language Models, LangChain, and robust vector databases, NoteAtlas redefines how you interact with your notes and documents.
+Built with a React 19 frontend, a Node.js/Express/TypeScript backend, and a robust vector-search pipeline (Pinecone + MongoDB), NoteAtlas is designed for researchers, students, and knowledge workers who need more than a plain document viewer.
+
+---
 
 ## ✨ Features
 
-- **📄 Document Processing:** Upload PDFs and text, parse contents, and chunk data for efficient retrieval.
-- **🧠 AI-Powered Insights:** Chat with your documents using Google GenAI and LangChain.
-- **🗺️ Mind Mapping:** Automatically generate visual mind maps from your documents (powered by Mind-Elixir).
-- **🎧 Audio Generation:** Convert text to speech for on-the-go listening.
-- **🔐 Secure Authentication:** Seamless user login and management via Firebase Auth.
-- **💳 Payments Integration:** Includes subscription/credit models using Stripe and Razorpay.
-- **⚡ Real-time Updates:** WebSocket integration for real-time processing feedback.
+| | Feature | Description |
+|---|---|---|
+| 📄 | **Document Processing** | Upload PDFs and plain text; content is parsed, chunked, and indexed for fast semantic retrieval. |
+| 🧠 | **AI-Powered Chat** | Ask natural language questions and get grounded answers via Google Gemini + LangChain RAG. |
+| 🗺️ | **Mind Map Generation** | Automatically build and explore interactive visual mind maps from your documents using Mind-Elixir. |
+| 🎧 | **Audio Summaries** | Convert document insights to speech with Google TTS — perfect for commutes or passive review. |
+| ⚡ | **Real-time Feedback** | WebSocket integration streams processing status so you're never left waiting in the dark. |
+| 🔐 | **Secure Authentication** | Firebase Auth handles sign-up, login, and session management out of the box. |
+| 💳 | **Flexible Payments** | Subscription and credit-pack billing via Stripe (global) and Razorpay (India). |
+
+---
 
 ## 🛠️ Tech Stack
 
 ### Frontend
-- **Framework:** React 19, Vite
-- **Styling:** Tailwind CSS 4, Radix UI
-- **State Management:** Redux Toolkit
-- **Routing:** React Router 7
-- **Authentication:** Firebase
-- **Others:** React Markdown, Stripe React, Mind-Elixir
+| Category | Technology |
+|---|---|
+| Framework | React 19, Vite |
+| Styling | Tailwind CSS 4, Radix UI |
+| State Management | Redux Toolkit |
+| Routing | React Router 7 |
+| Auth | Firebase |
+| Payments | Stripe React, Razorpay |
+| Visualization | Mind-Elixir |
+| Rendering | React Markdown |
 
 ### Backend
-- **Environment:** Node.js, Express, TypeScript
-- **AI & Orchestration:** LangChain, Google GenAI, LangGraph
-- **Database & Vector Store:** MongoDB, Pinecone, Supabase
-- **Authentication:** Firebase Admin
-- **Payments:** Razorpay
-- **Utilities:** PDF-Parse, Google TTS API, Fluent-FFmpeg, WebSockets
+| Category | Technology |
+|---|---|
+| Runtime | Node.js 18+, Express, TypeScript |
+| AI & Orchestration | LangChain, LangGraph, Google GenAI (Gemini) |
+| Databases | MongoDB (primary), Supabase (storage) |
+| Vector Store | Pinecone |
+| Auth | Firebase Admin SDK |
+| Payments | Razorpay |
+| Audio | Google TTS API, Fluent-FFmpeg |
+| Real-time | WebSockets |
+| Parsing | PDF-Parse |
+
+---
 
 ## 🚀 Getting Started
 
-Follow these steps to set up the project locally.
-
 ### Prerequisites
-- Node.js (v18 or higher)
-- npm or yarn
-- Accounts for Firebase, Pinecone, MongoDB, and Gemini API.
+
+Make sure you have the following installed and accounts created before you begin:
+
+- **Node.js** v18 or higher
+- **npm** or **yarn**
+- Active accounts for: [Firebase](https://firebase.google.com), [Pinecone](https://www.pinecone.io), [MongoDB Atlas](https://www.mongodb.com/atlas), [Google AI Studio (Gemini)](https://aistudio.google.com)
 
 ### 1. Clone the repository
+
 ```bash
 git clone https://github.com/Dev-6106/NoteAtlas.git
 cd NoteAtlas
 ```
 
-### 2. Setup Backend
+### 2. Configure environment variables
+
+Set up your `.env` files in both `frontend/` and `backend/` directories before starting the servers. See the [Environment Variables](#-environment-variables) section below for all required keys.
+
+### 3. Start the backend
+
 ```bash
 cd backend
 npm install
 npm run dev
 ```
 
-### 3. Setup Frontend
-Open a new terminal window:
+The backend server will start on the port defined in your `.env` (default: `8000`).
+
+### 4. Start the frontend
+
+Open a **new terminal window**:
+
 ```bash
 cd frontend
 npm install
 npm run dev
 ```
 
+The frontend dev server will start at `http://localhost:5173` by default.
+
+> **Tip:** Run both servers simultaneously — the frontend proxies API requests to the backend via `VITE_API_URL`.
+
+---
+
 ## 🔐 Environment Variables
 
-You will need to set up `.env` files in both the `frontend` and `backend` directories.
+Create `.env` files in each directory and populate them with the values from your service dashboards.
 
-**Backend (`backend/.env`):**
-- `PORT`
-- `MONGO_URI`
-- `PINECONE_API_KEY`
-- `GOOGLE_API_KEY` / Gemini API Key
-- Firebase Admin SDK credentials
-- Razorpay keys
-- Supabase credentials
+### `backend/.env`
 
-**Frontend (`frontend/.env`):**
-- `VITE_FIREBASE_API_KEY`
-- `VITE_FIREBASE_AUTH_DOMAIN`
-- `VITE_API_URL` (Backend URL)
-- Stripe public keys
+```env
+# Server
+PORT=8000
+
+# Database
+DB_URL=your_mongodb_connection_string
+
+# Vector Store
+PINECONE_API_KEY=your_pinecone_api_key
+PINECONE_INDEX=your_pinecone_index
+
+# AI
+GOOGLE_GEMINI_API_KEY=your_gemini_api_key
+
+# Firebase Admin SDK
+FIREBASE_PROJECT_ID=your_project_id
+FIREBASE_CLIENT_EMAIL=your_client_email
+FIREBASE_PRIVATE_KEY="your_private_key"
+
+# Payments
+RAZORPAY_KEY_ID=your_razorpay_key_id
+RAZORPAY_KEY_SECRET=your_razorpay_key_secret
+
+# Supabase
+SUPABASE_URL=your_supabase_url
+SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
+```
+
+### `frontend/.env`
+
+```env
+# Firebase
+VITE_FIREBASE_API_KEY=your_firebase_api_key
+VITE_FIREBASE_AUTH_DOMAIN=your_project.firebaseapp.com
+VITE_FIREBASE_PROJECT_ID=your_project_id
+VITE_FIREBASE_STORAGE_BUCKET=your_project.appspot.com
+VITE_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
+VITE_FIREBASE_APP_ID=your_app_id
+
+# Backend
+VITE_API_URL=http://localhost:8000
+
+# Payments
+VITE_RAZORPAY_KEY_ID=your_razorpay_key_id
+```
+
+---
+
+## 🗂️ Project Structure
+
+```
+NoteAtlas/
+├── backend/
+│   ├── src/
+│   │   ├── routes/        # Express route handlers
+│   │   ├── controllers/   # Business logic
+│   │   ├── services/      # LangChain, AI, TTS integrations
+│   │   ├── models/        # MongoDB schemas
+│   │   └── utils/         # Helpers, middleware
+│   ├── .env
+│   └── package.json
+│
+├── frontend/
+│   ├── src/
+│   │   ├── components/    # Reusable UI components
+│   │   ├── pages/         # Route-level page components
+│   │   ├── store/         # Redux slices and store
+│   │   ├── hooks/         # Custom React hooks
+│   │   └── lib/           # Firebase, API clients
+│   ├── .env
+│   └── package.json
+│
+└── README.md
+```
+
+---
 
 ## 🤝 Contributing
 
-Contributions, issues, and feature requests are welcome! Feel free to check the issues page.
+Contributions, bug reports, and feature requests are welcome!
+
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feat/your-feature-name`
+3. Commit your changes: `git commit -m "feat: add your feature"`
+4. Push to the branch: `git push origin feat/your-feature-name`
+5. Open a Pull Request
+
+Please check the [issues page](https://github.com/Dev-6106/NoteAtlas/issues) for open tasks before starting something new.
+
+---
 
 ## 📄 License
 
-This project is licensed under the ISC License.
+This project is licensed under the **ISC License**. See the [LICENSE](./LICENSE) file for details.
 
 ---
+
 <div align="center">
-  <i>Built with ❤️ using React, Node, and LangChain.</i>
+  <p>Built with ❤️ using React, Node.js, and LangChain.</p>
+  <p>
+    <a href="https://github.com/Dev-6106/NoteAtlas">⭐ Star this repo</a> if you find it useful!
+  </p>
 </div>

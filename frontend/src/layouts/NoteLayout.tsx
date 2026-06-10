@@ -73,7 +73,7 @@ export default function NoteLayout() {
         <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: 9, textDecoration: 'none' }}>
           <LogoSvg size={36} />
           <span className="nl-logo-text" style={{ fontSize: 15, fontWeight: 700, color: T.text1, letterSpacing: '-0.4px', fontFamily: T.fontSans }}>
-            Note<span style={{ color: "var(--primary-brand)" }}>Atlas</span>
+            Note<span style={{ color: "#3b82f6" }}>Atlas</span>
           </span>
         </Link>
 

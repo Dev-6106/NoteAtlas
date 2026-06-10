@@ -850,7 +850,7 @@ export default function HomePage() {
       }}>
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           <LogoSvg size={36} />
-          <span style={{ fontSize: 16, fontWeight: 700, color: "var(--text-1)", letterSpacing: "-0.5px" }}>NoteAtlas</span>
+          <span style={{ fontSize: 16, fontWeight: 700, color: "var(--text-1)", letterSpacing: "-0.5px" }}>Note<span style={{ color: "#3b82f6" }}>Atlas</span></span>
         </div>
         <p style={{ color: "var(--text-3)", fontSize: 14, fontWeight: 500 }}>
           © {new Date().getFullYear()} NoteAtlas Clone · Built for productivity

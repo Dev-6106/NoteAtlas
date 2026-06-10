@@ -62,7 +62,7 @@ export default function NotFoundPage() {
         {/* Logo */}
         <div className="anim-d0" style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 9, marginBottom: 48 }}>
           <LogoSvg size={38} />
-          <span style={{ fontSize: 18, fontWeight: 800, color: "var(--text-1)", letterSpacing: "-0.5px" }}>NoteAtlas</span>
+          <span style={{ fontSize: 18, fontWeight: 800, color: "var(--text-1)", letterSpacing: "-0.5px" }}>Note<span style={{ color: "#3b82f6" }}>Atlas</span></span>
         </div>
 
         {/* 404 */}
