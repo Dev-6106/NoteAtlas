@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import type { AppDispatch, RootState } from "@/store";
 import { BaseModal } from "@/components/base/BaseModal";
@@ -23,6 +23,12 @@ export const QuizModal = ({ noteId }: { noteId?: string }) => {
 
     const open = sourceModal?.source_type === "quiz-generator" || sourceModal?.source_type === "quiz-player";
 
+    useEffect(() => {
+        if (open && activeQuiz && !currentAttempt) {
+            setStartTime(Date.now());
+        }
+    }, [open, activeQuiz, currentAttempt]);
+
     const handleClose = () => {
         dispatch(closeSourceModal());
         dispatch(setActiveQuiz(null));
@@ -36,7 +42,6 @@ export const QuizModal = ({ noteId }: { noteId?: string }) => {
             import("@/util/toast-notification").then(m => m.showError("Please select at least one source."));
             return;
         }
-        setStartTime(Date.now());
         await dispatch(generateQuizAction({ noteId, docIds, difficulty, questionCount }));
     };
 

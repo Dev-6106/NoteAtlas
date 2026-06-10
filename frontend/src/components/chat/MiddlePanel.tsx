@@ -798,54 +798,76 @@ const ChatMessage = memo(({ msg, citations, onOpenSource }: {
         {/* Citation chips (AI messages only) */}
         {isAI && finalCitations && finalCitations.length > 0 && (
           <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 10 }}>
-            {finalCitations.map((c) => (
-              <button
-                key={`${c.docId}-${c.page}-${c.lines}`}
-                onClick={() => onOpenSource?.(finalCitations, c.docId, c.page, c.lines)}
-                style={{
-                  display: "flex", alignItems: "center", gap: 5,
-                  padding: "4px 10px", borderRadius: 999,
-                  background: "var(--primary-glow)",
-                  border: "1px solid var(--primary-border)",
-                  color: "var(--primary-brand)", fontSize: 11.5, fontWeight: 600,
-                  cursor: "pointer", transition: "all 0.15s",
-                  maxWidth: "100%",
-                }}
-                onMouseEnter={e => {
-                  (e.currentTarget as HTMLButtonElement).style.background = "var(--primary-mid)";
-                }}
-                onMouseLeave={e => {
-                  (e.currentTarget as HTMLButtonElement).style.background = "var(--primary-glow)";
-                }}
-              >
-                <FileText size={11} style={{ flexShrink: 0 }} />
-                <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                  {c.title}
-                </span>
-              </button>
-            ))}
-            <button
-              onClick={() => onOpenSource?.(finalCitations)}
-              style={{
-                display: "flex", alignItems: "center", gap: 5,
-                padding: "4px 10px", borderRadius: 999,
-                background: "transparent",
-                border: "1px solid var(--border-default)",
-                color: "var(--text-4)", fontSize: 11.5, fontWeight: 500,
-                cursor: "pointer", transition: "all 0.15s",
-              }}
-              onMouseEnter={e => {
-                (e.currentTarget as HTMLButtonElement).style.color = "var(--text-2)";
-                (e.currentTarget as HTMLButtonElement).style.borderColor = "var(--border-accent)";
-              }}
-              onMouseLeave={e => {
-                (e.currentTarget as HTMLButtonElement).style.color = "var(--text-4)";
-                (e.currentTarget as HTMLButtonElement).style.borderColor = "var(--border-default)";
-              }}
-            >
-              <BookOpen size={11} />
-              View all sources
-            </button>
+            {(() => {
+              const uniqueCitations: Citation[] = [];
+              const seenDocIds = new Set<string>();
+              for (const c of finalCitations) {
+                if (!seenDocIds.has(c.docId)) {
+                  seenDocIds.add(c.docId);
+                  uniqueCitations.push(c);
+                }
+              }
+              const displayCitations = uniqueCitations.slice(0, 3);
+              const hasMore = uniqueCitations.length > 3;
+
+              return (
+                <>
+                  {displayCitations.map((c) => (
+                    <button
+                      key={c.docId}
+                      onClick={() => onOpenSource?.(finalCitations, c.docId, c.page, c.lines)}
+                      style={{
+                        display: "flex", alignItems: "center", gap: 5,
+                        padding: "4px 10px", borderRadius: 999,
+                        background: "var(--primary-glow)",
+                        border: "1px solid var(--primary-border)",
+                        color: "var(--primary-brand)", fontSize: 11.5, fontWeight: 600,
+                        cursor: "pointer", transition: "all 0.15s",
+                        maxWidth: "100%",
+                      }}
+                      onMouseEnter={e => {
+                        (e.currentTarget as HTMLButtonElement).style.background = "var(--primary-mid)";
+                      }}
+                      onMouseLeave={e => {
+                        (e.currentTarget as HTMLButtonElement).style.background = "var(--primary-glow)";
+                      }}
+                    >
+                      <FileText size={11} style={{ flexShrink: 0 }} />
+                      <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        {c.title}
+                      </span>
+                    </button>
+                  ))}
+                  {hasMore && (
+                    <span style={{ color: "var(--text-4)", fontSize: 14, fontWeight: 700, display: "flex", alignItems: "center", padding: "0 4px" }}>
+                      ...
+                    </span>
+                  )}
+                  <button
+                    onClick={() => onOpenSource?.(finalCitations)}
+                    style={{
+                      display: "flex", alignItems: "center", gap: 5,
+                      padding: "4px 10px", borderRadius: 999,
+                      background: "transparent",
+                      border: "1px solid var(--border-default)",
+                      color: "var(--text-4)", fontSize: 11.5, fontWeight: 500,
+                      cursor: "pointer", transition: "all 0.15s",
+                    }}
+                    onMouseEnter={e => {
+                      (e.currentTarget as HTMLButtonElement).style.color = "var(--text-2)";
+                      (e.currentTarget as HTMLButtonElement).style.borderColor = "var(--border-accent)";
+                    }}
+                    onMouseLeave={e => {
+                      (e.currentTarget as HTMLButtonElement).style.color = "var(--text-4)";
+                      (e.currentTarget as HTMLButtonElement).style.borderColor = "var(--border-default)";
+                    }}
+                  >
+                    <BookOpen size={11} />
+                    View all sources
+                  </button>
+                </>
+              );
+            })()}
           </div>
         )}
       </div>

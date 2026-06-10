@@ -17,7 +17,7 @@ function shuffleQuiz(quiz: Quiz | null): Quiz | null {
   if (!quiz) return null;
   return {
     ...quiz,
-    questions: shuffleArray(quiz.questions).map(q => ({
+    questions: quiz.questions.map(q => ({
       ...q,
       options: shuffleArray(q.options)
     }))

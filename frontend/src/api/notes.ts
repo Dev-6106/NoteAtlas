@@ -3,6 +3,7 @@ import { makeHttpReq } from "@/helper/makeHttpReq";
 import type { NoteServerData, NoteType } from "@/types/note-types";
 import { showError, showSuccess } from "@/util/toast-notification";
 import { apiUrl } from "@/config/get-env";
+import { auth } from "@/config/firebase";
 
 export async function getNotes(page = 1, search: string = ''): Promise<NoteServerData> {
 
@@ -484,13 +485,21 @@ export const sendChatMessageStream = async (
     onCitations?: (citations: Array<{ title: string; docId: string }>) => void,
 ) => {
     const url = `${apiUrl}/api/v1/chats`;
+    const user = auth.currentUser;
+    const token = user ? await user.getIdToken() : "";
+    
+    const headers: HeadersInit = {
+        "Content-Type": "application/json",
+        "Accept": "text/event-stream",
+    };
+    if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+    }
+
     const res = await fetch(url, {
         method: "POST",
-        credentials: "include",
-        headers: {
-            "Content-Type": "application/json",
-            "Accept": "text/event-stream",
-        },
+        credentials: "omit",
+        headers,
         body: JSON.stringify({userId, noteId, docIds, query, conversationId}),
     });
 
@@ -656,9 +665,17 @@ export const uploadFilesApi = async (files: FileList, noteId: string) => {
     });
 
     try {
+        const user = auth.currentUser;
+        const token = user ? await user.getIdToken() : "";
+        const headers: HeadersInit = {};
+        if (token) {
+            headers["Authorization"] = `Bearer ${token}`;
+        }
+
         const response = await fetch(`${apiUrl}/api/v1/notes/upload-files`, {
             method: "POST",
-            credentials: "include",
+            credentials: "omit",
+            headers,
             body: formData,
         });
 
