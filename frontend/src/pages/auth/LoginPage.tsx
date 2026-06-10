@@ -5,10 +5,15 @@ import { LogoSvg } from "@/components/base/LogoSvg";
 import { apiUrl } from "@/config/get-env";
 import { auth } from '@/config/firebase';
 import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+import { useState } from 'react';
 
 function LoginPage() {
+  const [isLoading, setIsLoading] = useState(false);
+
   const handleGoogleLogin = async () => {
+    if (isLoading) return;
     try {
+      setIsLoading(true);
       const provider = new GoogleAuthProvider();
       const result = await signInWithPopup(auth, provider);
       
@@ -29,9 +34,11 @@ function LoginPage() {
         window.location.href = '/notes';
       } else {
         console.error('Failed to sync user data', await res.text());
+        setIsLoading(false);
       }
     } catch (error) {
       console.error('Login error', error);
+      setIsLoading(false);
     }
   };
 
@@ -48,6 +55,7 @@ function LoginPage() {
       padding: 24,
       position: "relative",
       overflow: "hidden",
+      userSelect: "none", // Prevent accidental blue text selection while authenticating
     }}>
       <style>{`
         @keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
@@ -55,11 +63,18 @@ function LoginPage() {
         .la1{animation:fadeUp 0.5s 0.1s ease both}
         .la2{animation:fadeUp 0.5s 0.2s ease both}
         .la3{animation:fadeUp 0.5s 0.32s ease both}
-        .google-btn:hover{
+        .google-btn:hover:not(:disabled){
           background:var(--bg-card-hover) !important;
           border-color:var(--border-accent) !important;
           transform:translateY(-1px) !important;
           box-shadow:var(--shadow-card-hover) !important;
+        }
+        .google-btn:focus {
+          outline: none;
+        }
+        .google-btn:disabled {
+          opacity: 0.7;
+          cursor: not-allowed;
         }
       `}</style>
 
@@ -128,6 +143,7 @@ function LoginPage() {
         <div className="la3">
           <button
             onClick={handleGoogleLogin}
+            disabled={isLoading}
             className="google-btn"
             style={{
               width: "100%",
@@ -136,13 +152,17 @@ function LoginPage() {
               background: "var(--bg-surface)",
               border: `1px solid ${T.border}`,
               color: T.text1, fontSize: 15, fontWeight: 600,
-              cursor: "pointer",
+              cursor: isLoading ? "wait" : "pointer",
               transition: "all 0.25s",
               fontFamily: T.fontSans,
             }}
           >
-            <img src={GoogleIcon} alt="Google" width={20} height={20} style={{ flexShrink: 0 }} />
-            Continue with Google
+            {isLoading ? (
+              <span className="spin" style={{ display: "inline-block", width: 20, height: 20, border: "2px solid var(--primary-mid)", borderTopColor: "var(--primary-brand)", borderRadius: "50%" }} />
+            ) : (
+              <img src={GoogleIcon} alt="Google" width={20} height={20} style={{ flexShrink: 0 }} />
+            )}
+            {isLoading ? "Authenticating..." : "Continue with Google"}
           </button>
         </div>
 
