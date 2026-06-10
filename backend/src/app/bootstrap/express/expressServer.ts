@@ -17,6 +17,7 @@ export function expressServer(app: Express, PORT: number) {
   // ─── Security headers ──────────────────────────────────
   app.use(helmet({
     crossOriginResourcePolicy: { policy: "cross-origin" },
+    crossOriginOpenerPolicy: { policy: "same-origin-allow-popups" },
   }));
 
   // ─── CORS ────────────────────────────────────────────────
@@ -69,8 +70,20 @@ export function expressServer(app: Express, PORT: number) {
 
       res.json(userInstance);
     } catch (error: any) {
-      logger.error("Auth sync error", error);
-      res.status(401).json({ error: { message: error.message || "Invalid or expired token", status: 401 } });
+      logger.error("Auth sync error", {
+        code: error.code,
+        message: error.message,
+        errorInfo: error.errorInfo,
+      });
+      
+      let userMessage = "Invalid or expired token";
+      if (error.code === "auth/id-token-expired") {
+        userMessage = "Token has expired. Please sign in again.";
+      } else if (error.code === "auth/argument-error") {
+        userMessage = "Server authentication configuration error.";
+      }
+      
+      res.status(401).json({ error: { message: userMessage, status: 401 } });
     }
   });
 
