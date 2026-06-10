@@ -68,9 +68,9 @@ export function expressServer(app: Express, PORT: number) {
       });
 
       res.json(userInstance);
-    } catch (error) {
+    } catch (error: any) {
       logger.error("Auth sync error", error);
-      res.status(401).json({ error: { message: "Invalid or expired token", status: 401 } });
+      res.status(401).json({ error: { message: error.message || "Invalid or expired token", status: 401 } });
     }
   });
 
