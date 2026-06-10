@@ -3,6 +3,7 @@ import { formatDate } from '@/util/formatDate';
 import { truncateTitle } from '@/util/truncateTitle';
 
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { MoreVertical, Copy, Archive, Trash2, Edit2, ArchiveRestore, BookOpen } from 'lucide-react';
 import { deleteNoteApi, duplicateNoteApi, updateNote } from '@/api/notes';
 import { useDispatch } from 'react-redux';
@@ -260,11 +261,11 @@ const NoteCard = ({ notebooks, viewNoteDetail, isArchiveView = false }: NoteCard
     })}
 
     {/* Custom Delete Confirmation Modal */}
-    {deleteConfirmId && (
+    {deleteConfirmId && typeof document !== 'undefined' && createPortal(
       <div 
         onClick={() => setDeleteConfirmId(null)}
         style={{ 
-          position: "fixed", inset: 0, zIndex: 9999, 
+          position: "fixed", top: 0, left: 0, right: 0, bottom: 0, zIndex: 9999, 
           display: "flex", alignItems: "center", justifyContent: "center", 
           background: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)" 
         }}
@@ -300,7 +301,8 @@ const NoteCard = ({ notebooks, viewNoteDetail, isArchiveView = false }: NoteCard
             </button>
           </div>
         </div>
-      </div>
+      </div>,
+      document.body
     )}
   </>);
 };
