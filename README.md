@@ -194,21 +194,33 @@ VITE_RAZORPAY_KEY_ID=your_razorpay_key_id
 NoteAtlas/
 ├── backend/
 │   ├── src/
-│   │   ├── routes/        # Express route handlers
-│   │   ├── controllers/   # Business logic
-│   │   ├── services/      # LangChain, AI, TTS integrations
-│   │   ├── models/        # MongoDB schemas
-│   │   └── utils/         # Helpers, middleware
+│   │   ├── app/           # Express routes and controllers
+│   │   ├── config/        # Environment and DB config
+│   │   ├── lib/           # Database setup and common libraries
+│   │   ├── middleware/    # Express middlewares (auth, etc)
+│   │   ├── pipelines/     # Data ingestion and chunking pipelines
+│   │   ├── prompt/        # LLM system prompts
+│   │   ├── services/      # Core business logic and AI integrations
+│   │   ├── types/         # TypeScript definitions
+│   │   └── util/          # Helper utilities
 │   ├── .env
 │   └── package.json
 │
 ├── frontend/
 │   ├── src/
+│   │   ├── api/           # API fetch functions
+│   │   ├── assets/        # Static assets
 │   │   ├── components/    # Reusable UI components
-│   │   ├── pages/         # Route-level page components
-│   │   ├── store/         # Redux slices and store
+│   │   ├── config/        # Environment configurations
+│   │   ├── helper/        # Helper functions
 │   │   ├── hooks/         # Custom React hooks
-│   │   └── lib/           # Firebase, API clients
+│   │   ├── layouts/       # UI layout wrappers
+│   │   ├── lib/           # Third-party integrations
+│   │   ├── pages/         # Route-level page components
+│   │   ├── router/        # React Router configuration
+│   │   ├── store/         # Redux state slices
+│   │   ├── types/         # TypeScript definitions
+│   │   └── util/          # Utility functions
 │   ├── .env
 │   └── package.json
 │
