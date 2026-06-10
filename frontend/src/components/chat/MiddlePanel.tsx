@@ -270,6 +270,31 @@ const MiddlePannel = ({
           />
         ))}
 
+        {/* Empty State */}
+        {(!activeConversationId || !chatHistory?.chatHistory || chatHistory.chatHistory.length === 0) && !isStreaming && !loading && (
+          <div className="fade-up" style={{ 
+            display: "flex", flexDirection: "column", alignItems: "center", 
+            justifyContent: "center", padding: "60px 20px 40px", textAlign: "center" 
+          }}>
+            <div style={{ marginBottom: 24, position: "relative", width: 80, height: 80, display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <svg width="80" height="80" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M40 18C41.5 30 46 34.5 58 36C46 37.5 41.5 42 40 54C38.5 42 34 37.5 22 36C34 34.5 38.5 30 40 18Z" fill="#E0D4FF"/>
+                <path d="M22 46C22.5 50 24 51.5 28 52C24 52.5 22.5 54 22 58C21.5 54 20 52.5 16 52C20 51.5 21.5 50 22 46Z" fill="#E0D4FF"/>
+                <path d="M60 46C60.5 50 62 51.5 66 52C62 52.5 60.5 54 60 58C59.5 54 58 52.5 54 52C58 51.5 59.5 50 60 46Z" fill="#E0D4FF"/>
+                <path d="M30 20C30.5 22.5 31.5 23.5 34 24C31.5 24.5 30.5 25.5 30 28C29.5 25.5 28.5 24.5 26 24C28.5 23.5 29.5 22.5 30 20Z" fill="#E0D4FF"/>
+                <path d="M52 24C52.5 26.5 53.5 27.5 56 28C53.5 28.5 52.5 29.5 52 32C51.5 29.5 50.5 28.5 48 28C50.5 27.5 51.5 26.5 52 24Z" fill="#E0D4FF"/>
+                <path d="M42 6C42.5 8.5 43.5 9.5 46 10C43.5 10.5 42.5 11.5 42 14C41.5 11.5 40.5 10.5 38 10C40.5 9.5 41.5 8.5 42 6Z" fill="#E0D4FF"/>
+              </svg>
+            </div>
+            <h2 style={{ fontSize: 20, fontWeight: 700, color: "var(--text-1)", marginBottom: 12, letterSpacing: "-0.4px" }}>
+              Your AI research assistant is ready
+            </h2>
+            <p style={{ fontSize: 14, color: "var(--text-3)", maxWidth: 320, lineHeight: 1.6 }}>
+              Ask anything about your sources and get accurate, cited answers.
+            </p>
+          </div>
+        )}
+
         {/* Streaming Message */}
         {isStreaming && streamingMessage && (
           <ChatMessage msg={{ role: "ai", content: streamingMessage }} />

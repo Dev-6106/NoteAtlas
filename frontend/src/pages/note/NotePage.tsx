@@ -61,7 +61,7 @@ function NotePage() {
   return (
     <div style={{
       minHeight: "calc(100vh - 60px)",
-      background: T.bg,
+      background: "transparent",
       fontFamily: T.fontSans,
       padding: "40px 36px",
       color: T.text1,
@@ -157,24 +157,31 @@ function NotePage() {
             <button
               onClick={() => setShowSortMenu(!showSortMenu)}
               style={{
-                height: 40, padding: "0 14px", borderRadius: 10,
-                background: showSortMenu ? T.primaryGlow : T.bgCard,
-                border: showSortMenu ? `1px solid ${T.borderAccent}` : `1px solid ${T.border}`,
-                color: showSortMenu ? T.primary : T.text2,
-                fontSize: 13, fontWeight: 500, fontFamily: T.fontSans,
+                height: 40, padding: "0 16px", borderRadius: 12,
+                background: showSortMenu ? "var(--bg-surface)" : "var(--bg-card)",
+                border: showSortMenu ? `1px solid var(--border-strong)` : `1px solid var(--border-default)`,
+                color: showSortMenu ? "var(--text-1)" : "var(--text-2)",
+                fontSize: 13.5, fontWeight: 500, fontFamily: T.fontSans,
                 display: "flex", alignItems: "center", gap: 8,
-                cursor: "pointer", transition: "all 0.2s"
+                cursor: "pointer", transition: "all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1)",
+                boxShadow: showSortMenu ? "0 8px 24px rgba(0,0,0,0.06)" : "0 2px 4px rgba(0,0,0,0.02)",
               }}
               onMouseEnter={e => {
                 if(!showSortMenu) {
-                  e.currentTarget.style.background = T.bgCardHover;
-                  e.currentTarget.style.color = T.text1;
+                  e.currentTarget.style.background = "var(--bg-surface)";
+                  e.currentTarget.style.color = "var(--text-1)";
+                  e.currentTarget.style.borderColor = "var(--border-strong)";
+                  e.currentTarget.style.boxShadow = "0 8px 24px rgba(0,0,0,0.06)";
+                  e.currentTarget.style.transform = "translateY(-1px)";
                 }
               }}
               onMouseLeave={e => {
                 if(!showSortMenu) {
-                  e.currentTarget.style.background = T.bgCard;
-                  e.currentTarget.style.color = T.text2;
+                  e.currentTarget.style.background = "var(--bg-card)";
+                  e.currentTarget.style.color = "var(--text-2)";
+                  e.currentTarget.style.borderColor = "var(--border-default)";
+                  e.currentTarget.style.boxShadow = "0 2px 4px rgba(0,0,0,0.02)";
+                  e.currentTarget.style.transform = "none";
                 }
               }}
             >
@@ -222,14 +229,14 @@ function NotePage() {
               placeholder="Search notebooks…"
               style={{
                 width: "100%", padding: "10px 14px 10px 36px",
-                background: searchFocused ? T.primaryGlow : T.bgCard,
+                background: searchFocused ? "var(--bg-surface)" : "var(--bg-card)",
                 border: searchFocused
-                  ? `1px solid ${T.borderAccent}`
-                  : `1px solid ${T.border}`,
-                borderRadius: 10, color: T.text1, fontSize: 13.5, fontWeight: 400,
-                outline: "none", transition: "all 0.22s",
+                  ? `1px solid var(--border-strong)`
+                  : `1px solid var(--border-default)`,
+                borderRadius: 12, color: T.text1, fontSize: 13.5, fontWeight: 400,
+                outline: "none", transition: "all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1)",
                 fontFamily: T.fontSans,
-                boxShadow: searchFocused ? T.shadowPrimary : "none",
+                boxShadow: searchFocused ? "0 8px 24px rgba(0,0,0,0.06), inset 0 2px 4px rgba(255,255,255,0.4)" : "0 2px 4px rgba(0,0,0,0.02)",
               }}
             />
           </div>
@@ -251,38 +258,39 @@ function NotePage() {
           onClick={showAddNoteSourceModal}
           style={{
             display: "flex", flexDirection: "column",
-            alignItems: "center", justifyContent: "center", gap: 12,
-            height: 190, borderRadius: 18, cursor: "pointer",
-            border: `1.5px dashed ${T.primaryBorder}`,
-            background: T.primaryMid,
-            transition: "all 0.25s ease",
+            alignItems: "center", justifyContent: "center", gap: 14,
+            height: 190, borderRadius: 20, cursor: "pointer",
+            border: `1.5px dashed var(--border-strong)`,
+            background: "transparent",
+            transition: "all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1)",
           }}
           onMouseEnter={e => {
-            (e.currentTarget as HTMLDivElement).style.background = T.primaryGlow;
-            (e.currentTarget as HTMLDivElement).style.borderColor = T.borderAccent;
-            (e.currentTarget as HTMLDivElement).style.transform = "translateY(-3px)";
-            (e.currentTarget as HTMLDivElement).style.boxShadow = T.shadowPrimary;
+            (e.currentTarget as HTMLDivElement).style.background = "var(--bg-surface)";
+            (e.currentTarget as HTMLDivElement).style.borderColor = "#3b82f6";
+            (e.currentTarget as HTMLDivElement).style.transform = "translateY(-4px)";
+            (e.currentTarget as HTMLDivElement).style.boxShadow = "0 12px 32px rgba(0,0,0,0.06)";
           }}
           onMouseLeave={e => {
-            (e.currentTarget as HTMLDivElement).style.background = T.primaryMid;
-            (e.currentTarget as HTMLDivElement).style.borderColor = T.primaryBorder;
-            (e.currentTarget as HTMLDivElement).style.transform = "translateY(0)";
+            (e.currentTarget as HTMLDivElement).style.background = "transparent";
+            (e.currentTarget as HTMLDivElement).style.borderColor = "var(--border-strong)";
+            (e.currentTarget as HTMLDivElement).style.transform = "none";
             (e.currentTarget as HTMLDivElement).style.boxShadow = "none";
           }}
         >
           {createNoteLoading ? (
-            <Loader2 size={22} style={{ color: T.primary, animation: "spin 0.75s linear infinite" }} />
+            <Loader2 size={24} style={{ color: "#3b82f6", animation: "spin 0.75s linear infinite" }} />
           ) : (
             <div style={{
-              width: 40, height: 40, borderRadius: 11,
-              background: T.primaryGlow,
-              border: `1px solid ${T.primaryBorder}`,
+              width: 48, height: 48, borderRadius: 14,
+              background: "var(--bg-card)",
+              border: `1px solid var(--border-default)`,
               display: "flex", alignItems: "center", justifyContent: "center",
+              boxShadow: "0 4px 12px rgba(0,0,0,0.04)"
             }}>
-              <Plus size={20} style={{ color: T.primary }} />
+              <Plus size={22} style={{ color: "var(--text-2)" }} />
             </div>
           )}
-          <span style={{ fontSize: 13, fontWeight: 600, color: T.text3, fontFamily: T.fontSans }}>
+          <span style={{ fontSize: 14, fontWeight: 600, color: "var(--text-2)", fontFamily: T.fontSans }}>
             {createNoteLoading ? "Creating…" : "New notebook"}
           </span>
         </div>

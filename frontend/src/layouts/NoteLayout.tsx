@@ -12,6 +12,7 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { T } from "@/components/ThemeTokens";
 
 import { LogoSvg } from "@/components/base/LogoSvg";
+import { DottedBg } from "@/components/base/DottedBg";
 
 export default function NoteLayout() {
   const dispatch = useDispatch<AppDispatch>();
@@ -34,49 +35,60 @@ export default function NoteLayout() {
       background: T.bg,
       color: T.text1,
       fontFamily: T.fontSans,
+      position: 'relative'
     }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;0,9..40,800;1,9..40,400&family=Instrument+Serif:ital@0;1&family=DM+Mono&display=swap');
         *{box-sizing:border-box}
+        .nl-header { padding: 0 32px !important; }
+        .nl-logo-text { display: inline !important; }
+        .nl-right-section { gap: 14px !important; }
+        .cm-hide-mobile { display: inline !important; }
+        @media (max-width: 600px) {
+          .nl-header { padding: 0 16px !important; }
+          .nl-logo-text { display: none !important; }
+          .nl-right-section { gap: 8px !important; }
+          .cm-hide-mobile { display: none !important; }
+        }
       `}</style>
 
+      <DottedBg />
+
       {/* Navbar — glassmorphism, theme-aware */}
-      <header style={{
+      <header className="nl-header" style={{
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        padding: '0 32px',
         height: 60,
-        background: T.glassBg,
+        background: "var(--glass-bg)",
         backdropFilter: 'blur(24px)',
         WebkitBackdropFilter: 'blur(24px)',
-        borderBottom: `1px solid ${T.border}`,
+        borderBottom: `1px solid var(--border-default)`,
         position: 'sticky',
         top: 0,
         zIndex: 100,
         flexShrink: 0,
-        boxShadow: T.shadowCard,
       }}>
         {/* Logo */}
         <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: 9, textDecoration: 'none' }}>
           <LogoSvg size={36} />
-          <span style={{ fontSize: 15, fontWeight: 700, color: T.text1, letterSpacing: '-0.4px', fontFamily: T.fontSans }}>
+          <span className="nl-logo-text" style={{ fontSize: 15, fontWeight: 700, color: T.text1, letterSpacing: '-0.4px', fontFamily: T.fontSans }}>
             Note<span style={{ color: "var(--primary-brand)" }}>Atlas</span>
           </span>
         </Link>
 
         {/* Right */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+        <div className="nl-right-section" style={{ display: 'flex', alignItems: 'center' }}>
           <ThemeToggle />
           <CreditMenu result={result} />
-          <div style={{ width: 1, height: 20, background: T.border }} />
+          <div style={{ width: 1, height: 20, background: T.border, marginLeft: 4, marginRight: 4 }} />
           <UserAvatar />
           <BuyCreditModal />
         </div>
       </header>
 
       {/* Content */}
-      <main style={{ flex: 1, overflowY: 'auto' }}>
+      <main style={{ flex: 1, overflowY: 'auto', position: 'relative', zIndex: 1 }}>
         <Outlet />
       </main>
     </div>

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { Loader2, Zap, CheckCircle2, Sparkles, Crown } from "lucide-react";
 import { BaseModal } from "../base/BaseModal";
 import { useDispatch, useSelector } from "react-redux";
@@ -295,8 +295,8 @@ const PlanCard = ({ plan, loading, onBuy }: PlanCardProps) => {
             {/* Features */}
             <ul style={{ listStyle: "none", padding: 0, margin: "0 0 20px", display: "flex", flexDirection: "column", gap: 8, flex: 1 }}>
                 {plan.features.map((f, i) => (
-                    <li key={i} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12.5, color: isPopular ? "#c7d2fe" : "var(--text-3)" }}>
-                        <CheckCircle2 size={13} style={{ color: isPopular ? "#818cf8" : "var(--text-4)", flexShrink: 0 }} />
+                    <li key={i} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12.5, color: isPopular ? "var(--text-2)" : "var(--text-3)" }}>
+                        <CheckCircle2 size={13} style={{ color: isPopular ? "var(--primary-brand)" : "var(--text-4)", flexShrink: 0 }} />
                         {f}
                     </li>
                 ))}

@@ -79,53 +79,44 @@ const NoteCard = ({ notebooks, viewNoteDetail, isArchiveView = false }: NoteCard
         <div
           key={note._id}
           onClick={() => viewNoteDetail(note?._id)}
+          className={`np-fade delay-${Math.min(index, 5) * 100}`}
           style={{
             position: "relative",
             zIndex: isMenuOpen ? 50 : 1,
             padding: "20px 18px",
-            borderRadius: 18,
+            borderRadius: 20,
             height: 190,
-            background: accent.bg,
-            border: `1px solid ${accent.border}`,
+            background: "var(--bg-card)",
+            border: `1px solid var(--border-default)`,
             backdropFilter: "blur(10px)",
             cursor: "pointer",
-            transition: "all 0.28s ease",
+            transition: "all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1)",
             display: "flex",
             flexDirection: "column",
           }}
           onMouseEnter={e => {
             const el = e.currentTarget as HTMLDivElement;
             el.style.transform = "translateY(-4px)";
-            el.style.boxShadow = `0 16px 40px var(--shadow-sm)`;
-            el.style.borderColor = "var(--border-accent)";
-            el.style.background = "var(--bg-card-hover)";
+            el.style.boxShadow = `0 12px 32px rgba(0,0,0,0.06)`;
+            el.style.borderColor = "var(--border-strong)";
+            el.style.background = "var(--bg-surface)";
           }}
           onMouseLeave={e => {
             const el = e.currentTarget as HTMLDivElement;
             el.style.transform = "translateY(0)";
             el.style.boxShadow = "none";
-            el.style.borderColor = accent.border;
-            el.style.background = accent.bg;
+            el.style.borderColor = "var(--border-default)";
+            el.style.background = "var(--bg-card)";
           }}
         >
-          {/* Background overlay layer for clipping effects */}
-          <div style={{ position: "absolute", inset: 0, overflow: "hidden", borderRadius: 18, pointerEvents: "none" }}>
-            {/* Subtle inner glow top-right */}
-            <div style={{
-              position: "absolute", top: -20, right: -20,
-              width: 100, height: 100, borderRadius: "50%",
-              background: `radial-gradient(circle, ${accent.glow} 0%, transparent 70%)`,
-            }} />
-          </div>
-
           <div style={{ position: "relative", zIndex: 1, display: "flex", flexDirection: "column", flex: 1 }}>
             <div style={{ height: 72, marginBottom: 10, display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
             {/* Notebook Icon / Image */}
             <div style={{
               width: 52, height: 52,
               borderRadius: 14,
-              background: "var(--primary-glow)",
-              border: "1px solid var(--primary-border)",
+              background: "linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(139, 92, 246, 0.1))",
+              border: "1px solid rgba(139, 92, 246, 0.2)",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",

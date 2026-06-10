@@ -58,7 +58,7 @@ export const CreditMenu = ({ result }: { result: CreditMenuStateType }) => {
         }}
       >
         <Zap size={13} style={{ color: "var(--primary-brand)" }} />
-        <span style={{ color: "var(--text-3)", fontWeight: 500 }}>Credits:</span>
+        <span className="cm-hide-mobile" style={{ color: "var(--text-3)", fontWeight: 500 }}>Credits:</span>
         <span style={{ color: "var(--text-1)" }}>{result?.credits?.toFixed(1)}</span>
         <ChevronDown
           size={13}
