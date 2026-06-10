@@ -46,10 +46,7 @@ export function expressServer(app: Express, PORT: number) {
     app.set("trust proxy", 1);
   }
 
-  // ─── API Routes ─────────────────────────────────────────
-  apiV1(app, router);
-
-  // ─── Auth Routes ────────────────────────────────────────
+  // ─── Auth Routes ──
   app.post("/api/v1/auth/sync", async (req: Request, res: Response) => {
     try {
       const header = req.headers.authorization;
@@ -88,9 +85,6 @@ export function expressServer(app: Express, PORT: number) {
   });
 
   app.get("/api/v1/auth/me", async (req: Request, res: Response) => {
-    // This uses a manual verification similar to requireAuth, but we are keeping it simple here
-    // or we could use the requireAuth middleware. Since requireAuth sets req.user
-    // Let's import requireAuth and use it: (we'll just do it manually for simplicity if requireAuth is not imported, wait, let's use the DB)
     try {
       const header = req.headers.authorization;
       if (!header?.startsWith("Bearer ")) {
@@ -116,6 +110,9 @@ export function expressServer(app: Express, PORT: number) {
   app.get("/api/v1/auth/logout", (req: Request, res: Response) => {
     res.json({ message: "Logged out successfully" });
   });
+
+  // ─── API Routes (ensureAuthenticated applied here) ─────
+  apiV1(app, router);
 
   // ─── Error Handler (must be last) ──────────────────────
   app.use(errorHandler);
