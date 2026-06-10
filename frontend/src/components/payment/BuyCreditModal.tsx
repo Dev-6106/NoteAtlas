@@ -108,6 +108,7 @@ export const BuyCreditModal = () => {
 
             const userData = getUserData();
             const orderData = await createRazorpayOrder(userData?._id, planId);
+            console.log("=== RAZORPAY ORDER DATA ===", orderData);
 
             const options = {
                 key: orderData.keyId,
