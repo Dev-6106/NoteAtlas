@@ -1,5 +1,4 @@
 import { Router, Express } from "express";
-import { driveRoutes } from "../http/controllers/drive/routes/drive.routes";
 import { createNoteRouter } from "../http/controllers/notes/routes/createNote.routes";
 import { updateNoteRouter } from "../http/controllers/notes/routes/updateNote.routes";
 import { deleteNoteRouter } from "../http/controllers/notes/routes/deleteNote.routes";
@@ -25,7 +24,6 @@ import { getDocSource } from "../http/controllers/notes/getDocSource";
 import { ensureAuthenticated } from "@/middleware/auth.middleware";
 
 export function apiV1(app: Express, router: Router) {
-    const driveRouter = driveRoutes(router);
     const noteRouter = createNoteRouter(router);
     const updateRouter = updateNoteRouter(router);
     const deleteRouter = deleteNoteRouter(router);
@@ -52,7 +50,7 @@ export function apiV1(app: Express, router: Router) {
     router.get("/notes/docs/:docId/source", getDocSource);
 
     app.use('/api/v1', ensureAuthenticated,
-        driveRouter, noteRouter, updateRouter, deleteRouter, duplicateRouter,
+        noteRouter, updateRouter, deleteRouter, duplicateRouter,
         summaryRouter, briefingRouter, faqRouter, studyGuideRouter, mindMapRouter,
         getAllNotesRouter, addSourceRouter, sourceResultsRouter, deleteSourceRouter,
         renameSourceRouter, mockRouter, chatRouter, quizRouter, flashcardRouter,

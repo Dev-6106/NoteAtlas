@@ -1,5 +1,4 @@
 import { Router } from "express";
-import { storeDriveFiles } from "../storeDriveFiles";
 import { storeWebLinkFiles } from "../storeWebLinkData";
 import { storeTextData } from "../storeTextData";
 import { createBlankNote } from "../../notes/createBlankNote";
@@ -41,7 +40,6 @@ export const createNoteRouter = (router: Router) => {
 };
 
 export function addSourceRoutes(router: Router) {
-    router.post('/notes/drive-files', storeDriveFiles);
     router.post('/notes/weblinkdata', storeWebLinkFiles);
     router.post('/notes/text-data', storeTextData);
     router.post('/notes/upload-files',upload.single("doc"),storeUploadFiles);

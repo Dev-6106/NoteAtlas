@@ -35,25 +35,10 @@ const envSchema = z.object({
   PINECONE_API_KEY: z.string().min(1, "PINECONE_API_KEY is required"),
   PINECONE_INDEX: z.string().min(1).default("notebooklm"),
 
-  // Google OAuth
-  GOOGLE_CLIENT_ID: z.string().trim().min(1, "GOOGLE_CLIENT_ID is required"),
-  GOOGLE_CLIENT_SECRET: z.string().trim().min(1, "GOOGLE_CLIENT_SECRET is required"),
-  CALLBACK_URL: z
-    .string()
-    .trim()
-    .url()
-    .default("http://localhost:8000/auth/google/callback"),
-
-  // Session
-  COOKIE_KEY: z.string().min(16, "COOKIE_KEY must be at least 16 characters"),
-
-  // JWT
-  JWT_ACCESS_SECRET: z
-    .string()
-    .min(16, "JWT_ACCESS_SECRET must be at least 16 characters"),
-  JWT_REFRESH_SECRET: z
-    .string()
-    .min(16, "JWT_REFRESH_SECRET must be at least 16 characters"),
+  // Firebase Admin
+  FIREBASE_PROJECT_ID: z.string().min(1, "FIREBASE_PROJECT_ID is required"),
+  FIREBASE_CLIENT_EMAIL: z.string().min(1, "FIREBASE_CLIENT_EMAIL is required"),
+  FIREBASE_PRIVATE_KEY: z.string().min(1, "FIREBASE_PRIVATE_KEY is required"),
   // Supabase Storage
   SUPABASE_URL: z.string().url("SUPABASE_URL must be a valid URL"),
   SUPABASE_SERVICE_ROLE_KEY: z.string().min(1, "SUPABASE_SERVICE_ROLE_KEY is required"),

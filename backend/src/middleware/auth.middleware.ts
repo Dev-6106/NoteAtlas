@@ -1,37 +1,26 @@
 import { Request, Response, NextFunction } from "express";
-import jwt from "jsonwebtoken";
-import { env } from "@/config/env";
 import { UnauthorizedError } from "./error.middleware";
+import { adminAuth } from "@/config/firebase-admin";
+import { User } from "@/app/models/user.models";
 
-/**
- * Decoded JWT payload shape attached to req.userId.
- */
-export interface JwtPayload {
-  iss: string;
-  sub: string;
-  aud: string;
-  exp: number;
-  iat: number;
-}
-
-// Extend Express Request to carry the authenticated userId
 declare global {
   namespace Express {
     interface Request {
       userId?: string;
+      user?: any;
     }
   }
 }
 
 /**
- * Middleware that verifies the JWT access token from the Authorization header.
+ * Middleware that verifies the Firebase ID token from the Authorization header.
  * On success, attaches `req.userId` for downstream handlers.
  */
-export function requireAuth(
+export async function requireAuth(
   req: Request,
   _res: Response,
   next: NextFunction
-): void {
+): Promise<void> {
   try {
     const header = req.headers.authorization;
     if (!header?.startsWith("Bearer ")) {
@@ -39,9 +28,16 @@ export function requireAuth(
     }
 
     const token = header.slice(7);
-    const decoded = jwt.verify(token, env.JWT_ACCESS_SECRET) as JwtPayload;
+    const decodedToken = await adminAuth.verifyIdToken(token);
+    
+    // Find the user in DB by firebaseUid
+    const user = await User.findOne({ firebaseUid: decodedToken.uid });
+    if (!user) {
+      throw new UnauthorizedError("User not found in database");
+    }
 
-    req.userId = decoded.sub;
+    req.userId = user._id.toString();
+    req.user = user;
     next();
   } catch (error) {
     if (error instanceof UnauthorizedError) {
@@ -55,17 +51,21 @@ export function requireAuth(
 /**
  * Optional auth — attaches userId if token is present but doesn't reject otherwise.
  */
-export function optionalAuth(
+export async function optionalAuth(
   req: Request,
   _res: Response,
   next: NextFunction
-): void {
+): Promise<void> {
   try {
     const header = req.headers.authorization;
     if (header?.startsWith("Bearer ")) {
       const token = header.slice(7);
-      const decoded = jwt.verify(token, env.JWT_ACCESS_SECRET) as JwtPayload;
-      req.userId = decoded.sub;
+      const decodedToken = await adminAuth.verifyIdToken(token);
+      const user = await User.findOne({ firebaseUid: decodedToken.uid });
+      if (user) {
+        req.userId = user._id.toString();
+        req.user = user;
+      }
     }
   } catch {
     // Token invalid or expired — continue without auth
@@ -74,25 +74,14 @@ export function optionalAuth(
 }
 
 /**
- * Middleware to ensure a user is authenticated via Passport.js session.
+ * Middleware to ensure a user is authenticated. 
+ * Replaces the old passport ensureAuthenticated.
  */
-export function ensureAuthenticated(
+export async function ensureAuthenticated(
   req: Request,
   res: Response,
   next: NextFunction
-): void {
-  if (req.isAuthenticated && req.isAuthenticated()) {
-    // Ensure req.user has an ID, and we can map it to req.userId for consistency if needed
-    const userObj = req.user as any;
-    if (userObj) {
-      const id = userObj._id || userObj.authData?._id;
-      if (id) {
-        req.userId = id.toString();
-      }
-    }
-    return next();
-  }
-  
-  // For API endpoints, we return JSON. The frontend should handle the 401.
-  next(new UnauthorizedError("You must be logged in to access this resource"));
+): Promise<void> {
+  // We can just use requireAuth logic here or wrap it
+  await requireAuth(req, res, next);
 }

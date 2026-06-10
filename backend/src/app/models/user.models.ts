@@ -14,15 +14,7 @@ const userSchema = new mongoose.Schema({
         type: String,
         required: false
     },
-    googleAccessToken: {
-        type: String,
-        required: false
-    },
-    googleRefreshToken: {
-        type: String,
-        required: false
-    },
-    googleId: {
+    firebaseUid: {
         type: String,
         required: true
     },
@@ -39,6 +31,6 @@ const userSchema = new mongoose.Schema({
     },
 }, { timestamps: true });
 
-userSchema.index({ googleId: 1 });
+userSchema.index({ firebaseUid: 1 });
 
 export const User = mongoose.model('User', userSchema);

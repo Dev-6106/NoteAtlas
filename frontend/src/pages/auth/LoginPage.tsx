@@ -3,10 +3,36 @@ import { T } from "@/components/ThemeTokens";
 
 import { LogoSvg } from "@/components/base/LogoSvg";
 import { apiUrl } from "@/config/get-env";
+import { auth } from '@/config/firebase';
+import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 
 function LoginPage() {
-  const handleGoogleLogin = () => {
-    window.location.href = `${apiUrl}/auth/google`;
+  const handleGoogleLogin = async () => {
+    try {
+      const provider = new GoogleAuthProvider();
+      const result = await signInWithPopup(auth, provider);
+      
+      // Sync user with backend
+      const idToken = await result.user.getIdToken();
+      const res = await fetch(`${apiUrl}/api/v1/auth/sync`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${idToken}`
+        }
+      });
+      
+      if (res.ok) {
+        const data = await res.json();
+        const { _id, name, email, image } = data.authData;
+        localStorage.setItem('userData', JSON.stringify({ _id, name, email, image }));
+        window.location.href = '/notes';
+      } else {
+        console.error('Failed to sync user data', await res.text());
+      }
+    } catch (error) {
+      console.error('Login error', error);
+    }
   };
 
   return (

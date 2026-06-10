@@ -5,11 +5,8 @@ import type { AppDispatch, RootState } from "@/store";
 import { useDispatch, useSelector } from "react-redux";
 import { toggleAddSourceNoteModal } from "@/store/addSourceSlice";
 import { fetchSingleNote } from "@/store/chatSlice";
-import useDrivePicker from 'react-google-drive-picker';
-import { apiUrl, developerKey, googleClientId } from "@/config/get-env";
 import { getUserData } from "@/helper/getUserData";
 
-import { uploadPickedFiles } from "@/api/notes";
 import { AddPasteTextForm } from "./AddPasteTextForm";
 import AddWebLinkForm from "./AddWebLinkForm";
 
@@ -24,35 +21,6 @@ const CreateNoteModal = ({ noteId }: { noteId?: string }) => {
     const { modal } = useSelector((state: RootState) => state.addSource);
     const userData = getUserData();
 
-
-
-    const [openPicker] = useDrivePicker();
-    const handleOpenPicker = async () => {
-
-        openPicker({
-            clientId: googleClientId,
-            developerKey: developerKey,
-            viewId: "DOCS",
-            token: userData?.googleAccessToken,
-            showUploadView: true,
-            showUploadFolders: true,
-            supportDrives: true,
-            multiselect: true,
-            callbackFunction: async (data: any) => {
-                if (data.action === 'picked') {
-                    await uploadPickedFiles(data?.docs, noteId);
-                    // Refresh note data to show newly uploaded docs in the sources panel
-                    if (noteId) {
-                        dispatch(fetchSingleNote(noteId));
-                    }
-                }
-            }
-        });
-
-        dispatch(toggleAddSourceNoteModal());
-
-
-    };
 
 
     const [dropZone, setDropZone] = useState(true);
@@ -125,42 +93,6 @@ const CreateNoteModal = ({ noteId }: { noteId?: string }) => {
 
                 {/* Action cards */}
                 <div style={{ display: "flex", flexWrap: "wrap", gap: 12 }}>
-                    {/* Google Workspace */}
-                    <div style={{
-                        flex: 1, minWidth: 140, borderRadius: 14, padding: 16,
-                        background: "var(--bg-card)",
-                        border: "1px solid var(--border-default)",
-                        transition: "all 0.2s",
-                    }}>
-                        <p style={{
-                            fontSize: 14, fontWeight: 600, color: "var(--text-1)",
-                            marginBottom: 16,
-                        }}>
-                            Google Workspace
-                        </p>
-                        <button
-                            onClick={() => handleOpenPicker()}
-                            style={{
-                                display: "flex", alignItems: "center", gap: 8,
-                                padding: "8px 14px", borderRadius: 10,
-                                background: "var(--primary-glow)",
-                                border: "1px solid var(--primary-border)",
-                                color: "var(--primary-brand)", fontSize: 13, fontWeight: 600,
-                                cursor: "pointer", transition: "all 0.2s",
-                            }}
-                            onMouseEnter={e => {
-                                (e.currentTarget as HTMLButtonElement).style.background = "var(--primary-glow)";
-                                (e.currentTarget as HTMLButtonElement).style.borderColor = "var(--primary-brand)";
-                            }}
-                            onMouseLeave={e => {
-                                (e.currentTarget as HTMLButtonElement).style.background = "transparent";
-                                (e.currentTarget as HTMLButtonElement).style.borderColor = "var(--primary-border)";
-                            }}
-                        >
-                            <HardDrive size={15} />
-                            Google Drive
-                        </button>
-                    </div>
 
                     {/* Link */}
                     <div style={{
