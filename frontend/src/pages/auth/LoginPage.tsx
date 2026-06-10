@@ -4,88 +4,36 @@ import { T } from "@/components/ThemeTokens";
 import { LogoSvg } from "@/components/base/LogoSvg";
 import { apiUrl } from "@/config/get-env";
 import { auth } from '@/config/firebase';
-import { GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult } from 'firebase/auth';
-import { useState, useEffect } from 'react';
+import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+import { useState } from 'react';
 
 function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
-
-  // Handle redirect result on page load (fallback flow)
-  useEffect(() => {
-    getRedirectResult(auth).then(async (result) => {
-      if (result) {
-        setIsLoading(true);
-        try {
-          const idToken = await result.user.getIdToken(true);
-          const res = await fetch(`${apiUrl}/api/v1/auth/sync`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${idToken}`
-            }
-          });
-
-          if (res.ok) {
-            const data = await res.json();
-            const { _id, name, email, image } = data.authData;
-            localStorage.setItem('userData', JSON.stringify({ _id, name, email, image }));
-            window.location.href = '/notes';
-          } else {
-            console.error('Failed to sync user data after redirect', await res.text());
-            setIsLoading(false);
-          }
-        } catch (error) {
-          console.error('Redirect sync error', error);
-          setIsLoading(false);
-        }
-      }
-    }).catch((error) => {
-      console.error('Redirect result error', error);
-    });
-  }, []);
 
   const handleGoogleLogin = async () => {
     if (isLoading) return;
     try {
       setIsLoading(true);
       const provider = new GoogleAuthProvider();
+      const result = await signInWithPopup(auth, provider);
       
-      try {
-        // Try popup first
-        const result = await signInWithPopup(auth, provider);
-        
-        // Force a fresh token to avoid any clock-skew issues
-        const idToken = await result.user.getIdToken(true);
-        const res = await fetch(`${apiUrl}/api/v1/auth/sync`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${idToken}`
-          }
-        });
-        
-        if (res.ok) {
-          const data = await res.json();
-          const { _id, name, email, image } = data.authData;
-          localStorage.setItem('userData', JSON.stringify({ _id, name, email, image }));
-          window.location.href = '/notes';
-        } else {
-          console.error('Failed to sync user data', await res.text());
-          setIsLoading(false);
+      const idToken = await result.user.getIdToken(true);
+      const res = await fetch(`${apiUrl}/api/v1/auth/sync`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${idToken}`
         }
-      } catch (popupError: any) {
-        // If popup blocked by COOP or browser, fall back to redirect
-        if (
-          popupError.code === 'auth/popup-blocked' ||
-          popupError.code === 'auth/popup-closed-by-user' ||
-          popupError.message?.includes('Cross-Origin-Opener-Policy')
-        ) {
-          console.warn('Popup blocked, falling back to redirect flow');
-          await signInWithRedirect(auth, provider);
-          // Page will redirect, so no further code runs
-          return;
-        }
-        throw popupError;
+      });
+      
+      if (res.ok) {
+        const data = await res.json();
+        const { _id, name, email, image } = data.authData;
+        localStorage.setItem('userData', JSON.stringify({ _id, name, email, image }));
+        window.location.href = '/notes';
+      } else {
+        console.error('Failed to sync user data', await res.text());
+        setIsLoading(false);
       }
     } catch (error) {
       console.error('Login error', error);

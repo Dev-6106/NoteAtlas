@@ -1,6 +1,10 @@
 {
   "rewrites": [
     {
+      "source": "/__/auth/(.*)",
+      "destination": "https://noteatlas-9bb98.firebaseapp.com/__/auth/$1"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }
