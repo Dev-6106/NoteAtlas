@@ -31,7 +31,8 @@ export const CREDIT_PLANS = [
 // POST /api/v1/payment/create-order
 export async function createOrder(req: Request, res: Response, next: NextFunction) {
     try {
-        const { planId, userId } = req.body;
+        const { planId } = req.body;
+        const userId = req.userId as string;
 
         const plan = CREDIT_PLANS.find((p) => p.id === planId);
         if (!plan) {
@@ -64,7 +65,8 @@ export async function createOrder(req: Request, res: Response, next: NextFunctio
 // POST /api/v1/payment/verify
 export async function verifyPayment(req: Request, res: Response, next: NextFunction) {
     try {
-        const { razorpay_order_id, razorpay_payment_id, razorpay_signature, userId, planId } = req.body;
+        const { razorpay_order_id, razorpay_payment_id, razorpay_signature, planId } = req.body;
+        const userId = req.userId as string;
 
         // Verify signature
         const expectedSig = crypto
@@ -97,8 +99,7 @@ export async function verifyPayment(req: Request, res: Response, next: NextFunct
 // GET /api/v1/payment/user-credits
 export async function getUserCredits(req: Request, res: Response, next: NextFunction) {
     try {
-        const userId = req.query.userId as string;
-        if (!userId) return res.status(400).json({ error: "userId is required" });
+        const userId = req.userId as string;
 
         const credits = await getCredits(userId);
         const user = await User.findById(userId).select("razorpayCustomerId");

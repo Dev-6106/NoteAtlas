@@ -9,7 +9,8 @@ import { ChatPromptTemplate } from "@langchain/core/prompts";
 import { invokeWithRetry } from "@/util/invokeWithRetry";
 export async function generateBriefingDocSources(req: Request, res: Response, next: NextFunction) {
     try {
-        const { userId, noteId, docIds, type = 'briefing-doc' } = req.body as { userId: string, noteId: string, docIds: string[], type: 'briefing-doc' };
+        const { noteId, docIds, type = 'briefing-doc' } = req.body as { noteId: string, docIds: string[], type: 'briefing-doc' };
+        const userId = req.userId as string;
 
         if (docIds.length === 0) return res.status(400).json({ message: "Select a source" });
 

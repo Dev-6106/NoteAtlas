@@ -24,7 +24,7 @@ export async function createNote(
       return res.status(400).send("No file uploaded");
     }
 
-    const userId = req.body?.userId;
+    const userId = req.userId as string;
 
     const currentDir = cwd();
 
@@ -58,8 +58,12 @@ export async function createNote(
     fs.writeFileSync(tempPath, fileBuffer);
 
     // Load document
-    const docSplit = await loadDocument(tempPath);
-    fs.unlinkSync(tempPath);
+    let docSplit;
+            try {
+                docSplit = await loadDocument(tempPath);
+            } finally {
+                if (fs.existsSync(tempPath)) fs.unlinkSync(tempPath);
+            }
 
     // Take only first chunk
     const firstChunk = getDocChunk(docSplit);

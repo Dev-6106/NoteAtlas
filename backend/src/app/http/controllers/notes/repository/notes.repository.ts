@@ -89,6 +89,7 @@ export class NoteRepository {
     sortBy = "updatedAt",
     sortOrder = "desc",
     isArchived = false,
+    folderId,
   }: {
     search?: string;
     page?: number;
@@ -97,8 +98,14 @@ export class NoteRepository {
     sortBy?: string;
     sortOrder?: string;
     isArchived?: boolean;
+    folderId?: string | null;
   }) {
     const query: Record<string, any> = { isArchived: isArchived ? true : { $ne: true } };
+
+    // Filter by folderId
+    if (folderId !== undefined) {
+      query.folderId = folderId === "null" ? null : folderId;
+    }
 
     // Filter by user
     if (userId) {

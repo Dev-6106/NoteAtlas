@@ -1,6 +1,9 @@
 import { Router } from "express";
+import { env } from "@/config/env";
 
 export function mockRoutes(router: Router) {
+    if (env.NODE_ENV !== 'development') return router;
+    
     // Return mock data for user credits to prevent 404
     router.get("/notes/payment/user-credits", (req, res) => {
         res.json({

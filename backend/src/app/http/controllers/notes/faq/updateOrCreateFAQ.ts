@@ -24,8 +24,12 @@ export async function updateOrCreateFAQ(_id: string, userId: string, noteId: str
         
         await downloadFromStorage(storageKey, tempPath);
         
-        const splittingDoc = await loadDocument(tempPath);
-        fs.unlinkSync(tempPath);
+        let splittingDoc;
+            try {
+                splittingDoc = await loadDocument(tempPath);
+            } finally {
+                if (fs.existsSync(tempPath)) fs.unlinkSync(tempPath);
+            }
 
         const faq = await generateFAQ(llm, splittingDoc);
 

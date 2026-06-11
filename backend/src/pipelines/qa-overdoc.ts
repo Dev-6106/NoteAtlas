@@ -39,6 +39,12 @@ const StateAnnotation = Annotation.Root({
   newQuery: Annotation<string>({
     reducer: (previousVal, nextVal) => previousVal ?? nextVal ?? "",
   }),
+  userId: Annotation<string>({
+    reducer: (previousVal, nextVal) => previousVal ?? nextVal ?? "",
+  }),
+  noteId: Annotation<string>({
+    reducer: (previousVal, nextVal) => previousVal ?? nextVal ?? "",
+  }),
   retrievedDoc: Annotation<Document[]>({
     default: () => [],
     reducer: (previousVal, nextVal) => previousVal.concat(nextVal),
@@ -73,7 +79,7 @@ const RetreiverNode = async (state: typeof StateAnnotation.State) => {
   const allRetrievedDocs: Document[][] = [];
 
   for (const question of questions) {
-    const result = await queryVectorDB(question);
+    const result = await queryVectorDB(question, state.userId, state.noteId);
 
     allRetrievedDocs.push(result);
   }
@@ -230,8 +236,5 @@ const builder = new StateGraph(StateAnnotation)
 
 const app = builder.compile();
 
-const result = await app.invoke({
-  messages: [new HumanMessage({ content: "When was the ramayan writter?" })],
-});
-
-console.log("Result :::: ", result);
+// Removed top-level execution that ran on import
+export { app as qaOverDocGraph };

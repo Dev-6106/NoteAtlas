@@ -24,8 +24,12 @@ export async function updateOrCreateStudyGuide(_id: string, userId: string, note
         
         await downloadFromStorage(storageKey, tempPath);
         
-        const splittingDoc = await loadDocument(tempPath);
-        fs.unlinkSync(tempPath);
+        let splittingDoc;
+            try {
+                splittingDoc = await loadDocument(tempPath);
+            } finally {
+                if (fs.existsSync(tempPath)) fs.unlinkSync(tempPath);
+            }
 
         const studyGuide = await generateStudyGuide(llm, splittingDoc);
 

@@ -44,7 +44,8 @@ function extractCitations(text: string): Array<Citation> {
 
 export async function ChatOverDoc(req: Request, res: Response, next: NextFunction) {
     try {
-        const { query, userId, noteId, docIds, conversationId } = req.body;
+        const { query, noteId, docIds, conversationId } = req.body;
+        const userId = req.userId as string;
 
         if (!query || !userId || !noteId) {
             return res.status(400).send({ error: "query, userId, and noteId are required" });

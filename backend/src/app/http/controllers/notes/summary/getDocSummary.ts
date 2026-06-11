@@ -20,7 +20,8 @@ import { updateOrCreateSummary } from "./updateOrCreateSummary";
 export async function getDocSummary(req: Request, res: Response, next: NextFunction,) {
     try {
         console.log("=> Reached POST /notes/summary (getDocSummary)");
-        const {userId,noteId, docIds} = req.body as {userId: string, noteId: string, docIds: string[]};
+        const {noteId, docIds} = req.body as {noteId: string, docIds: string[]};
+        const userId = req.userId as string;
         console.log(`Processing summary for docIds:`, docIds);
         
         const docRepo = DocRepository.getInstance();

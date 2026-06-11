@@ -23,7 +23,7 @@ export function expressServer(app: Express, PORT: number) {
   // ─── CORS ────────────────────────────────────────────────
   app.use(
     cors({
-      origin: true,
+      origin: env.FRONTEND_URL,
       credentials: true,
     })
   );
@@ -40,6 +40,27 @@ export function expressServer(app: Express, PORT: number) {
   // ─── Health Check ───────────────────────────────────────
   app.get("/", (_req: Request, res: Response) => {
     res.json({ status: "ok", message: "NotebookLM API is running" });
+  });
+
+  app.get("/health", async (_req: Request, res: Response) => {
+    try {
+      const mongoose = require("mongoose");
+      const dbState = mongoose.connection.readyState;
+      if (dbState !== 1) {
+        return res.status(503).json({ status: "error", message: "Database not connected" });
+      }
+      
+      // Could add Pinecone/Supabase checks here
+
+      res.json({ 
+        status: "ok", 
+        message: "NotebookLM API is healthy",
+        timestamp: new Date().toISOString(),
+        database: "connected"
+      });
+    } catch (error: any) {
+      res.status(503).json({ status: "error", message: error.message });
+    }
   });
 
   if (env.NODE_ENV === "production") {

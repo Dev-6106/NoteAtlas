@@ -4,7 +4,8 @@ import { createOrUpdateMindMap } from "./createOrUpdateMindMap";
 
 export async function getMindMap(req:Request, res: Response, next: NextFunction){
     try {
-        const {userId, noteId, docIds} = req.body as {userId: string, noteId: string, docIds: string[]};
+        const {noteId, docIds} = req.body as {noteId: string, docIds: string[]};
+        const userId = req.userId as string;
         const docRepo = DocRepository.getInstance();
         const docWithoutMindMap = [] as any;
         

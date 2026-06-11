@@ -13,6 +13,8 @@ import { uploadToStorage } from "@/services/storage/upload.service";
 import crypto from "crypto";
 import fs from "fs";
 import agenda from "@/app/bootstrap/agenda/agenda";
+import OpenAI, { toFile } from "openai";
+import { env } from "@/config/env";
 
 export async function uploadFiles(
   req: Request,
@@ -24,7 +26,8 @@ export async function uploadFiles(
       return res.status(400).send("No files uploaded");
     }
 
-    const { userId, noteId } = req.body;
+    const { noteId } = req.body;
+    const userId = req.userId as string;
     
     if (!noteId) {
       return res.status(400).send("Missing noteId");
@@ -51,13 +54,46 @@ export async function uploadFiles(
       const fileName = storageKey;
       
       const randomName = crypto.randomUUID();
-      const tempPath = path.join(cwd(), "tmp", randomName + "-" + originalName);
-      if (!fs.existsSync(path.join(cwd(), "tmp"))) fs.mkdirSync(path.join(cwd(), "tmp"));
-      fs.writeFileSync(tempPath, fileBuffer);
+      // Process based on file type
+      let docSplit;
+      const isAudio = mimeType.startsWith('audio/') || originalName.match(/\.(mp3|wav|mpeg)$/i);
 
-      // Load document
-      const docSplit = await loadDocument(tempPath);
-      fs.unlinkSync(tempPath);
+      if (isAudio) {
+        if (!env.GROQ_API_KEY) {
+          throw new Error("GROQ_API_KEY is not configured for audio transcription");
+        }
+        
+        const openai = new OpenAI({
+          apiKey: env.GROQ_API_KEY,
+          baseURL: "https://api.groq.com/openai/v1"
+        });
+
+        const transcript = await openai.audio.transcriptions.create({
+          file: await toFile(fileBuffer, originalName),
+          model: "whisper-large-v3"
+        });
+
+        const txtName = originalName + ".txt";
+        const tempPath = path.join(cwd(), "tmp", randomName + "-" + txtName);
+        if (!fs.existsSync(path.join(cwd(), "tmp"))) fs.mkdirSync(path.join(cwd(), "tmp"));
+        fs.writeFileSync(tempPath, transcript.text);
+
+        try {
+            docSplit = await loadDocument(tempPath);
+        } finally {
+            if (fs.existsSync(tempPath)) fs.unlinkSync(tempPath);
+        }
+      } else {
+        const tempPath = path.join(cwd(), "tmp", randomName + "-" + originalName);
+        if (!fs.existsSync(path.join(cwd(), "tmp"))) fs.mkdirSync(path.join(cwd(), "tmp"));
+        fs.writeFileSync(tempPath, fileBuffer);
+
+        try {
+            docSplit = await loadDocument(tempPath);
+        } finally {
+            if (fs.existsSync(tempPath)) fs.unlinkSync(tempPath);
+        }
+      }
 
       // Take only first chunk
       const firstChunk = getDocChunk(docSplit);

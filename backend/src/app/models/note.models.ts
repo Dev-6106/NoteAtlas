@@ -7,8 +7,17 @@ const noteSchema = new mongoose.Schema({
     isArchived: { type: Boolean, default: false },
     isPinned: { type: Boolean, default: false },
     archivedAt: { type: Date, default: null },
-    userId: {type: mongoose.Schema.Types.ObjectId, ref: "User", required: true},
-    docs: [{ type: mongoose.Schema.Types.ObjectId, ref: "Doc" }]
+    userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+    folderId: { type: mongoose.Schema.Types.ObjectId, ref: "Folder", default: null },
+    docs: [{ type: mongoose.Schema.Types.ObjectId, ref: "Doc" }],
+    collaborators: [
+        {
+            userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+            role: { type: String, enum: ["viewer", "editor", "admin"], default: "editor" },
+            joinedAt: { type: Date, default: Date.now }
+        }
+    ],
+    isPublic: { type: Boolean, default: false }
 }, {timestamps: true});
 
 noteSchema.index({ userId: 1 });

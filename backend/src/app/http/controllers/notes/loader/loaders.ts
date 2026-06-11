@@ -4,6 +4,9 @@ import { CheerioWebBaseLoader } from "@langchain/community/document_loaders/web/
 import { Document } from "@langchain/core/documents";
 import { PDFLoader } from "@langchain/community/document_loaders/fs/pdf";
 import path from "path";
+import mammoth from "mammoth";
+import csvParser from "csv-parser";
+import fs from "fs";
 
 export async function splitDocToChunks(docs: Document<Record<string, any>>[], props: { chunkSize: number, chunkOverlap: number }) {
     const splitter = new RecursiveCharacterTextSplitter(props);
@@ -28,6 +31,35 @@ export async function loadText(filePath: string) {
     return [new Document({ pageContent: text, metadata: { source: filePath } })];
 };
 
+export async function loadDocx(filePath: string) {
+    const result = await mammoth.extractRawText({ path: filePath });
+    return [new Document({ pageContent: result.value, metadata: { source: filePath } })];
+}
+
+export async function loadCSV(filePath: string): Promise<Document[]> {
+    return new Promise((resolve, reject) => {
+        const results: any[] = [];
+        fs.createReadStream(filePath)
+            .pipe(csvParser())
+            .on('data', (data) => results.push(data))
+            .on('end', () => {
+                const docs = results.map(row => {
+                    const content = Object.entries(row).map(([key, value]) => `${key}: ${value}`).join("\n");
+                    return new Document({ pageContent: content, metadata: { source: filePath } });
+                });
+                resolve(docs);
+            })
+            .on('error', (err) => reject(err));
+    });
+}
+
+export async function loadJSON(filePath: string) {
+    const text = await readFile(filePath, "utf-8");
+    const data = JSON.parse(text);
+    const content = JSON.stringify(data, null, 2);
+    return [new Document({ pageContent: content, metadata: { source: filePath } })];
+}
+
 export async function loadDocument(
     filePath: string,
     // docType: "pdf" | "html" | "txt",
@@ -47,10 +79,21 @@ export async function loadDocument(
             docs = await loadWeb(filePath);
             break;
         case 'txt':
+        case 'md':
             docs = await loadText(filePath);
             break;
+        case 'docx':
+        case 'doc':
+            docs = await loadDocx(filePath);
+            break;
+        case 'csv':
+            docs = await loadCSV(filePath);
+            break;
+        case 'json':
+            docs = await loadJSON(filePath);
+            break;
         default:
-            throw new Error("File Type Not Supported");
+            throw new Error(`File Type ${docType} Not Supported`);
     };
 
     return splitDocToChunks(docs, { chunkSize, chunkOverlap });

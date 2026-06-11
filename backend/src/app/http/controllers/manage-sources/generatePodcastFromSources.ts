@@ -9,7 +9,8 @@ import { uploadToStorage } from "@/services/storage/upload.service";
 
 export async function generatePodcastFromSources(req: Request, res: Response, next: NextFunction) {
     try {
-        const { userId, noteId, docIds } = req.body as { userId: string, noteId: string, docIds: string[] };
+        const { noteId, docIds } = req.body as { noteId: string, docIds: string[] };
+        const userId = req.userId as string;
 
         if (docIds.length === 0) return res.status(400).json({ message: "Select a source" });
 

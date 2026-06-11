@@ -16,10 +16,11 @@ export async function getAllNotes(
     const sortBy = (query?.sortBy as string) || "updatedAt";
     const sortOrder = (query?.sortOrder as string) || "desc";
     const isArchived = query?.isArchived === "true";
+    const folderId = query?.folderId as string | undefined;
 
     const noteRepo = NoteRepository.getInstance();
     const notes = await noteRepo.getAllNotes({ 
-        search, page, limit, userId, sortBy, sortOrder, isArchived 
+        search, page, limit, userId, sortBy, sortOrder, isArchived, folderId
     });
 
     return res.status(200).json(notes);

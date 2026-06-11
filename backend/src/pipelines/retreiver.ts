@@ -5,7 +5,7 @@ import { Pinecone as PineconeClient } from "@pinecone-database/pinecone";
 import { env } from "@/config/env";
 import { logger } from "@/lib/logger";
 
-export async function queryVectorDB(query: string) {
+export async function queryVectorDB(query: string, userId: string, noteId: string) {
   const embeddings = new CohereEmbeddings({
     model: "embed-english-v3.0",
     apiKey: env.COHERE_API_KEY,
@@ -20,6 +20,7 @@ export async function queryVectorDB(query: string) {
   const vectorStore = await PineconeStore.fromExistingIndex(embeddings, {
     pineconeIndex,
     maxConcurrency: 5,
+    filter: { userId, noteId }
   });
 
   const retriever = await vectorStore.asRetriever();

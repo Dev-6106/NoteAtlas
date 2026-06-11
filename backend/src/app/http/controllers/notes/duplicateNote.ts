@@ -7,7 +7,7 @@ import { Source } from "@/app/models/source.models";
 export async function duplicateNote(req: Request, res: Response, next: NextFunction) {
     try {
         const { id } = req.params;
-        const userId = req.body.userId;
+        const userId = req.userId as string;
 
         if (!id) {
             return res.status(400).send({

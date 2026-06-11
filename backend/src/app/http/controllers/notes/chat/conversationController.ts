@@ -4,7 +4,8 @@ import { ChatMessage } from "@/app/models/chat.models";
 
 export async function createConversation(req: Request, res: Response, next: NextFunction) {
     try {
-        const { userId, noteId, title } = req.body;
+        const { noteId, title } = req.body;
+        const userId = req.userId as string;
         if (!userId || !noteId || !title) {
             return res.status(400).send({ message: "userId, noteId, and title are required" });
         }

@@ -17,7 +17,8 @@ import agenda from "@/app/bootstrap/agenda/agenda";
 
 export async function storeWebLinkFiles(req: Request, res: Response, next: NextFunction) {
     try {
-        const { userId, noteId, webLink } = req.body;
+        const { noteId, webLink } = req.body;
+        const userId = req.userId as string;
 
         if (!webLink) {
             return res.status(400).json({ message: "webLink is required" });

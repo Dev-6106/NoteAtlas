@@ -25,9 +25,12 @@ export async function webFileEmbeddings(props: {
   await downloadFromStorage(storageKey, tempPath);
 
   // Load document
-  const parsedDocs = await loadDocument(tempPath);
-  
-  fs.unlinkSync(tempPath);
+  let parsedDocs;
+            try {
+                parsedDocs = await loadDocument(tempPath);
+            } finally {
+                if (fs.existsSync(tempPath)) fs.unlinkSync(tempPath);
+            }
 
   // Attach metadata
   const docsWithMeta = parsedDocs.map((doc) => ({

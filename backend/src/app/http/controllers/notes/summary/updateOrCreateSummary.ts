@@ -29,8 +29,12 @@ export async function updateOrCreateSummary(_id: string,userId: string, noteId: 
         
         await downloadFromStorage(storageKey, tempPath);
         
-        const splittingDoc = await loadDocument(tempPath);
-        fs.unlinkSync(tempPath);
+        let splittingDoc;
+            try {
+                splittingDoc = await loadDocument(tempPath);
+            } finally {
+                if (fs.existsSync(tempPath)) fs.unlinkSync(tempPath);
+            }
 
         const summary = await generateSummary(llm, splittingDoc);
 

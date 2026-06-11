@@ -37,8 +37,12 @@ export async function generateFlashcardsController(req: Request, res: Response) 
                     if (!fs.existsSync(path.join(cwd(), "tmp"))) fs.mkdirSync(path.join(cwd(), "tmp"));
                     
                     await downloadFromStorage(storageKey, tempPath);
-                    const splittingDoc = await loadDocument(tempPath);
-                    fs.unlinkSync(tempPath);
+                    let splittingDoc;
+            try {
+                splittingDoc = await loadDocument(tempPath);
+            } finally {
+                if (fs.existsSync(tempPath)) fs.unlinkSync(tempPath);
+            }
 
                     splitDocs.push(...splittingDoc);
                 } else {

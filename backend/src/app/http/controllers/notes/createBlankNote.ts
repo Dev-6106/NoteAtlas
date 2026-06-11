@@ -7,7 +7,7 @@ export async function createBlankNote(
   next: NextFunction
 ) {
   try {
-    const userId = req.body?.userId;
+    const userId = req.userId;
     if (!userId) {
       return res.status(400).send("User ID is required");
     }

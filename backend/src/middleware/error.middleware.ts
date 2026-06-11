@@ -82,6 +82,20 @@ export function errorHandler(
     console.error("[UNHANDLED ERROR]", err);
   }
 
+  // Handle Multer errors
+  if (err.name === "MulterError") {
+    const multerErr = err as any;
+    if (multerErr.code === "LIMIT_FILE_SIZE") {
+      return res.status(400).json({ success: false, status: 400, message: "File is too large. Maximum size is 10MB.", data: null });
+    }
+    return res.status(400).json({ success: false, status: 400, message: multerErr.message, data: null });
+  }
+
+  // Handle file filter errors
+  if (err.message && err.message.includes("Invalid File Type")) {
+    return res.status(400).json({ success: false, status: 400, message: err.message, data: null });
+  }
+
   res.status(statusCode).json({
     success: false,
     status: statusCode,

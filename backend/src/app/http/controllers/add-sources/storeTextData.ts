@@ -17,7 +17,8 @@ import agenda from "@/app/bootstrap/agenda/agenda";
 
 export async function storeTextData(req: Request, res: Response, next: NextFunction) {
     try {
-        const { userId, noteId, text } = req.body;
+        const { noteId, text } = req.body;
+        const userId = req.userId as string;
         const llm = LLM.getInstance();
 
         const title = await generateTitle(llm, [new Document({ pageContent: text })]);

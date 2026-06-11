@@ -5,7 +5,8 @@ import { updateOrCreateBriefingDoc } from "./updateOrCreateBriefingDoc";
 
 export async function getBriefingDoc(req: Request, res: Response, next: NextFunction,) {
     try {
-        const {userId, noteId, docIds} = req.body as {userId: string, noteId: string, docIds: string[]};
+        const {noteId, docIds} = req.body as {noteId: string, docIds: string[]};
+        const userId = req.userId as string;
         
         const docRepo = DocRepository.getInstance();
         const docWithoutBriefingDoc = [] as any;

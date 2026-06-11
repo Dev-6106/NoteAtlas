@@ -27,8 +27,12 @@ export async function updateOrCreateBriefingDoc(_id: string, userId: string, not
         
         await downloadFromStorage(storageKey, tempPath);
         
-        const splittingDoc = await loadDocument(tempPath);
-        fs.unlinkSync(tempPath);
+        let splittingDoc;
+            try {
+                splittingDoc = await loadDocument(tempPath);
+            } finally {
+                if (fs.existsSync(tempPath)) fs.unlinkSync(tempPath);
+            }
 
         const briefingDoc = await generateBriefingDoc(llm, splittingDoc);
 

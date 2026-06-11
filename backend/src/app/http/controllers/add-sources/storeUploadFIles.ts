@@ -19,7 +19,8 @@ export async function storeUploadFiles(req: Request, res: Response, next: NextFu
     try {
         if(!req.file) return res.status(400).send("No file uploaded.");
 
-        const {noteId, userId} = req.body;
+        const {noteId} = req.body;
+        const userId = req.userId as string;
         
         const fileBuffer = req.file.buffer;
         const mimeType = req.file.mimetype;
@@ -34,8 +35,12 @@ export async function storeUploadFiles(req: Request, res: Response, next: NextFu
         fs.writeFileSync(tempPath, fileBuffer);
 
         const llm = LLM.getInstance();
-        const docSplit = await loadDocument(tempPath);
-        fs.unlinkSync(tempPath);
+        let docSplit;
+            try {
+                docSplit = await loadDocument(tempPath);
+            } finally {
+                if (fs.existsSync(tempPath)) fs.unlinkSync(tempPath);
+            }
 
         const firstChunk = getDocChunk(docSplit);
         const title = await generateTitle(llm, firstChunk); 

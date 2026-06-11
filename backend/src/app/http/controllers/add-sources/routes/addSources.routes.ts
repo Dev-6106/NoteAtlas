@@ -13,13 +13,14 @@ const storage = multer.memoryStorage();
 
 
 const documentFileFilter = (req: any, file: any, cb: FileFilterCallback) => {
-    const allowedTypes = /pdf|doc|docx|html|csv|txt/;
-    const isDoc = allowedTypes.test(file.mimetype) || allowedTypes.test(file.originalname);
+    const allowedTypes = /pdf|doc|docx|html|csv|txt|json|md|mp3|wav|mpeg|audio/;
+    const isDoc = allowedTypes.test(file.mimetype) || allowedTypes.test(file.originalname.toLowerCase());
+
     if(isDoc){
         cb(null, true);
     }
     else {
-        cb(new Error("Invalid File Type. Only pdf,doc,docx,csv,txt allowed"));
+        cb(new Error("Invalid File Type. Allowed: pdf, doc, docx, html, csv, txt, json, md, mp3, wav"));
     }
 }
 const upload = multer({ 
