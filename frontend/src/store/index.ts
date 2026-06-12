@@ -9,6 +9,8 @@ import chatHistorySlice from './chatHistorySlice'
 import creditMenuSlice from './creditMenuSlice'
 import quizReducer from './quizSlice';
 import flashcardReducer from './flashcardSlice';
+import knowledgeGraphReducer from './knowledgeGraphSlice';
+import folderReducer from './folderSlice';
 
 export const store = configureStore({
   reducer: {
@@ -20,13 +22,11 @@ export const store = configureStore({
      chatHistory:chatHistorySlice,
      creditMenu:creditMenuSlice,
      quiz: quizReducer,
-     flashcard: flashcardReducer
+     flashcard: flashcardReducer,
+     knowledgeGraph: knowledgeGraphReducer,
+     folders: folderReducer,
   },
 })
 
 export type RootState = ReturnType<typeof store.getState>;
 export type AppDispatch = typeof store.dispatch;
-
-
-
-

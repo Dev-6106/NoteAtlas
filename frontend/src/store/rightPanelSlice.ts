@@ -16,6 +16,7 @@ const sourceNoteResultState = {
     error: null,
     sourceModal: { modal: false, title: "", content: "", source_type: "" },
     mindMapModal: { modal: false, title: "", content: "", source_type: "" },
+    agentStudioModal: { modal: false },
     audioCard: { show: false, content: "", title: "" },
 
 };
@@ -51,7 +52,13 @@ export const rightPanelSlice = createSlice({
 
         closeMindMap: (state) => {
             state.mindMapModal.modal = false
+        },
 
+        openAgentStudioModal: (state) => {
+            state.agentStudioModal.modal = true;
+        },
+        closeAgentStudioModal: (state) => {
+            state.agentStudioModal.modal = false;
         },
 
         closeSourceModal: (state) => {
@@ -132,7 +139,9 @@ export const {
     showAudioPlayer, 
     closeAudioPlayer,
     openSourceViewer,
-    closeSourceViewer
+    closeSourceViewer,
+    openAgentStudioModal,
+    closeAgentStudioModal
 } = rightPanelSlice.actions
 
 

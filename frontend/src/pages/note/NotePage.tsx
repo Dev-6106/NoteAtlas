@@ -3,9 +3,10 @@ import DiscoveryModal from '@/components/note/DiscoveryModal';
 import NoteCard from '@/components/note/NoteCard';
 import type { AppDispatch, RootState } from '@/store';
 import { fetchNotes } from '@/store/noteSlice';
-import { Loader2, Plus, Search, BookOpen } from 'lucide-react'
+import { Loader2, Plus, Search, BookOpen, Folder } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux';
+import { createPortal } from 'react-dom';
 import {
   Pagination, PaginationContent, PaginationItem,
   PaginationLink, PaginationNext, PaginationPrevious,
@@ -15,27 +16,34 @@ import { toggleAddSourceNoteModal } from '@/store/addSourceSlice';
 import { useNavigate } from 'react-router';
 import { createBlankNote } from '@/api/notes';
 import { attribNoteVal } from '@/store/chatSlice';
+import { fetchFolders, createNewFolder, moveNote, removeFolder, renameFolder } from '@/store/folderSlice';
+import FolderCard from '@/components/note/FolderCard';
+import CreateFolderModal from '@/components/note/CreateFolderModal';
+import RenameFolderModal from '@/components/note/RenameFolderModal';
+import { DndContext, useSensor, useSensors, PointerSensor, closestCenter } from '@dnd-kit/core';
+import type { DragEndEvent } from '@dnd-kit/core';
 
 import { T } from "@/components/ThemeTokens";
 
 function NotePage() {
   const dispatch = useDispatch<AppDispatch>();
   const { notes, loading, pagination } = useSelector((state: RootState) => state.note);
+  const { folders, loading: foldersLoading } = useSelector((state: RootState) => state.folders);
 
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
   const [sortBy, setSortBy] = useState('updatedAt');
   const [sortOrder, setSortOrder] = useState('desc');
   const [isArchiveView, setIsArchiveView] = useState(false);
+  const [currentFolderId, setCurrentFolderId] = useState<string | null>(null);
+  const [isCreateFolderModalOpen, setIsCreateFolderModalOpen] = useState(false);
+  const [folderToRename, setFolderToRename] = useState<{ id: string, name: string } | null>(null);
+  const [deleteFolderConfirmId, setDeleteFolderConfirmId] = useState<string | null>(null);
   const totalPages = pagination?.totalPages ?? 1;
   const navigate = useNavigate();
   const [createNoteLoading, setCreateNoteLoading] = useState(false);
   const [searchFocused, setSearchFocused] = useState(false);
   const [showSortMenu, setShowSortMenu] = useState(false);
-
-  const fetchNoteWithDebounce = useCallback(debounce((page: number, search: string, isArchived: boolean, sortBy: string, sortOrder: string) => {
-    dispatch(fetchNotes({ page, search, isArchived, sortBy, sortOrder }))
-  }, 500), [dispatch]);
 
   const searchNote = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearch(e.target.value);
@@ -56,9 +64,34 @@ function NotePage() {
     }
   };
 
-  useEffect(() => { fetchNoteWithDebounce(page, search, isArchiveView, sortBy, sortOrder) }, [page, search, isArchiveView, sortBy, sortOrder, fetchNoteWithDebounce]);
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      dispatch(fetchNotes({ page, search, isArchived: isArchiveView, sortBy, sortOrder, folderId: currentFolderId || null }));
+    }, search ? 500 : 0);
+    return () => clearTimeout(timer);
+  }, [page, search, isArchiveView, sortBy, sortOrder, currentFolderId, dispatch]);
+
+  useEffect(() => {
+    dispatch(fetchFolders());
+  }, [dispatch]);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
+  );
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (over && over.data.current?.type === 'Folder' && active.data.current?.type === 'Note') {
+      const noteId = active.id as string;
+      const folderId = over.id as string;
+      dispatch(moveNote({ noteId, folderId })).then(() => {
+        dispatch(fetchNotes({ page, search, isArchived: isArchiveView, sortBy, sortOrder, folderId: currentFolderId || null }));
+      });
+    }
+  };
 
   return (
+    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
     <div style={{
       minHeight: "calc(100vh - 60px)",
       background: "transparent",
@@ -67,12 +100,8 @@ function NotePage() {
       color: T.text1,
     }}>
       <style>{`
-        @keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
         @keyframes spin{to{transform:rotate(360deg)}}
         @keyframes shimmer{0%{background-position:-400px 0}100%{background-position:400px 0}}
-        .np-fade{animation:fadeUp 0.55s ease both}
-        .np-fade1{animation:fadeUp 0.55s 0.08s ease both}
-        .np-fade2{animation:fadeUp 0.55s 0.18s ease both}
         [data-slot="pagination-link"],
         [data-slot="pagination-previous"],
         [data-slot="pagination-next"]{
@@ -119,7 +148,7 @@ function NotePage() {
       `}</style>
 
       {/* Header Row */}
-      <div className="np-fade" style={{
+      <div className="fade-up" style={{
         display: "flex", alignItems: "center",
         justifyContent: "space-between",
         flexWrap: "wrap", gap: 16, marginBottom: 40,
@@ -127,6 +156,19 @@ function NotePage() {
       }}>
         {/* Title block */}
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          {currentFolderId && (
+            <button
+              onClick={() => setCurrentFolderId(null)}
+              style={{
+                background: "var(--bg-card)", border: "1px solid var(--border-default)",
+                borderRadius: 8, padding: "8px 12px", cursor: "pointer",
+                color: "var(--text-1)", display: "flex", alignItems: "center", gap: 6,
+                fontFamily: "var(--font-sans)", fontSize: 13,
+              }}
+            >
+              ← Back
+            </button>
+          )}
           <div style={{
             width: 42, height: 42, borderRadius: 12,
             background: T.primaryGlow,
@@ -152,6 +194,30 @@ function NotePage() {
         {/* Controls */}
         <div className="np-header-controls" style={{ display: "flex", gap: 12, alignItems: "center" }}>
           
+          <button
+            onClick={() => setIsCreateFolderModalOpen(true)}
+            style={{
+              height: 40, padding: "0 16px", borderRadius: 12,
+              background: "var(--bg-card)",
+              border: `1px solid var(--border-default)`,
+              color: "var(--text-1)",
+              fontSize: 13.5, fontWeight: 500, fontFamily: "var(--font-sans)",
+              display: "flex", alignItems: "center", gap: 8,
+              cursor: "pointer", transition: "all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1)",
+            }}
+            onMouseEnter={e => {
+              e.currentTarget.style.background = "var(--bg-surface)";
+              e.currentTarget.style.borderColor = "var(--border-strong)";
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.background = "var(--bg-card)";
+              e.currentTarget.style.borderColor = "var(--border-default)";
+            }}
+          >
+            <Folder size={16} />
+            <span>New Folder</span>
+          </button>
+
           {/* Sort/Filter Dropdown */}
           <div style={{ position: "relative" }}>
             <button
@@ -246,8 +312,35 @@ function NotePage() {
       {/* Divider */}
       <div style={{ height: 1, background: `linear-gradient(90deg, transparent, ${T.border}, transparent)`, marginBottom: 36 }} />
 
+      {/* Folders Section */}
+      {folders.length > 0 && !isArchiveView && !currentFolderId && (
+        <div style={{ marginBottom: 40 }}>
+          <h2 style={{ fontSize: 16, fontWeight: 600, color: "var(--text-1)", marginBottom: 16, fontFamily: "var(--font-sans)" }}>Folders</h2>
+          <div className="fade-up delay-100" style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fill, minmax(230px, 1fr))",
+            gap: 16,
+          }}>
+            {folders.map(folder => (
+              <FolderCard 
+                key={folder._id} 
+                id={folder._id} 
+                name={folder.name} 
+                onClick={() => {
+                  setCurrentFolderId(folder._id);
+                  setPage(1);
+                }}
+                onRename={(id, name) => setFolderToRename({ id, name })}
+                onDelete={(id) => setDeleteFolderConfirmId(id)}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Grid */}
-      <div className="np-fade1" style={{
+      <h2 style={{ fontSize: 16, fontWeight: 600, color: "var(--text-1)", marginBottom: 16, fontFamily: "var(--font-sans)" }}>Notebooks</h2>
+      <div className="fade-up delay-200" style={{
         display: "grid",
         gridTemplateColumns: "repeat(auto-fill, minmax(230px, 1fr))",
         gap: 16,
@@ -311,13 +404,37 @@ function NotePage() {
             </div>
           ))
         ) : (
-          <NoteCard viewNoteDetail={viewNoteDetail} notebooks={notes} isArchiveView={isArchiveView} />
+          <NoteCard viewNoteDetail={viewNoteDetail} notebooks={notes} isArchiveView={isArchiveView} currentFolderId={currentFolderId} />
         )}
       </div>
 
+      {!loading && (!notes || notes.length === 0) && (!folders || folders.length === 0) && !isArchiveView && !currentFolderId && (
+        <div className="fade-up" style={{ 
+          display: "flex", flexDirection: "column", alignItems: "center", 
+          justifyContent: "center", padding: "40px 20px", textAlign: "center" 
+        }}>
+          <div style={{ marginBottom: 24, position: "relative", width: 80, height: 80, display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <svg width="80" height="80" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M40 18C41.5 30 46 34.5 58 36C46 37.5 41.5 42 40 54C38.5 42 34 37.5 22 36C34 34.5 38.5 30 40 18Z" fill="#E0D4FF"/>
+              <path d="M22 46C22.5 50 24 51.5 28 52C24 52.5 22.5 54 22 58C21.5 54 20 52.5 16 52C20 51.5 21.5 50 22 46Z" fill="#E0D4FF"/>
+              <path d="M60 46C60.5 50 62 51.5 66 52C62 52.5 60.5 54 60 58C59.5 54 58 52.5 54 52C58 51.5 59.5 50 60 46Z" fill="#E0D4FF"/>
+              <path d="M30 20C30.5 22.5 31.5 23.5 34 24C31.5 24.5 30.5 25.5 30 28C29.5 25.5 28.5 24.5 26 24C28.5 23.5 29.5 22.5 30 20Z" fill="#E0D4FF"/>
+              <path d="M52 24C52.5 26.5 53.5 27.5 56 28C53.5 28.5 52.5 29.5 52 32C51.5 29.5 50.5 28.5 48 28C50.5 27.5 51.5 26.5 52 24Z" fill="#E0D4FF"/>
+              <path d="M42 6C42.5 8.5 43.5 9.5 46 10C43.5 10.5 42.5 11.5 42 14C41.5 11.5 40.5 10.5 38 10C40.5 9.5 41.5 8.5 42 6Z" fill="#E0D4FF"/>
+            </svg>
+          </div>
+          <h2 style={{ fontSize: 20, fontWeight: 700, color: "var(--text-1)", marginBottom: 12, letterSpacing: "-0.4px", fontFamily: "var(--font-sans)" }}>
+            Welcome to NoteAtlas!
+          </h2>
+          <p style={{ fontSize: 14, color: "var(--text-3)", maxWidth: 320, lineHeight: 1.6, fontFamily: "var(--font-sans)" }}>
+            Create a new notebook or folder to get started and unlock the power of AI-assisted learning.
+          </p>
+        </div>
+      )}
+
       {/* Pagination */}
       {totalPages > 1 && (
-        <div className="np-fade2" style={{ display: "flex", justifyContent: "center" }}>
+        <div className="fade-up delay-300" style={{ display: "flex", justifyContent: "center" }}>
           <Pagination>
             <PaginationContent style={{ gap: 6 }}>
               <PaginationItem>
@@ -340,7 +457,71 @@ function NotePage() {
 
       <CreateNoteModal />
       <DiscoveryModal />
+      <CreateFolderModal isOpen={isCreateFolderModalOpen} onClose={() => setIsCreateFolderModalOpen(false)} />
+      
+      {folderToRename && (
+        <RenameFolderModal
+          isOpen={!!folderToRename}
+          onClose={() => setFolderToRename(null)}
+          folderId={folderToRename.id}
+          currentName={folderToRename.name}
+        />
+      )}
+
+      {/* Custom Folder Delete Confirmation Modal */}
+      {deleteFolderConfirmId && typeof document !== 'undefined' && createPortal(
+        <div 
+          onClick={() => setDeleteFolderConfirmId(null)}
+          style={{ 
+            position: "fixed", top: 0, left: 0, right: 0, bottom: 0, zIndex: 9999, 
+            display: "flex", alignItems: "center", justifyContent: "center", 
+            background: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)" 
+          }}
+        >
+          <div 
+            onClick={(e) => e.stopPropagation()}
+            style={{ 
+              background: "var(--bg-elevated)", padding: 24, borderRadius: 16, 
+              border: "1px solid var(--border-default)", maxWidth: 400, width: "90%", 
+              boxShadow: "var(--shadow-xl)", animation: "fadeUp 0.2s ease-out" 
+            }}
+          >
+            <h3 style={{ fontSize: 18, fontWeight: 600, color: "var(--text-1)", marginBottom: 8, fontFamily: "var(--font-sans)" }}>Delete Folder</h3>
+            <p style={{ fontSize: 14, color: "var(--text-3)", marginBottom: 24, lineHeight: 1.5, fontFamily: "var(--font-sans)" }}>
+              Are you sure you want to delete this folder? Notes inside will not be deleted, but will be moved to the root workspace.
+            </p>
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: 12 }}>
+              <button 
+                onClick={() => setDeleteFolderConfirmId(null)}
+                style={{ padding: "8px 16px", borderRadius: 8, border: "1px solid var(--border-default)", background: "transparent", color: "var(--text-2)", fontSize: 14, fontWeight: 500, cursor: "pointer", fontFamily: "var(--font-sans)" }}
+                onMouseEnter={e => e.currentTarget.style.background = "var(--bg-card-hover)"}
+                onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={() => {
+                  if (deleteFolderConfirmId) {
+                    dispatch(removeFolder(deleteFolderConfirmId)).then(() => {
+                      dispatch(fetchNotes({ page, search, isArchived: isArchiveView, sortBy, sortOrder, folderId: currentFolderId }));
+                    });
+                    setDeleteFolderConfirmId(null);
+                  }
+                }}
+                style={{ padding: "8px 16px", borderRadius: 8, border: "none", background: "var(--color-error)", color: "var(--text-1)", fontSize: 14, fontWeight: 500, cursor: "pointer", fontFamily: "var(--font-sans)" }}
+                onMouseEnter={e => e.currentTarget.style.opacity = "0.9"}
+                onMouseLeave={e => e.currentTarget.style.opacity = "1"}
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+
     </div>
+    </DndContext>
   );
 }
 

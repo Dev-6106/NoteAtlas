@@ -1,11 +1,14 @@
 import { Link } from "react-router";
 import { MoveLeft } from "lucide-react";
 import { T } from "@/components/ThemeTokens";
+import { DottedBg } from "@/components/base/DottedBg";
 
 export default function PrivacyPolicyPage() {
   return (
-    <div style={{ background: T.bg, minHeight: "100vh", color: T.text1, fontFamily: T.fontSans }}>
-      <main style={{ maxWidth: 800, margin: "0 auto", padding: "80px 24px" }}>
+    <div style={{ background: T.bg, minHeight: "100vh", color: T.text1, fontFamily: T.fontSans, position: "relative", overflow: "hidden" }}>
+      <DottedBg />
+      <main style={{ maxWidth: 800, margin: "0 auto", padding: "80px 24px", position: "relative", zIndex: 1 }}>
+        <div className="fade-up">
         <Link 
           to="/" 
           style={{ 
@@ -19,8 +22,9 @@ export default function PrivacyPolicyPage() {
         
         <h1 style={{ fontSize: 42, fontWeight: 800, marginBottom: 16, color: T.text1 }}>Privacy Policy</h1>
         <p style={{ fontSize: 16, color: T.text3, marginBottom: 48 }}>Last updated: June 8, 2026</p>
+        </div>
 
-        <section style={{ marginBottom: 40 }}>
+        <section className="fade-up delay-100" style={{ marginBottom: 40 }}>
           <h2 style={{ fontSize: 24, fontWeight: 700, marginBottom: 16 }}>1. What Data We Collect</h2>
           <p style={{ fontSize: 16, lineHeight: 1.7, color: T.text2, marginBottom: 16 }}>
             When you use NoteAtlas, we collect:
@@ -32,7 +36,7 @@ export default function PrivacyPolicyPage() {
           </ul>
         </section>
 
-        <section style={{ marginBottom: 40 }}>
+        <section className="fade-up delay-200" style={{ marginBottom: 40 }}>
           <h2 style={{ fontSize: 24, fontWeight: 700, marginBottom: 16 }}>2. Why We Collect It</h2>
           <p style={{ fontSize: 16, lineHeight: 1.7, color: T.text2, marginBottom: 16 }}>
             We collect this data solely to provide and improve the NoteAtlas services:
@@ -45,7 +49,7 @@ export default function PrivacyPolicyPage() {
           </ul>
         </section>
 
-        <section style={{ marginBottom: 40 }}>
+        <section className="fade-up delay-300" style={{ marginBottom: 40 }}>
           <h2 style={{ fontSize: 24, fontWeight: 700, marginBottom: 16 }}>3. How We Store Your Data</h2>
           <p style={{ fontSize: 16, lineHeight: 1.7, color: T.text2, marginBottom: 16 }}>
             Your data is stored securely using industry-standard cloud infrastructure (MongoDB Atlas). 
@@ -54,7 +58,7 @@ export default function PrivacyPolicyPage() {
           </p>
         </section>
 
-        <section style={{ marginBottom: 40 }}>
+        <section className="fade-up delay-400" style={{ marginBottom: 40 }}>
           <h2 style={{ fontSize: 24, fontWeight: 700, marginBottom: 16 }}>4. Contact Information</h2>
           <p style={{ fontSize: 16, lineHeight: 1.7, color: T.text2, marginBottom: 16 }}>
             If you have questions about this privacy policy, how your data is handled, or wish to request data deletion, please contact the developer at:

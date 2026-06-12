@@ -5,9 +5,9 @@ export const DottedBg = () => (
     {/* Clean Dotted Pattern */}
     <div style={{
       position: "absolute", inset: 0,
-      backgroundImage: `radial-gradient(var(--border-strong) 1px, transparent 1px)`,
+      backgroundImage: `radial-gradient(var(--text-4) 1px, transparent 1px)`,
       backgroundSize: "28px 28px",
-      opacity: 0.45,
+      opacity: 0.8,
       maskImage: "radial-gradient(ellipse 90% 90% at 50% 50%, black 15%, transparent 85%)",
       WebkitMaskImage: "radial-gradient(ellipse 90% 90% at 50% 50%, black 15%, transparent 85%)",
     }} />

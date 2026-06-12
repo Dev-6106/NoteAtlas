@@ -11,6 +11,8 @@ import { cwd } from "process";
 import { generateFlashcards } from "@/pipelines/flashcards";
 import { Document } from "@langchain/core/documents";
 
+import { deductCredits } from "@/app/helpers/credits";
+
 export async function generateFlashcardsController(req: Request, res: Response) {
     try {
         const { noteId, docIds, count } = req.body;
@@ -19,6 +21,8 @@ export async function generateFlashcardsController(req: Request, res: Response) 
         if (!userId || !noteId || !docIds || docIds.length === 0) {
             return res.status(400).json({ success: false, message: "Missing required fields." });
         }
+        
+        await deductCredits(userId, 5);
 
         const llm = LLM.getInstance();
         const docRepo = DocRepository.getInstance();

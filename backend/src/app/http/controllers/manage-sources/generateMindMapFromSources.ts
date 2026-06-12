@@ -8,6 +8,7 @@ import { generateTitle } from "../notes/helpers/TitleGeneration";
 import { invokeWithRetry } from "@/util/invokeWithRetry";
 import { ChatPromptTemplate } from "@langchain/core/prompts";
 import { Runnable } from "@langchain/core/runnables";
+import { deductCredits } from "@/app/helpers/credits";
 
 export async function generateMindMapFromSources(req: Request, res: Response, next: NextFunction) {
     try {
@@ -16,6 +17,8 @@ export async function generateMindMapFromSources(req: Request, res: Response, ne
 
         if (!userId || !noteId) return res.status(400).json({ message: "UserId and NoteId required" });
         if (docIds.length === 0) return res.status(400).json({ message: "Select a source" });
+        
+        await deductCredits(userId, 5);
 
         const llm = LLM.getInstance();
 

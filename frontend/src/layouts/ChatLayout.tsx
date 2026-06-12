@@ -25,7 +25,7 @@ export default function ChatLayout() {
         * { box-sizing: border-box; }
 
         /* ── Toast overrides — theme-aware ── */
-        .Toastify__toast-container { font-family: var(--font-sans, 'DM Sans', system-ui, sans-serif) !important; }
+        .Toastify__toast-container { font-family: var(--font-sans, 'DM Sans', system-ui, sans-serif) !important; z-index: 999999 !important; }
         .Toastify__toast {
           background: var(--glass-bg) !important;
           border: 1px solid var(--border-accent) !important;

@@ -5,10 +5,10 @@ import { showError, showSuccess } from "@/util/toast-notification";
 import { apiUrl } from "@/config/get-env";
 import { auth } from "@/config/firebase";
 
-export async function getNotes(page = 1, search: string = ''): Promise<NoteServerData> {
-
-    const data = await makeHttpReq('GET', `notes?page=${page}&search=${search}`) as NoteServerData
-    return data
+export async function getNotes(page = 1, search: string = '', folderId?: string | null): Promise<NoteServerData> {
+    const folderParam = folderId !== undefined ? `&folderId=${folderId}` : '';
+    const data = await makeHttpReq('GET', `notes?page=${page}&search=${search}${folderParam}`) as NoteServerData;
+    return data;
 
 
 }
@@ -689,6 +689,28 @@ export const uploadFilesApi = async (files: FileList, noteId: string) => {
     } catch (error) {
         console.error("Error uploading files:", error);
         showError('Failed to upload file(s)');
+        throw error;
+    }
+};
+
+export const deleteGeneratedSourceApi = async (sourceId: string) => {
+    try {
+        const data = await makeHttpReq('DELETE', `notes/generated-sources/${sourceId}`);
+        showSuccess(data?.message || 'Generated source deleted successfully');
+        return data;
+    } catch (error) {
+        console.log('error : ', error);
+        throw error;
+    }
+};
+
+export const renameGeneratedSourceApi = async (sourceId: string, title: string) => {
+    try {
+        const data = await makeHttpReq('PUT', `notes/generated-sources/${sourceId}/rename`, { title });
+        showSuccess(data?.message || 'Generated source renamed successfully');
+        return data;
+    } catch (error) {
+        console.log('error : ', error);
         throw error;
     }
 };

@@ -18,6 +18,7 @@ export type NoteType = {
     createdAt: string
     updatedAt: string
     docs:DocType[]
+    folderId?: string | null
 }
 
 export type DocType = {

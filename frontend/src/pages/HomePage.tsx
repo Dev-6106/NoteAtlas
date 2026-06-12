@@ -2,7 +2,7 @@ import { Link, useNavigate } from "react-router";
 import { useDispatch } from "react-redux";
 import { openPaymentModal } from "@/store/chatSlice";
 import { useState, useEffect, useRef } from "react";
-import { Menu, X, CheckSquare, Clock, LayoutGrid, CalendarDays, Brain, Folder, FileText, FileAudio, Youtube, Zap, BookOpen, Mic, Lock, MessageSquare, Search, Sparkles } from "lucide-react";
+import { Menu, X, CheckSquare, Clock, LayoutGrid, CalendarDays, Brain, Folder, FileText, FileAudio, Youtube, Zap, BookOpen, Mic, Lock, MessageSquare, Search, Sparkles, CheckCircle, RefreshCw } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { getUserData } from "@/helper/getUserData";
 import { LogoSvg } from "@/components/base/LogoSvg";
@@ -11,21 +11,21 @@ import UserAvatar from "@/components/base/UserAvatar";
 import { DottedBg } from "@/components/base/DottedBg";
 
 // ─── Floating Widgets ────────────────────────────────────────────────────────
-const StickyNoteWidget = () => (
+const FlashcardsWidget = () => (
   <div className="float-widget" style={{
-    position: "absolute", top: "15%", left: "5%",
+    position: "absolute", top: "10%", right: "calc(50% + 390px)",
     width: 230, padding: 26,
     background: "linear-gradient(135deg, #fef08a 0%, #fde047 100%)", // Richer yellow
     borderRadius: 6,
     boxShadow: "2px 12px 36px rgba(0,0,0,0.15), inset 0 0 40px rgba(255,255,255,0.4)",
-    transform: "rotate(-4deg)",
+    transform: "rotate(-12deg) scale(0.9)",
     zIndex: 10,
     fontFamily: "'Caveat', cursive, sans-serif",
     color: "#422006", // dark brown
   }}>
     <div style={{ position: "absolute", top: -8, left: "50%", transform: "translateX(-50%)", width: 14, height: 14, borderRadius: "50%", background: "#ef4444", boxShadow: "inset -2px -2px 6px rgba(0,0,0,0.3), 0 4px 6px rgba(0,0,0,0.2)" }} />
-    <p style={{ fontSize: 20, lineHeight: 1.3 }}>Generate study guides, summaries, and instant answers from any uploaded document.</p>
-    
+    <p style={{ fontSize: 20, lineHeight: 1.3 }}>Flashcard: What is the primary function of the KV Cache?</p>
+
     {/* Floating icon over sticky */}
     <div className="fw-sticky-icon" style={{
       position: "absolute", bottom: -28, left: -28,
@@ -35,34 +35,34 @@ const StickyNoteWidget = () => (
       display: "flex", alignItems: "center", justifyContent: "center",
       transform: "rotate(12deg)",
     }}>
-      <div style={{ width: 36, height: 36, borderRadius: 10, background: "linear-gradient(135deg, #3b82f6, #2563eb)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "inset 0 2px 4px rgba(255,255,255,0.2)" }}>
-        <BookOpen size={20} color="white" strokeWidth={2.5} />
+      <div style={{ width: 36, height: 36, borderRadius: 10, background: "linear-gradient(135deg, #f59e0b, #d97706)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "inset 0 2px 4px rgba(255,255,255,0.2)" }}>
+        <Brain size={20} color="white" strokeWidth={2.5} />
       </div>
     </div>
   </div>
 );
 
-const RemindersWidget = () => (
+const AgentStudioWidget = () => (
   <div className="float-widget delay-1" style={{
-    position: "absolute", top: "18%", right: "8%",
+    position: "absolute", top: "18%", left: "calc(50% + 380px)",
     width: 270,
     background: "var(--glass-bg)", backdropFilter: "blur(24px)", WebkitBackdropFilter: "blur(24px)",
     border: "1px solid var(--border-default)", borderRadius: 24,
     boxShadow: "0 24px 48px rgba(0,0,0,0.1), 0 0 0 1px rgba(255,255,255,0.5) inset",
     padding: "22px", zIndex: 10,
-    transform: "rotate(3deg)",
+    transform: "rotate(6deg) scale(0.95)",
   }}>
     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-      <span style={{ fontSize: 16, fontWeight: 700, color: "var(--text-1)" }}>AI Insights</span>
-      <span style={{ fontSize: 11, color: "var(--text-4)" }}>Analysis</span>
+      <span style={{ fontSize: 16, fontWeight: 700, color: "var(--text-1)" }}>Agent Studio</span>
+      <span style={{ fontSize: 11, color: "var(--color-success)" }}>Active</span>
     </div>
-    
+
     <div style={{ background: "var(--bg-surface)", borderRadius: 12, padding: 16, border: "1px solid var(--border-subtle)" }}>
       <p style={{ fontSize: 13, fontWeight: 600, color: "var(--text-1)", marginBottom: 4 }}>Q3 Market Research</p>
-      <p style={{ fontSize: 11, color: "var(--text-3)", marginBottom: 12 }}>Revenue increased by 14%...</p>
-      <div style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "var(--primary-glow)", padding: "4px 10px", borderRadius: 6 }}>
-        <Zap size={12} color="var(--primary-brand)" />
-        <span style={{ fontSize: 11, fontWeight: 600, color: "var(--primary-brand)" }}>7 sec read</span>
+      <p style={{ fontSize: 11, color: "var(--text-3)", marginBottom: 12 }}>Synthesizing key insights...</p>
+      <div style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "var(--color-success-light)", padding: "4px 10px", borderRadius: 6 }}>
+        <div className="animate-spin" style={{ display: "flex" }}><RefreshCw size={12} color="var(--color-success)" /></div>
+        <span style={{ fontSize: 11, fontWeight: 600, color: "var(--color-success)" }}>Processing</span>
       </div>
     </div>
 
@@ -75,43 +75,44 @@ const RemindersWidget = () => (
       display: "flex", alignItems: "center", justifyContent: "center",
       transform: "rotate(-10deg)",
     }}>
-      <Brain size={38} color="#8b5cf6" strokeWidth={1.5} />
+      <Sparkles size={38} color="#10b981" strokeWidth={1.5} />
     </div>
   </div>
 );
 
-const TasksWidget = () => (
+const FormatsWidget = () => (
   <div className="float-widget delay-2" style={{
-    position: "absolute", bottom: "10%", left: "12%",
+    position: "absolute", bottom: "16%", right: "calc(50% + 350px)",
     width: 330,
     background: "var(--glass-bg)", backdropFilter: "blur(24px)", WebkitBackdropFilter: "blur(24px)",
     border: "1px solid var(--border-default)", borderRadius: 24,
     boxShadow: "0 24px 48px rgba(0,0,0,0.1), 0 0 0 1px rgba(255,255,255,0.5) inset",
     padding: "26px", zIndex: 10,
+    transform: "rotate(8deg) scale(0.85)",
   }}>
-    <h3 style={{ fontSize: 16, fontWeight: 700, color: "var(--text-1)", marginBottom: 20 }}>Processing</h3>
-    
+    <h3 style={{ fontSize: 16, fontWeight: 700, color: "var(--text-1)", marginBottom: 20 }}>Processing Formats</h3>
+
     <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
       {/* Task 1 */}
       <div>
         <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
-          <div style={{ width: 22, height: 22, borderRadius: 6, background: "#ef4444", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, color: "white", fontWeight: 700 }}>PDF</div>
-          <span style={{ fontSize: 13, fontWeight: 500, color: "var(--text-1)", flex: 1 }}>Biology Chapter 4.pdf</span>
+          <div style={{ width: 22, height: 22, borderRadius: 6, background: "#ef4444", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, color: "white", fontWeight: 700 }}><Youtube size={12} /></div>
+          <span style={{ fontSize: 13, fontWeight: 500, color: "var(--text-1)", flex: 1 }}>Lecture Video</span>
           <span style={{ fontSize: 11, color: "var(--text-3)" }}>100%</span>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           <span style={{ fontSize: 10, color: "var(--text-4)" }}>Ready</span>
           <div style={{ flex: 1, height: 4, background: "var(--border-subtle)", borderRadius: 2, overflow: "hidden" }}>
-            <div style={{ width: "100%", height: "100%", background: "var(--primary-brand)", borderRadius: 2 }} />
+            <div style={{ width: "100%", height: "100%", background: "#ef4444", borderRadius: 2 }} />
           </div>
         </div>
       </div>
-      
+
       {/* Task 2 */}
       <div>
         <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
-          <div style={{ width: 22, height: 22, borderRadius: 6, background: "#8b5cf6", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, color: "white", fontWeight: 700 }}>MP3</div>
-          <span style={{ fontSize: 13, fontWeight: 500, color: "var(--text-1)", flex: 1 }}>Lecture Audio.mp3</span>
+          <div style={{ width: 22, height: 22, borderRadius: 6, background: "#8b5cf6", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, color: "white", fontWeight: 700 }}><Mic size={12} /></div>
+          <span style={{ fontSize: 13, fontWeight: 500, color: "var(--text-1)", flex: 1 }}>Podcast.mp3</span>
           <span style={{ fontSize: 11, color: "var(--text-3)" }}>Parsing</span>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
@@ -125,30 +126,28 @@ const TasksWidget = () => (
   </div>
 );
 
-const IntegrationsWidget = () => (
+const CitationWidget = () => (
   <div className="float-widget delay-3" style={{
-    position: "absolute", bottom: "15%", right: "10%",
-    width: 290,
+    position: "absolute", bottom: "12%", left: "calc(50% + 360px)",
+    width: 270,
     background: "var(--glass-bg)", backdropFilter: "blur(24px)", WebkitBackdropFilter: "blur(24px)",
-    border: "1px solid var(--border-default)", borderRadius: 24,
+    border: "1px solid var(--color-success-border)", borderRadius: 24,
     boxShadow: "0 24px 48px rgba(0,0,0,0.1), 0 0 0 1px rgba(255,255,255,0.5) inset",
-    padding: "26px", zIndex: 10,
-    transform: "rotate(-2deg)",
+    padding: "20px", zIndex: 10,
+    transform: "rotate(-4deg) scale(1.05)",
   }}>
-    <h3 style={{ fontSize: 15, fontWeight: 600, color: "var(--text-1)", marginBottom: 20 }}>Supported Formats</h3>
-    <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-      {/* App 1 */}
-      <div style={{ width: 64, height: 64, borderRadius: 16, background: "var(--bg-card)", border: "1px solid var(--border-default)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 8px 20px rgba(0,0,0,0.06)", transform: "rotate(-5deg)" }}>
-        <FileText size={32} color="#ef4444" strokeWidth={1.5} />
+    <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
+      <div style={{ width: 28, height: 28, borderRadius: 8, background: "var(--color-success-light)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <CheckCircle size={16} color="var(--color-success)" />
       </div>
-      {/* App 2 */}
-      <div style={{ width: 72, height: 72, borderRadius: 18, background: "var(--bg-card)", border: "1px solid var(--border-default)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 12px 24px rgba(0,0,0,0.08)", zIndex: 2 }}>
-        <Youtube size={36} color="#ef4444" strokeWidth={1.5} />
-      </div>
-      {/* App 3 */}
-      <div style={{ width: 64, height: 64, borderRadius: 16, background: "var(--bg-card)", border: "1px solid var(--border-default)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 8px 20px rgba(0,0,0,0.06)", transform: "rotate(8deg)" }}>
-        <Mic size={28} color="#8b5cf6" strokeWidth={1.5} />
-      </div>
+      <span style={{ fontSize: 13, fontWeight: 700, color: "var(--color-success)" }}>Claim Verified</span>
+    </div>
+    <p style={{ fontSize: 12, color: "var(--text-1)", lineHeight: 1.5, marginBottom: 12, fontWeight: 500 }}>
+      "RAG reduces hallucinations by grounding responses in retrieved evidence."
+    </p>
+    <div style={{ display: "flex", alignItems: "center", gap: 6, background: "var(--bg-surface)", padding: "6px 10px", borderRadius: 8, border: "1px solid var(--border-default)" }}>
+      <FileText size={12} color="var(--text-3)" />
+      <span style={{ fontSize: 11, color: "var(--text-2)", fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>Stanford CS224N Lecture 12</span>
     </div>
   </div>
 );
@@ -268,8 +267,8 @@ const PricingCard = ({ tier, price, period, desc, features, cta, featured = fals
           border: featured ? "none" : `1px solid var(--border-strong)`,
           boxShadow: featured ? "0 8px 24px rgba(59, 130, 246, 0.3)" : "0 4px 12px rgba(0,0,0,0.05)",
         }}
-        onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-2px)"; if(featured) e.currentTarget.style.boxShadow = "0 12px 28px rgba(59, 130, 246, 0.4)"; }}
-        onMouseLeave={e => { e.currentTarget.style.transform = "none"; if(featured) e.currentTarget.style.boxShadow = "0 8px 24px rgba(59, 130, 246, 0.3)"; }}
+        onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-2px)"; if (featured) e.currentTarget.style.boxShadow = "0 12px 28px rgba(59, 130, 246, 0.4)"; }}
+        onMouseLeave={e => { e.currentTarget.style.transform = "none"; if (featured) e.currentTarget.style.boxShadow = "0 8px 24px rgba(59, 130, 246, 0.3)"; }}
       >{cta}</button>
     </div>
   );
@@ -344,15 +343,6 @@ export default function HomePage() {
           box-shadow: 0 8px 24px rgba(0,0,0,0.1);
         }
 
-        .fade-up { animation: fadeUpAnim 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards; opacity: 0; transform: translateY(20px); }
-        .delay-100 { animation-delay: 0.1s; }
-        .delay-200 { animation-delay: 0.2s; }
-        .delay-300 { animation-delay: 0.3s; }
-
-        @keyframes fadeUpAnim {
-          to { opacity: 1; transform: translateY(0); }
-        }
-
         .text-gradient {
           background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
           -webkit-background-clip: text;
@@ -372,19 +362,23 @@ export default function HomePage() {
         .float-widget {
           pointer-events: auto;
           animation: floatUpDown 8s ease-in-out infinite;
-          transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+          transition: scale 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), filter 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+          scale: 1;
         }
         .float-widget:hover {
-          transform: scale(1.05) translateY(-10px) !important;
+          scale: 1.05;
           z-index: 50 !important;
           box-shadow: 0 32px 64px rgba(0,0,0,0.15), 0 0 0 1px rgba(255,255,255,0.7) inset !important;
+          animation-play-state: paused;
         }
 
         .delay-1 { animation-delay: 1.5s; }
         .delay-2 { animation-delay: 3s; }
         .delay-3 { animation-delay: 4.5s; }
+        .delay-4 { animation-delay: 0.7s; }
+        .delay-5 { animation-delay: 6s; }
 
-        @media (max-width: 1100px) {
+        @media (max-width: 1350px) {
           .widgets-container {
             position: relative; inset: auto;
             width: 100vw; margin-left: calc(50% - 50vw);
@@ -411,19 +405,19 @@ export default function HomePage() {
             position: relative !important;
             top: auto !important; left: auto !important; right: auto !important; bottom: auto !important;
             animation: none !important;
-            transform: none !important;
+            rotate: 0deg !important;
             flex: 0 0 280px !important;
             width: 280px !important;
             margin: 0 !important;
           }
           .float-widget:hover {
-            transform: translateY(-4px) !important;
+            scale: 1.02 !important;
           }
           .fw-sticky-icon, .fw-reminders-icon {
             display: none !important;
           }
         }
-        @media (min-width: 1101px) {
+        @media (min-width: 1351px) {
           .mobile-only-clone { display: none !important; }
           .widgets-scroll-track { display: contents; }
         }
@@ -507,30 +501,25 @@ export default function HomePage() {
       )}
 
       {/* ── HERO ────────────────────────────────────────── */}
-      <section style={{ 
-        position: "relative", 
-        padding: "60px 24px", 
+      <section style={{
+        position: "relative",
+        padding: "60px 24px",
         minHeight: "calc(100vh - 72px)",
         display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
       }}>
 
         <div style={{ position: "relative", zIndex: 5, maxWidth: 800, textAlign: "center", pointerEvents: "auto" }}>
-          
+
           {/* Top Logo Icon Block */}
-          <div className="fade-up" style={{ 
-            width: 76, height: 76, borderRadius: 22, 
+          <div className="fade-up" style={{
+            width: 76, height: 76, borderRadius: 22,
             background: "linear-gradient(180deg, var(--bg-card) 0%, var(--bg-surface) 100%)",
-            border: "1px solid var(--border-default)", 
+            border: "1px solid var(--border-default)",
             boxShadow: "0 16px 40px rgba(0,0,0,0.08), inset 0 2px 4px rgba(255,255,255,0.3)",
             margin: "0 auto 40px",
             display: "flex", alignItems: "center", justifyContent: "center"
           }}>
-             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 4 }}>
-                <div style={{ width: 14, height: 14, borderRadius: "50%", background: "#3b82f6" }} />
-                <div style={{ width: 14, height: 14, borderRadius: "50%", background: "var(--text-1)" }} />
-                <div style={{ width: 14, height: 14, borderRadius: "50%", background: "var(--text-1)" }} />
-                <div style={{ width: 14, height: 14, borderRadius: "50%", background: "var(--text-1)" }} />
-             </div>
+            <LogoSvg size={44} />
           </div>
 
           {/* Headline */}
@@ -542,16 +531,16 @@ export default function HomePage() {
             marginBottom: 24,
             color: "var(--text-1)",
           }}>
-            Read, study, and research<br/>
-            <span className="text-gradient">at the speed of thought</span>
+            Your ultimate AI workspace<br />
+            <span className="text-gradient">for research and learning</span>
           </h1>
 
           {/* Subheadline */}
           <p className="fade-up delay-100" style={{
             fontSize: 18, color: "var(--text-2)", lineHeight: 1.6,
-            maxWidth: 580, margin: "0 auto 40px", fontWeight: 400
+            maxWidth: 680, margin: "0 auto 40px", fontWeight: 400
           }}>
-            Upload PDFs, links, or audio and let our AI create study guides, summarize concepts, and answer your deepest questions.
+            Organize infinite notebooks, chat with multiple documents simultaneously, visualize knowledge graphs, and deploy autonomous agents to verify claims and generate cited reports.
           </p>
 
           {/* CTA Button */}
@@ -568,16 +557,16 @@ export default function HomePage() {
         {/* Floating Background Widgets */}
         <div className="widgets-container">
           <div className="widgets-scroll-track">
-            <StickyNoteWidget />
-            <RemindersWidget />
-            <TasksWidget />
-            <IntegrationsWidget />
+            <AgentStudioWidget />
+            <FlashcardsWidget />
+            <FormatsWidget />
+            <CitationWidget />
             {/* Clone for infinite mobile marquee */}
             <div className="mobile-only-clone">
-              <StickyNoteWidget />
-              <RemindersWidget />
-              <TasksWidget />
-              <IntegrationsWidget />
+              <AgentStudioWidget />
+              <FlashcardsWidget />
+              <FormatsWidget />
+              <CitationWidget />
             </div>
           </div>
         </div>
@@ -695,12 +684,15 @@ export default function HomePage() {
         </div>
 
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 24 }}>
+          {/* Original Core Features */}
           <FeatureCard delay={0} icon={<MessageSquare size={24} />} title="AI chat over your docs" desc="Ask questions in natural language. Get cited, context-aware answers grounded in your uploaded documents." />
           <FeatureCard delay={100} icon={<Zap size={24} />} title="Auto summarization" desc="Generate concise summaries, FAQs, study guides, and briefing docs from your PDFs and notes in seconds." />
-          <FeatureCard delay={200} icon={<Lock size={24} />} title="Private & secure" desc="Your documents stay in your account. We never use your content to train AI models." />
-          <FeatureCard delay={0} icon={<LayoutGrid size={24} />} title="Multi-source chat" desc="Select multiple documents and chat across all of them simultaneously. Cross-reference with ease." />
-          <FeatureCard delay={100} icon={<Folder size={24} />} title="Infinite notebooks" desc="Organize unlimited documents into unlimited notebooks with full-text search and source management." />
-          <FeatureCard delay={200} icon={<Mic size={24} />} title="Audio overviews" desc="Turn your documents into podcast-style audio discussions. Study on the go with AI-generated audio." />
+          <FeatureCard delay={200} icon={<LayoutGrid size={24} />} title="Multi-source chat" desc="Select multiple documents and chat across all of them simultaneously. Cross-reference with ease." />
+
+          {/* New Agentic Features */}
+          <FeatureCard delay={0} icon={<CheckCircle size={24} />} title="Citation Verification Agent" desc="Extracts claims from your text, cross-references with your private vector DB, and verifies against public web search." />
+          <FeatureCard delay={100} icon={<Search size={24} />} title="Knowledge Gap Detection" desc="Input your curriculum or syllabus and let our AI grade your notes, calculate coverage, and highlight missing concepts." />
+          <FeatureCard delay={200} icon={<FileText size={24} />} title="Research Reports" desc="Synthesize massive amounts of data into formal Research Reports with exact inline citations and bibliography." />
         </div>
       </section>
 
@@ -840,7 +832,7 @@ export default function HomePage() {
       {/* ── FOOTER ──────────────────────────────────────── */}
       <footer style={{
         borderTop: `1px solid var(--border-default)`,
-        padding: "48px 40px",
+        padding: "24px 40px",
         display: "flex",
         alignItems: "center",
         justifyContent: "space-between",
@@ -857,11 +849,11 @@ export default function HomePage() {
         </p>
         <nav style={{ display: "flex", gap: 32 }}>
           <Link to="/privacy" style={{ color: "var(--text-3)", fontSize: 14, fontWeight: 500, textDecoration: "none", transition: "color 0.2s" }}
-              onMouseEnter={e => (e.target as HTMLElement).style.color = "var(--text-1)"}
-              onMouseLeave={e => (e.target as HTMLElement).style.color = "var(--text-3)"}>Privacy</Link>
+            onMouseEnter={e => (e.target as HTMLElement).style.color = "var(--text-1)"}
+            onMouseLeave={e => (e.target as HTMLElement).style.color = "var(--text-3)"}>Privacy</Link>
           <Link to="/terms" style={{ color: "var(--text-3)", fontSize: 14, fontWeight: 500, textDecoration: "none", transition: "color 0.2s" }}
-              onMouseEnter={e => (e.target as HTMLElement).style.color = "var(--text-1)"}
-              onMouseLeave={e => (e.target as HTMLElement).style.color = "var(--text-3)"}>Terms</Link>
+            onMouseEnter={e => (e.target as HTMLElement).style.color = "var(--text-1)"}
+            onMouseLeave={e => (e.target as HTMLElement).style.color = "var(--text-3)"}>Terms</Link>
         </nav>
       </footer>
     </div>

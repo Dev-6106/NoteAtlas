@@ -510,9 +510,9 @@ const NoteHeader = ({
             style={{ width: 64, height: 64, borderRadius: 12, opacity: 0.9, objectFit: "cover", marginBottom: 12 }}
           />
         ) : (
-          <span style={{ fontSize: "3rem", lineHeight: 1.2 }}>
-            {imgError ? "📓" : note.image}
-          </span>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 64, height: 64, borderRadius: 12, background: "var(--primary-glow)", border: "1px solid var(--border-default)", marginBottom: 12, fontSize: "2rem" }}>
+            {imgError || !note.image ? <BookOpen size={32} style={{ color: "var(--primary-brand)" }} /> : note.image}
+          </div>
         )
       )}
 

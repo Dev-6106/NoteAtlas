@@ -9,6 +9,7 @@ import crypto from "crypto";
 import { cwd } from "process";
 import { LLM } from "@/app/llm/llm";
 import { generateAgentStudioArtifact } from "@/pipelines/agentStudio";
+import { deductCredits } from "@/app/helpers/credits";
 
 export const generateAgentReportController = async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -18,6 +19,8 @@ export const generateAgentReportController = async (req: Request, res: Response,
         if (!userId || !noteId || !agentType) {
             return res.status(400).json({ error: "Missing required fields" });
         }
+        
+        await deductCredits(userId, 10);
 
         const docRepo = DocRepository.getInstance();
         const sourceRepo = SourceRepository.getInstance();

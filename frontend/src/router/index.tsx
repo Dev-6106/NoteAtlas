@@ -44,6 +44,16 @@ export const router = createBrowserRouter([
       ]
    },
    {
+      path: '/notes/:noteId/graph',
+      Component: lazy(() => import("@/layouts/ChatLayout")),
+      children: [
+         {
+            index: true,
+            Component: lazy(() => import("@/pages/knowledge-graph/KnowledgeGraphPage")),
+         }
+      ]
+   },
+   {
       path: '/privacy',
       Component: lazy(() => import("@/pages/legal/PrivacyPolicyPage")),
    },

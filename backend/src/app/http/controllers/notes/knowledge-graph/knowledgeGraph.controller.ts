@@ -15,6 +15,7 @@ import { LLM } from "@/app/llm/llm";
 import { logger } from "@/lib/logger";
 import { updateOrCreateSummary } from "@/app/http/controllers/notes/summary/updateOrCreateSummary";
 import { DocRepository } from "@/app/http/controllers/notes/repository/DocRepository";
+import { deductCredits } from "@/app/helpers/credits";
 
 /**
  * GET /api/v1/notes/:noteId/graph
@@ -163,6 +164,8 @@ export async function generateKnowledgeGraph(req: Request, res: Response) {
       res.status(400).json({ error: { message: "No indexed documents found in this notebook" } });
       return;
     }
+    
+    await deductCredits(userId, 10);
 
     // If force, clear existing entities and relationships
     if (force) {

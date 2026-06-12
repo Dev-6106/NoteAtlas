@@ -10,15 +10,21 @@ import { makeHttpReq } from "@/helper/makeHttpReq";
 // Wrap API call in an async thunk
 export const fetchNotes = createAsyncThunk(
   "notes/fetchNotes",
-  async ({ page = 1, search = "", isArchived = false, sortBy = "updatedAt", sortOrder = "desc" }: 
-    { page: number, search: string, isArchived?: boolean, sortBy?: string, sortOrder?: string }) => {
-      const query = new URLSearchParams({
+  async ({ page = 1, search = "", isArchived = false, sortBy = "updatedAt", sortOrder = "desc", folderId }: 
+    { page: number, search: string, isArchived?: boolean, sortBy?: string, sortOrder?: string, folderId?: string | null }) => {
+      const queryParams: Record<string, string> = {
           page: page.toString(),
           search,
           isArchived: isArchived.toString(),
           sortBy,
           sortOrder
-      }).toString();
+      };
+      
+      if (folderId !== undefined) {
+          queryParams.folderId = folderId === null ? "null" : folderId;
+      }
+
+      const query = new URLSearchParams(queryParams).toString();
       
       const data = await makeHttpReq('GET', `notes?${query}`) as NoteServerData;
       return data;

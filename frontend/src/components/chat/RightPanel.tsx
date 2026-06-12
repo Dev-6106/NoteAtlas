@@ -20,7 +20,9 @@ import {
   Pause,
   Youtube,
   Globe,
-  FileAudio
+  FileAudio,
+  Network,
+  Bot
 } from "lucide-react";
 import { Button } from "../ui/button";
 import { useDispatch, useSelector } from "react-redux";
@@ -30,6 +32,7 @@ import {
   toggleRightPanel,
 } from "@/store/chatSlice";
 import "./animate.css";
+import { useNavigate } from "react-router";
 
 import {
   createBriefingDoc,
@@ -42,7 +45,7 @@ import {
 import type { AppDispatch, RootState } from "@/store";
 import { showError } from "@/util/toast-notification";
 import { useState, useEffect, useRef } from "react";
-import { fetchNoteSourceResult, showSourceModalContent, showAudioPlayer, closeAudioPlayer } from "@/store/rightPanelSlice";
+import { fetchNoteSourceResult, showSourceModalContent, showAudioPlayer, closeAudioPlayer, openAgentStudioModal } from "@/store/rightPanelSlice";
 import { fetchQuizHistoryAction, setActiveQuiz, submitQuizAction } from "@/store/quizSlice";
 import { fetchFlashcardHistoryAction, setActiveFlashcardSet } from "@/store/flashcardSlice";
 import { truncateTitle } from "@/util/truncateTitle";
@@ -55,6 +58,7 @@ import { getAudioUrl } from "@/api/notes";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import PdfIcon from "@/assets/pdf.png";
+import AgentStudioModal from "../agents/AgentStudioModal";
 
 const AudioPlayer = ({ storageKey, onClose, title }: { storageKey: string, onClose: () => void, title: string }) => {
   const [url, setUrl] = useState<string | null>(null);
@@ -196,6 +200,9 @@ const AudioPlayer = ({ storageKey, onClose, title }: { storageKey: string, onClo
 /* ═══════════════════════════════════════
    Right Panel — Studio
    ═══════════════════════════════════════ */
+import { Edit2, Trash2, MoreVertical } from "lucide-react";
+import { renameGeneratedSourceApi, deleteGeneratedSourceApi } from "@/api/notes";
+
 const RightPanel = ({ noteId }: { noteId?: string }) => {
   const dispatch = useDispatch<AppDispatch>();
   const { rightPanelOpen } = useSelector((state: RootState) => state.chat);
@@ -215,6 +222,41 @@ const RightPanel = ({ noteId }: { noteId?: string }) => {
   const [pptLoading, setPptLoading] = useState(false);
   const [flashcardLoading, setFlashcardLoading] = useState(false);
   const [activeSource, setActiveSource] = useState<any | null>(null);
+
+  /* ── generated source management states ── */
+  const [editingSourceId, setEditingSourceId] = useState<string | null>(null);
+  const [editSourceName, setEditSourceName] = useState("");
+  const [openGeneratedMenuId, setOpenGeneratedMenuId] = useState<string | null>(null);
+  const [deleteConfirmGeneratedId, setDeleteConfirmGeneratedId] = useState<string | null>(null);
+
+  const handleRenameGeneratedSource = (e: React.MouseEvent, sourceId: string, currentName: string) => {
+    e.stopPropagation();
+    setOpenGeneratedMenuId(null);
+    setEditingSourceId(sourceId);
+    setEditSourceName(currentName);
+  };
+
+  const saveRenameGenerated = async (sourceId: string, currentName: string) => {
+    if (editSourceName && editSourceName.trim() !== "" && editSourceName !== currentName) {
+      await renameGeneratedSourceApi(sourceId, editSourceName.trim());
+      fetchSources();
+    }
+    setEditingSourceId(null);
+  };
+
+  const handleDeleteGeneratedSourceClick = (e: React.MouseEvent, sourceId: string) => {
+    e.stopPropagation();
+    setOpenGeneratedMenuId(null);
+    setDeleteConfirmGeneratedId(sourceId);
+  };
+
+  const handleConfirmDeleteGeneratedSource = async () => {
+    if (deleteConfirmGeneratedId) {
+      await deleteGeneratedSourceApi(deleteConfirmGeneratedId);
+      fetchSources();
+      setDeleteConfirmGeneratedId(null);
+    }
+  };
 
   function handleViewSource(source: any) {
     if (source.source_type === "audio-overview" || source.source_type === "podcast") {
@@ -379,7 +421,23 @@ const RightPanel = ({ noteId }: { noteId?: string }) => {
   }
 
   /* ── Action items config ── */
+  const navigate = useNavigate();
+
   const studioActions = [
+    {
+      key: "knowledge-graph",
+      label: "Knowledge Graph",
+      icon: <Network size={18} />,
+      color: "#a78bfa", // purple
+      bgLight: "rgba(167, 139, 250, 0.12)",
+      bgHover: "rgba(167, 139, 250, 0.25)",
+      loading: false,
+      onClick: () => {
+        if (noteId) {
+          window.location.href = `/notes/${noteId}/graph`;
+        }
+      },
+    },
     {
       key: "audio",
       label: "Audio Overview",
@@ -461,6 +519,16 @@ const RightPanel = ({ noteId }: { noteId?: string }) => {
       onClick: handleOpenFlashcardModal,
     },
     {
+      key: "agent-studio",
+      label: "Agent Studio",
+      icon: <Bot size={18} />,
+      color: "#10b981", // emerald
+      bgLight: "rgba(16, 185, 129, 0.12)",
+      bgHover: "rgba(16, 185, 129, 0.25)",
+      loading: false,
+      onClick: () => dispatch(openAgentStudioModal()),
+    },
+    {
       key: "ppt",
       label: "Presentation",
       icon: <MonitorPlay size={18} />,
@@ -483,6 +551,7 @@ const RightPanel = ({ noteId }: { noteId?: string }) => {
         overflow: "hidden",
       }}
     >
+      <AgentStudioModal noteId={noteId} />
       <SourceModal />
       <MindMapSourceModal />
       <QuizModal noteId={noteId} />
@@ -665,9 +734,8 @@ const RightPanel = ({ noteId }: { noteId?: string }) => {
                 >
                   {Array.isArray(sources) &&
                     sources.map((source: any) => (
-                      <button
+                      <div
                         key={source._id}
-                        onClick={() => handleViewSource(source)}
                         style={{
                           display: "flex",
                           alignItems: "center",
@@ -676,10 +744,10 @@ const RightPanel = ({ noteId }: { noteId?: string }) => {
                           borderRadius: 10,
                           border: "1px solid transparent",
                           background: "transparent",
-                          cursor: "pointer",
                           transition: "all 0.2s",
                           textAlign: "left",
                           width: "100%",
+                          cursor: "pointer"
                         }}
                         onMouseEnter={(e) => {
                           e.currentTarget.style.background =
@@ -691,40 +759,148 @@ const RightPanel = ({ noteId }: { noteId?: string }) => {
                           e.currentTarget.style.background = "transparent";
                           e.currentTarget.style.borderColor = "transparent";
                         }}
+                        onClick={() => handleViewSource(source)}
                       >
                         <SourceIcon type={source?.source_type} />
-                        <div
-                          style={{
-                            display: "flex",
-                            flexDirection: "column",
-                            minWidth: 0,
-                            flex: 1,
-                          }}
-                        >
-                          <span
+                        {editingSourceId === source._id ? (
+                          <input
+                            autoFocus
+                            value={editSourceName}
+                            onChange={(e) => setEditSourceName(e.target.value)}
+                            onBlur={() => saveRenameGenerated(source._id, source?.title)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') saveRenameGenerated(source._id, source?.title);
+                              if (e.key === 'Escape') setEditingSourceId(null);
+                            }}
+                            onClick={(e) => e.stopPropagation()}
                             style={{
+                              flex: 1,
                               fontSize: 13,
                               fontWeight: 500,
                               color: "var(--text-1)",
-                              overflow: "hidden",
-                              textOverflow: "ellipsis",
-                              whiteSpace: "nowrap",
+                              background: "var(--bg-elevated)",
+                              border: "1px solid var(--border-accent)",
+                              borderRadius: 4,
+                              padding: "2px 6px",
+                              outline: "none",
                             }}
-                          >
-                            {truncateTitle(source?.title, 30) || "No title"}
-                          </span>
-                          <span
+                          />
+                        ) : (
+                          <div
                             style={{
-                              fontSize: 11,
-                              color: "var(--text-3)",
-                              marginTop: 1,
+                              display: "flex",
+                              flexDirection: "column",
+                              minWidth: 0,
+                              flex: 1,
                             }}
                           >
-                            {source?.source_type} · {source?.total_source}{" "}
-                            sources
-                          </span>
+                            <span
+                              style={{
+                                fontSize: 13,
+                                fontWeight: 500,
+                                color: "var(--text-1)",
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
+                                whiteSpace: "nowrap",
+                              }}
+                              title={source?.title}
+                            >
+                              {truncateTitle(source?.title, 30) || "No title"}
+                            </span>
+                            <span
+                              style={{
+                                fontSize: 11,
+                                color: "var(--text-3)",
+                                marginTop: 1,
+                              }}
+                            >
+                              {source?.source_type} · {source?.total_source}{" "}
+                              sources
+                            </span>
+                          </div>
+                        )}
+
+                        {/* Context Menu Button */}
+                        <div style={{ position: "relative" }}>
+                          <button 
+                            onClick={(e) => { e.stopPropagation(); setOpenGeneratedMenuId(openGeneratedMenuId === source._id ? null : source._id); }}
+                            style={{
+                              background: openGeneratedMenuId === source._id ? "var(--bg-elevated)" : "transparent",
+                              border: "none",
+                              borderRadius: 6,
+                              padding: 2,
+                              cursor: "pointer",
+                              color: "var(--text-3)",
+                              transition: "all 0.2s",
+                              display: "flex"
+                            }}
+                            onMouseEnter={e => e.currentTarget.style.color = "var(--text-1)"}
+                            onMouseLeave={e => e.currentTarget.style.color = openGeneratedMenuId === source._id ? "var(--text-1)" : "var(--text-3)"}
+                          >
+                            <MoreVertical size={14} />
+                          </button>
+
+                          {/* Dropdown Menu */}
+                          {openGeneratedMenuId === source._id && (
+                            <>
+                              <div 
+                                onClick={(e) => { e.stopPropagation(); setOpenGeneratedMenuId(null); }}
+                                style={{ position: "fixed", inset: 0, zIndex: 10 }}
+                              />
+                              <div style={{
+                                position: "absolute", top: 24, right: 0,
+                                background: "var(--bg-elevated)",
+                                border: "1px solid var(--border-default)",
+                                borderRadius: 10,
+                                boxShadow: "var(--shadow-lg)",
+                                padding: 4,
+                                minWidth: 140,
+                                zIndex: 20,
+                                display: "flex", flexDirection: "column", gap: 2,
+                                animation: "fadeUp 0.15s ease-out"
+                              }}>
+                                <button
+                                  onClick={(e) => { e.stopPropagation(); handleViewSource(source); setOpenGeneratedMenuId(null); }}
+                                  style={{
+                                    display: "flex", alignItems: "center", gap: 8, padding: "6px 10px", borderRadius: 6, border: "none",
+                                    background: "transparent", color: "var(--text-2)", fontSize: 12, fontWeight: 500, cursor: "pointer",
+                                    textAlign: "left", width: "100%"
+                                  }}
+                                  onMouseEnter={e => { e.currentTarget.style.background = "var(--bg-card-hover)"; e.currentTarget.style.color = "var(--text-1)"; }}
+                                  onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "var(--text-2)"; }}
+                                >
+                                  <FileText size={13}/><span>View source</span>
+                                </button>
+                                <button
+                                  onClick={(e) => handleRenameGeneratedSource(e, source._id, source.title)}
+                                  style={{
+                                    display: "flex", alignItems: "center", gap: 8, padding: "6px 10px", borderRadius: 6, border: "none",
+                                    background: "transparent", color: "var(--text-2)", fontSize: 12, fontWeight: 500, cursor: "pointer",
+                                    textAlign: "left", width: "100%"
+                                  }}
+                                  onMouseEnter={e => { e.currentTarget.style.background = "var(--bg-card-hover)"; e.currentTarget.style.color = "var(--text-1)"; }}
+                                  onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "var(--text-2)"; }}
+                                >
+                                  <Edit2 size={13}/><span>Rename</span>
+                                </button>
+                                <div style={{ height: 1, background: "var(--border-default)", margin: "2px 0" }} />
+                                <button
+                                  onClick={(e) => handleDeleteGeneratedSourceClick(e, source._id)}
+                                  style={{
+                                    display: "flex", alignItems: "center", gap: 8, padding: "6px 10px", borderRadius: 6, border: "none",
+                                    background: "transparent", color: "var(--color-error)", fontSize: 12, fontWeight: 500, cursor: "pointer",
+                                    textAlign: "left", width: "100%"
+                                  }}
+                                  onMouseEnter={e => { e.currentTarget.style.background = "var(--color-error-light)"; e.currentTarget.style.color = "var(--color-error)"; }}
+                                  onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "var(--color-error)"; }}
+                                >
+                                  <Trash2 size={13}/><span>Delete</span>
+                                </button>
+                              </div>
+                            </>
+                          )}
                         </div>
-                      </button>
+                      </div>
                     ))}
                   
                   {Array.isArray(history) && history.map((quiz: any) => {
@@ -796,31 +972,25 @@ const RightPanel = ({ noteId }: { noteId?: string }) => {
                 </div>
               </>
             ) : (
-              <div
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  padding: "32px 16px",
-                  textAlign: "center",
-                }}
-              >
-                <FileText
-                  size={40}
-                  style={{ color: "var(--text-3)", opacity: 0.5 }}
-                />
-                <p
-                  style={{
-                    fontSize: 13,
-                    color: "var(--text-3)",
-                    marginTop: 12,
-                    lineHeight: 1.5,
-                  }}
-                >
-                  Select sources and generate content
-                  <br />
-                  using the buttons above.
+              <div className="fade-up" style={{ 
+                display: "flex", flexDirection: "column", alignItems: "center", 
+                justifyContent: "center", padding: "40px 16px", textAlign: "center" 
+              }}>
+                <div style={{ marginBottom: 16, position: "relative", width: 64, height: 64, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <svg width="64" height="64" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M40 18C41.5 30 46 34.5 58 36C46 37.5 41.5 42 40 54C38.5 42 34 37.5 22 36C34 34.5 38.5 30 40 18Z" fill="#E0D4FF"/>
+                    <path d="M22 46C22.5 50 24 51.5 28 52C24 52.5 22.5 54 22 58C21.5 54 20 52.5 16 52C20 51.5 21.5 50 22 46Z" fill="#E0D4FF"/>
+                    <path d="M60 46C60.5 50 62 51.5 66 52C62 52.5 60.5 54 60 58C59.5 54 58 52.5 54 52C58 51.5 59.5 50 60 46Z" fill="#E0D4FF"/>
+                    <path d="M30 20C30.5 22.5 31.5 23.5 34 24C31.5 24.5 30.5 25.5 30 28C29.5 25.5 28.5 24.5 26 24C28.5 23.5 29.5 22.5 30 20Z" fill="#E0D4FF"/>
+                    <path d="M52 24C52.5 26.5 53.5 27.5 56 28C53.5 28.5 52.5 29.5 52 32C51.5 29.5 50.5 28.5 48 28C50.5 27.5 51.5 26.5 52 24Z" fill="#E0D4FF"/>
+                    <path d="M42 6C42.5 8.5 43.5 9.5 46 10C43.5 10.5 42.5 11.5 42 14C41.5 11.5 40.5 10.5 38 10C40.5 9.5 41.5 8.5 42 6Z" fill="#E0D4FF"/>
+                  </svg>
+                </div>
+                <h3 style={{ fontSize: 16, fontWeight: 700, color: "var(--text-1)", marginBottom: 8, letterSpacing: "-0.3px" }}>
+                  Nothing generated yet
+                </h3>
+                <p style={{ fontSize: 13, color: "var(--text-3)", maxWidth: 220, lineHeight: 1.5 }}>
+                  Select sources and generate content using the studio buttons above.
                 </p>
               </div>
             )}
@@ -901,6 +1071,42 @@ const RightPanel = ({ noteId }: { noteId?: string }) => {
           </div>
         )}
       </div>
+
+      {/* Custom Delete Confirmation Modal for Generated Source */}
+      {deleteConfirmGeneratedId && (
+        <div 
+          onClick={() => setDeleteConfirmGeneratedId(null)}
+          style={{ position: "fixed", inset: 0, zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)" }}
+        >
+          <div 
+            onClick={(e) => e.stopPropagation()}
+            style={{ background: "var(--bg-elevated)", padding: 24, borderRadius: 16, border: "1px solid var(--border-default)", maxWidth: 400, width: "90%", boxShadow: "var(--shadow-xl)", animation: "fadeUp 0.2s ease-out" }}
+          >
+            <h3 style={{ fontSize: 18, fontWeight: 600, color: "var(--text-1)", marginBottom: 8, fontFamily: "var(--font-sans)" }}>Delete Generated Source</h3>
+            <p style={{ fontSize: 14, color: "var(--text-3)", marginBottom: 24, lineHeight: 1.5, fontFamily: "var(--font-sans)" }}>
+              Are you sure you want to delete this generated source? This action cannot be undone.
+            </p>
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: 12 }}>
+              <button 
+                onClick={() => setDeleteConfirmGeneratedId(null)}
+                style={{ padding: "8px 16px", borderRadius: 8, border: "1px solid var(--border-default)", background: "transparent", color: "var(--text-2)", fontSize: 14, fontWeight: 500, cursor: "pointer", fontFamily: "var(--font-sans)" }}
+                onMouseEnter={e => e.currentTarget.style.background = "var(--bg-card-hover)"}
+                onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={handleConfirmDeleteGeneratedSource}
+                style={{ padding: "8px 16px", borderRadius: 8, border: "none", background: "var(--color-error)", color: "var(--text-1)", fontSize: 14, fontWeight: 500, cursor: "pointer", fontFamily: "var(--font-sans)" }}
+                onMouseEnter={e => e.currentTarget.style.opacity = "0.9"}
+                onMouseLeave={e => e.currentTarget.style.opacity = "1"}
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
@@ -949,6 +1155,7 @@ const StudioActionButton = ({
         opacity: action.loading ? 0.7 : 1,
         minHeight: expanded ? 48 : 50,
         width: "100%",
+        minWidth: 0,
         color: action.color,
         transform: hovered && !action.loading ? "translateY(-1px)" : "none",
         boxShadow: hovered && !action.loading

@@ -7,12 +7,15 @@ import { SourceRepository } from "../notes/repository/sourceRepository";
 import { DocRepository } from "../notes/repository/DocRepository";
 import { ChatPromptTemplate } from "@langchain/core/prompts";
 import { invokeWithRetry } from "@/util/invokeWithRetry";
+import { deductCredits } from "@/app/helpers/credits";
+
 export async function generateBriefingDocSources(req: Request, res: Response, next: NextFunction) {
     try {
         const { noteId, docIds, type = 'briefing-doc' } = req.body as { noteId: string, docIds: string[], type: 'briefing-doc' };
         const userId = req.userId as string;
 
         if (docIds.length === 0) return res.status(400).json({ message: "Select a source" });
+        await deductCredits(userId, 3);
 
         const llm = LLM.getInstance();
         const sourceRepo = SourceRepository.getInstance();

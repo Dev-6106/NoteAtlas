@@ -2,6 +2,7 @@ import GoogleIcon from '@/assets/google.png'
 import { T } from "@/components/ThemeTokens";
 
 import { LogoSvg } from "@/components/base/LogoSvg";
+import { DottedBg } from "@/components/base/DottedBg";
 import { apiUrl } from "@/config/get-env";
 import { auth } from '@/config/firebase';
 import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
@@ -57,11 +58,6 @@ function LoginPage() {
       userSelect: "none", // Prevent accidental blue text selection while authenticating
     }}>
       <style>{`
-        @keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
-        .la0{animation:fadeUp 0.5s 0s ease both}
-        .la1{animation:fadeUp 0.5s 0.1s ease both}
-        .la2{animation:fadeUp 0.5s 0.2s ease both}
-        .la3{animation:fadeUp 0.5s 0.32s ease both}
         .google-btn:hover:not(:disabled){
           background:var(--bg-card-hover) !important;
           border-color:var(--border-accent) !important;
@@ -76,6 +72,8 @@ function LoginPage() {
           cursor: not-allowed;
         }
       `}</style>
+
+      <DottedBg />
 
       {/* Decorative Background Glow */}
       <div style={{
@@ -110,7 +108,7 @@ function LoginPage() {
         }} />
 
         {/* Logo */}
-        <div className="la0" style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 12, marginBottom: 36 }}>
+        <div className="fade-up" style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 12, marginBottom: 36 }}>
           <LogoSvg size={48} />
           <span style={{ fontSize: 22, fontWeight: 700, color: T.text1, letterSpacing: "-0.5px" }}>
             Note<span style={{ color: "#3b82f6" }}>Atlas</span>
@@ -118,7 +116,7 @@ function LoginPage() {
         </div>
 
         {/* Heading */}
-        <div className="la1" style={{ textAlign: "center", marginBottom: 12 }}>
+        <div className="fade-up delay-100" style={{ textAlign: "center", marginBottom: 12 }}>
           <h1 style={{
             fontSize: 28, fontWeight: 700, color: T.text1,
             letterSpacing: "-0.8px", marginBottom: 10,
@@ -132,14 +130,14 @@ function LoginPage() {
         </div>
 
         {/* Accent divider */}
-        <div className="la2" style={{
+        <div className="fade-up delay-200" style={{
           width: 40, height: 3, margin: "24px auto 32px",
           background: "linear-gradient(90deg, var(--primary-brand), var(--primary-light))",
           borderRadius: 2,
         }} />
 
         {/* Google Button */}
-        <div className="la3">
+        <div className="fade-up delay-300">
           <button
             onClick={handleGoogleLogin}
             disabled={isLoading}

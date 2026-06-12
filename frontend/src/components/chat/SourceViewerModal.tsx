@@ -2,6 +2,9 @@ import React, { useState, useEffect } from "react";
 import { X, FileText, Quote, Loader2, BookOpen, ExternalLink } from "lucide-react";
 import { makeHttpReq } from "@/helper/makeHttpReq";
 import { getUserData } from "@/helper/getUserData";
+import { useParams } from "react-router";
+import { getAnnotations, createAnnotation, deleteAnnotation, askAIAboutSelection } from "@/api/annotations";
+import type { Annotation } from "@/api/annotations";
 
 export interface Citation {
     title: string;
@@ -33,7 +36,6 @@ export const SourceViewerModal = ({
     initialPage, 
     initialLines 
 }: SourceViewerModalProps) => {
-    const [activeTab, setActiveTab] = useState<"citations" | "document">("citations");
     const [selectedDocId, setSelectedDocId] = useState<string | null>(initialDocId ?? null);
     const [activeCitation, setActiveCitation] = useState<{ page?: number; lines?: string } | null>(
         (initialPage || initialLines) ? { page: initialPage, lines: initialLines } : null
@@ -42,6 +44,16 @@ export const SourceViewerModal = ({
     const [textContent, setTextContent] = useState<string | null>(null);
     const [fetchingText, setFetchingText] = useState(false);
     const [loading, setLoading] = useState(false);
+
+    const { noteId } = useParams<{ noteId: string }>();
+    const [annotations, setAnnotations] = useState<Annotation[]>([]);
+    const [activeTab, setActiveTab] = useState<"citations" | "document" | "annotations">("citations");
+
+    // Selection state
+    const [selection, setSelection] = useState<{ text: string; top: number; left: number } | null>(null);
+    const [askAIQuery, setAskAIQuery] = useState("");
+    const [isAskingAI, setIsAskingAI] = useState(false);
+    const [showAskInput, setShowAskInput] = useState(false);
 
     useEffect(() => {
         if (initialDocId) {
@@ -101,6 +113,63 @@ export const SourceViewerModal = ({
             setDocContent({ docId, title: "Error", content: "Could not load document source.", source_type: undefined });
         } finally {
             setLoading(false);
+        }
+
+        // Fetch annotations
+        if (noteId) {
+            getAnnotations(noteId, docId).then(setAnnotations).catch(e => console.error("Failed to load annotations", e));
+        }
+    };
+
+    const handleMouseUp = () => {
+        const sel = window.getSelection();
+        if (!sel || sel.isCollapsed || !sel.toString().trim()) {
+            if (!showAskInput) {
+                setSelection(null);
+            }
+            return;
+        }
+
+        const range = sel.getRangeAt(0);
+        const rect = range.getBoundingClientRect();
+        
+        // Calculate position for toolbar relative to the viewport
+        // The modal is fixed, so viewport coords are fine, or we can adjust for modal container
+        setSelection({
+            text: sel.toString().trim(),
+            top: rect.top - 40, // 40px above selection
+            left: rect.left + rect.width / 2,
+        });
+    };
+
+    const handleCreateAnnotation = async (type: "highlight" | "bookmark") => {
+        if (!noteId || !selectedDocId || !selection) return;
+        try {
+            const newAnn = await createAnnotation(noteId, selectedDocId, {
+                type,
+                selectedText: selection.text,
+            });
+            setAnnotations(prev => [newAnn, ...prev]);
+            setSelection(null);
+        } catch (e) {
+            console.error("Failed to create annotation", e);
+        }
+    };
+
+    const handleAskAI = async () => {
+        if (!noteId || !selectedDocId || !selection || !askAIQuery.trim()) return;
+        setIsAskingAI(true);
+        try {
+            const newAnn = await askAIAboutSelection(noteId, selectedDocId, askAIQuery, selection.text);
+            setAnnotations(prev => [newAnn, ...prev]);
+            setSelection(null);
+            setShowAskInput(false);
+            setAskAIQuery("");
+            setActiveTab("annotations"); // switch to annotations tab to see result
+        } catch (e) {
+            console.error("Failed to ask AI", e);
+        } finally {
+            setIsAskingAI(false);
         }
     };
 
@@ -188,7 +257,7 @@ export const SourceViewerModal = ({
                     padding: "0 20px",
                     flexShrink: 0,
                 }}>
-                    {(["citations", "document"] as const).map((tab) => (
+                    {(["citations", "document", "annotations"] as const).map((tab) => (
                         <button key={tab} onClick={() => setActiveTab(tab)} style={{
                             padding: "10px 16px",
                             background: "transparent", border: "none",
@@ -199,9 +268,12 @@ export const SourceViewerModal = ({
                             marginBottom: -1,
                             display: "flex", alignItems: "center", gap: 6,
                             transition: "color 0.15s",
+                            textTransform: "capitalize",
                         }}>
-                            {tab === "citations" ? <Quote size={13} /> : <FileText size={13} />}
-                            {tab === "citations" ? "Citations" : "Document"}
+                            {tab === "citations" && <Quote size={13} />}
+                            {tab === "document" && <FileText size={13} />}
+                            {tab === "annotations" && <BookOpen size={13} />}
+                            {tab}
                         </button>
                     ))}
                 </div>
@@ -312,7 +384,9 @@ export const SourceViewerModal = ({
                                             <span style={{ fontSize: 13 }}>Fetching text content…</span>
                                         </div>
                                     ) : (textContent || docContent.content) ? (
-                                        <div style={{
+                                        <div
+                                            onMouseUp={handleMouseUp}
+                                            style={{
                                             fontSize: 13, color: "var(--text-2)",
                                             lineHeight: 1.75,
                                             background: "var(--bg-card)",
@@ -358,8 +432,151 @@ export const SourceViewerModal = ({
                             )}
                         </div>
                     )}
+
+                    {activeTab === "annotations" && (
+                        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                            {!selectedDocId ? (
+                                <div style={{ textAlign: "center", padding: "40px 20px", color: "var(--text-4)" }}>
+                                    <BookOpen size={32} style={{ opacity: 0.3, marginBottom: 12 }} />
+                                    <p style={{ fontSize: 13 }}>Select a citation or document to view its annotations.</p>
+                                </div>
+                            ) : annotations.length === 0 ? (
+                                <div style={{ textAlign: "center", padding: "40px 20px", color: "var(--text-4)" }}>
+                                    <BookOpen size={32} style={{ opacity: 0.3, marginBottom: 12 }} />
+                                    <p style={{ fontSize: 13 }}>No annotations yet.</p>
+                                    <p style={{ fontSize: 12, marginTop: 4 }}>Select text in the Document tab to add notes.</p>
+                                </div>
+                            ) : (
+                                annotations.map((ann) => (
+                                    <div key={ann._id} style={{
+                                        padding: "12px 14px",
+                                        borderRadius: 12,
+                                        background: "var(--bg-card)",
+                                        border: "1px solid var(--border-default)",
+                                        display: "flex", flexDirection: "column", gap: 8
+                                    }}>
+                                        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                                            <span style={{ 
+                                                fontSize: 11, fontWeight: 600, color: "var(--text-3)",
+                                                textTransform: "uppercase", letterSpacing: "0.05em",
+                                                display: "flex", alignItems: "center", gap: 4
+                                            }}>
+                                                {ann.type === "highlight" && <FileText size={12} />}
+                                                {ann.type === "bookmark" && <BookOpen size={12} />}
+                                                {ann.type === "question" && <Quote size={12} />}
+                                                {ann.type}
+                                            </span>
+                                        </div>
+                                        {ann.selectedText && (
+                                            <div style={{
+                                                padding: "8px 10px", borderRadius: 8,
+                                                background: "var(--bg-base)", borderLeft: "3px solid var(--primary-brand)",
+                                                fontSize: 12, color: "var(--text-2)", fontStyle: "italic"
+                                            }}>
+                                                "{ann.selectedText}"
+                                            </div>
+                                        )}
+                                        {ann.aiResponse && (
+                                            <div style={{ fontSize: 13, color: "var(--text-1)", marginTop: 4, lineHeight: 1.5 }}>
+                                                <strong>AI:</strong> {ann.aiResponse}
+                                            </div>
+                                        )}
+                                    </div>
+                                ))
+                            )}
+                        </div>
+                    )}
                 </div>
             </div>
+
+            {/* Floating Selection Toolbar */}
+            {selection && (
+                <div style={{
+                    position: "fixed",
+                    top: selection.top,
+                    left: selection.left,
+                    transform: "translateX(-50%)",
+                    zIndex: 9002,
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 8,
+                    alignItems: "center",
+                    animation: "slideUp 0.15s ease-out",
+                }}>
+                    <style>{`@keyframes slideUp{from{opacity:0;transform:translate(-50%, 10px)}to{opacity:1;transform:translate(-50%, 0)}}`}</style>
+                    <div style={{
+                        display: "flex",
+                        background: "var(--bg-elevated)",
+                        border: "1px solid var(--border-default)",
+                        borderRadius: 12,
+                        padding: 4,
+                        boxShadow: "var(--shadow-lg)",
+                        backdropFilter: "blur(12px)",
+                    }}>
+                        <button onClick={() => handleCreateAnnotation("highlight")} style={{
+                            background: "transparent", border: "none", cursor: "pointer",
+                            padding: "6px 10px", borderRadius: 8,
+                            color: "var(--text-1)", fontSize: 12, fontWeight: 600,
+                            display: "flex", alignItems: "center", gap: 6,
+                        }}>
+                            <FileText size={14} /> Highlight
+                        </button>
+                        <button onClick={() => handleCreateAnnotation("bookmark")} style={{
+                            background: "transparent", border: "none", cursor: "pointer",
+                            padding: "6px 10px", borderRadius: 8,
+                            color: "var(--text-1)", fontSize: 12, fontWeight: 600,
+                            display: "flex", alignItems: "center", gap: 6,
+                        }}>
+                            <BookOpen size={14} /> Bookmark
+                        </button>
+                        <button onClick={() => setShowAskInput(true)} style={{
+                            background: "transparent", border: "none", cursor: "pointer",
+                            padding: "6px 10px", borderRadius: 8,
+                            color: "var(--primary-brand)", fontSize: 12, fontWeight: 600,
+                            display: "flex", alignItems: "center", gap: 6,
+                        }}>
+                            <Quote size={14} /> Ask AI
+                        </button>
+                    </div>
+
+                    {showAskInput && (
+                        <div style={{
+                            background: "var(--bg-elevated)",
+                            border: "1px solid var(--border-default)",
+                            borderRadius: 12,
+                            padding: 8,
+                            boxShadow: "var(--shadow-lg)",
+                            display: "flex",
+                            gap: 8,
+                            width: 280,
+                        }}>
+                            <input
+                                autoFocus
+                                value={askAIQuery}
+                                onChange={e => setAskAIQuery(e.target.value)}
+                                onKeyDown={e => e.key === "Enter" && handleAskAI()}
+                                placeholder="Ask about this selection..."
+                                style={{
+                                    flex: 1, background: "var(--bg-base)", border: "1px solid var(--border-default)",
+                                    borderRadius: 8, padding: "6px 10px", color: "var(--text-1)", fontSize: 12,
+                                    outline: "none"
+                                }}
+                            />
+                            <button
+                                onClick={handleAskAI}
+                                disabled={isAskingAI || !askAIQuery.trim()}
+                                style={{
+                                    background: "var(--primary-brand)", color: "#fff", border: "none",
+                                    borderRadius: 8, padding: "6px 12px", fontSize: 12, fontWeight: 600,
+                                    cursor: "pointer", opacity: (isAskingAI || !askAIQuery.trim()) ? 0.5 : 1
+                                }}
+                            >
+                                {isAskingAI ? <Loader2 size={14} style={{ animation: "spin 1s linear infinite" }} /> : "Ask"}
+                            </button>
+                        </div>
+                    )}
+                </div>
+            )}
         </>
     );
 };

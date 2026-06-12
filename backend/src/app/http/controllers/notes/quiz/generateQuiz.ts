@@ -11,6 +11,8 @@ import { cwd } from "process";
 import { generateQuiz } from "@/pipelines/quiz";
 import { Document } from "@langchain/core/documents";
 
+import { deductCredits } from "@/app/helpers/credits";
+
 export async function generateQuizController(req: Request, res: Response) {
     try {
         const { noteId, docIds, difficulty, questionCount } = req.body;
@@ -23,6 +25,8 @@ export async function generateQuizController(req: Request, res: Response) {
                 message: `Missing required fields. userId: ${!!userId}, noteId: ${!!noteId}, docIds: ${!!docIds}, docIds.length: ${docIds?.length}` 
             });
         }
+        
+        await deductCredits(userId, 5);
 
         const llm = LLM.getInstance();
         const docRepo = DocRepository.getInstance();

@@ -7,12 +7,15 @@ import { generateTitle } from "../notes/helpers/TitleGeneration";
 import { generateAudio } from "@/pipelines/audio";
 import { uploadToStorage } from "@/services/storage/upload.service";
 
+import { deductCredits } from "@/app/helpers/credits";
+
 export async function generateAudioFromSources(req: Request, res: Response, next: NextFunction) {
     try {
         const { noteId, docIds } = req.body as { noteId: string, docIds: string[] };
         const userId = req.userId as string;
 
         if (docIds.length === 0) return res.status(400).json({ message: "Select a source" });
+        await deductCredits(userId, 5);
 
         const llm = LLM.getInstance();
         const sourceRepo = SourceRepository.getInstance();

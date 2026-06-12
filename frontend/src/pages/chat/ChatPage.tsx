@@ -107,7 +107,7 @@ function ChatPage() {
       `}</style>
 
       {/* ── Top Bar ── */}
-      <header style={{
+      <header className="fade-up" style={{
         display: "flex",
         alignItems: "center",
         justifyContent: "space-between",
@@ -148,7 +148,7 @@ function ChatPage() {
         {/* Left Panel */}
         {(!isMobile || mobileTab === "left") && (
         <div
-          className={`chat-side-panel left-panel ${!leftPanelOpen && !isMobile ? 'collapsed' : ''}`}
+          className={`chat-side-panel left-panel fade-up delay-100 ${!leftPanelOpen && !isMobile ? 'collapsed' : ''}`}
           style={{
             borderRadius: isMobile ? 0 : 16,
             border: `1px solid ${T.border}`,
@@ -167,7 +167,7 @@ function ChatPage() {
 
         {/* Chat Sidebar (New Multi-Chat panel) */}
         {userData && id && (!isMobile || mobileTab === "left") && (
-          <div style={{
+          <div className="fade-up delay-100" style={{
             borderRadius: isMobile ? 0 : 16,
             border: `1px solid ${T.border}`,
             background: T.bgSurface,
@@ -181,7 +181,7 @@ function ChatPage() {
 
         {/* Middle Panel */}
         {(!isMobile || mobileTab === "middle") && (
-        <div style={{
+        <div className="fade-up delay-200" style={{
           flex: 1,
           borderRadius: isMobile ? 0 : 16,
           border: isMobile ? "none" : `1px solid ${T.border}`,
@@ -202,7 +202,7 @@ function ChatPage() {
         {/* Right Panel */}
         {(!isMobile || mobileTab === "right") && (
         <div
-          className={`chat-side-panel right-panel ${!rightPanelOpen && !isMobile ? 'collapsed' : ''}`}
+          className={`chat-side-panel right-panel fade-up delay-300 ${!rightPanelOpen && !isMobile ? 'collapsed' : ''}`}
           style={{
             borderRadius: isMobile ? 0 : 16,
             border: `1px solid ${T.border}`,

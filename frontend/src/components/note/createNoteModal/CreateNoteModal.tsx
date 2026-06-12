@@ -12,6 +12,8 @@ import AddWebLinkForm from "./AddWebLinkForm";
 
 import { toggleDiscoveryModal } from "@/store/discoveryModalSlice";
 import { showInfo } from "@/util/toast-notification";
+import { apiUrl } from "@/config/get-env";
+import { auth } from "@/config/firebase";
 
 
 
@@ -232,9 +234,12 @@ const UploadFileSection = ({ noteId }: { noteId?: string }) => {
                 });
             }, 1200);
 
+            const user = auth.currentUser;
+            const token = user ? await user.getIdToken() : null;
+
             const response = await fetch(`${apiUrl}/api/v1/notes/upload-files`, {
                 method: "POST",
-                credentials: "include",
+                headers: token ? { "Authorization": `Bearer ${token}` } : {},
                 body: formData,
             });
 
@@ -249,6 +254,9 @@ const UploadFileSection = ({ noteId }: { noteId?: string }) => {
                 showInfo('File uploaded successfully');
                 setLoading(false);
                 setIngestStep(0);
+                if (noteId) {
+                    dispatch(fetchSingleNote(noteId));
+                }
             }, 800);
         } catch (error) {
             setLoading(false);
@@ -334,21 +342,21 @@ const UploadFileSection = ({ noteId }: { noteId?: string }) => {
                         background: "var(--primary-glow)",
                         border: "1px solid var(--primary-border)",
                         display: "flex", alignItems: "center", justifyContent: "center",
-                        marginBottom: 12,
+                        marginBottom: 12, pointerEvents: "none"
                     }}>
                         <Upload size={24} style={{ color: "var(--primary-brand)" }} />
                     </div>
 
-                    <p style={{ fontSize: 15, fontWeight: 600, color: "var(--text-1)", marginBottom: 4 }}>
+                    <p style={{ fontSize: 15, fontWeight: 600, color: "var(--text-1)", marginBottom: 4, pointerEvents: "none" }}>
                         Upload sources
                     </p>
-                    <p style={{ fontSize: 13, color: "var(--text-3)", marginBottom: 6 }}>
+                    <p style={{ fontSize: 13, color: "var(--text-3)", marginBottom: 6, pointerEvents: "none" }}>
                         Drag & drop or{" "}
                         <span style={{ color: "var(--primary-brand)", fontWeight: 600 }}>choose file</span>{" "}
                         to upload
                     </p>
-                    <p style={{ fontSize: 12, color: "var(--text-4)" }}>
-                        Supported file types: PDF, .txt, Markdown
+                    <p style={{ fontSize: 12, color: "var(--text-4)", pointerEvents: "none" }}>
+                        Supported file types: PDF, .docx, .csv, .md, .txt, .json, Audio (.mp3, .wav)
                     </p>
                 </>
             )}
@@ -358,6 +366,7 @@ const UploadFileSection = ({ noteId }: { noteId?: string }) => {
                 ref={fileInputRef}
                 style={{ display: "none" }}
                 onChange={handleFileSelect}
+                accept=".pdf,.txt,.md,.docx,.doc,.csv,.json,audio/mpeg,audio/wav,.mp3"
                 multiple
             />
 

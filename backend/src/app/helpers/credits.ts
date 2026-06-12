@@ -1,6 +1,8 @@
 import { User } from "@/app/models/user.models";
 import mongoose from "mongoose";
 
+import { AppError } from "@/middleware/error.middleware";
+
 /**
  * Deduct credits from a user. Returns false and throws if insufficient balance.
  */
@@ -12,9 +14,7 @@ export async function deductCredits(userId: string, amount: number): Promise<voi
     );
 
     if (!result) {
-        const err: any = new Error("Insufficient credits. Please recharge to continue using AI features.");
-        err.statusCode = 402;
-        throw err;
+        throw new AppError("Insufficient credits. Please recharge to continue using AI features.", 402, true);
     }
 }
 
