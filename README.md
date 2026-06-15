@@ -1,36 +1,36 @@
 <div align="center">
 
-  <img src="https://raw.githubusercontent.com/tandpfun/skill-icons/main/icons/React-Dark.svg" width="52" alt="React" />
-  <img src="https://raw.githubusercontent.com/tandpfun/skill-icons/main/icons/NodeJS-Dark.svg" width="52" alt="NodeJS" />
-  <img src="https://raw.githubusercontent.com/tandpfun/skill-icons/main/icons/TypeScript.svg" width="52" alt="TypeScript" />
-  <img src="https://raw.githubusercontent.com/tandpfun/skill-icons/main/icons/TailwindCSS-Dark.svg" width="52" alt="TailwindCSS" />
-  <img src="https://raw.githubusercontent.com/tandpfun/skill-icons/main/icons/MongoDB.svg" width="52" alt="MongoDB" />
-  <img src="https://raw.githubusercontent.com/tandpfun/skill-icons/main/icons/Firebase-Dark.svg" width="52" alt="Firebase" />
+<br/>
 
-  <h1><img src="./frontend/public/logo_white.svg" height="36" alt="NoteAtlas Logo" /> NoteAtlas</h1>
+<img src="https://raw.githubusercontent.com/tandpfun/skill-icons/main/icons/React-Dark.svg" width="46" alt="React" />
+<img src="https://raw.githubusercontent.com/tandpfun/skill-icons/main/icons/NodeJS-Dark.svg" width="46" alt="Node.js" />
+<img src="https://raw.githubusercontent.com/tandpfun/skill-icons/main/icons/TypeScript.svg" width="46" alt="TypeScript" />
+<img src="https://raw.githubusercontent.com/tandpfun/skill-icons/main/icons/MongoDB.svg" width="46" alt="MongoDB" />
+<img src="https://raw.githubusercontent.com/tandpfun/skill-icons/main/icons/Firebase-Dark.svg" width="46" alt="Firebase" />
 
-  <p><strong>Your intelligent, AI-powered document workspace — inspired by Google NotebookLM.</strong></p>
+<br/><br/>
 
-  <p>
-    <img src="https://img.shields.io/badge/React-19-61DAFB?style=flat-square&logo=react&logoColor=black" alt="React 19" />
-    <img src="https://img.shields.io/badge/Node.js-18%2B-339933?style=flat-square&logo=node.js&logoColor=white" alt="Node.js" />
-    <img src="https://img.shields.io/badge/TypeScript-5-3178C6?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript" />
-    <img src="https://img.shields.io/badge/LangChain-enabled-1C3C3C?style=flat-square&logo=langchain&logoColor=white" alt="LangChain" />
-    <img src="https://img.shields.io/badge/License-ISC-blue?style=flat-square" alt="License" />
-  </p>
+# <img src="./frontend/public/logo_white.svg" height="36" alt="NoteAtlas Logo" style="vertical-align: middle;"/> NoteAtlas
 
-  <p>
-    <a href="#-overview">Overview</a> •
-    <a href="#-features">Features</a> •
-    <a href="#-tech-stack">Tech Stack</a> •
-    <a href="#-getting-started">Getting Started</a> •
-    <a href="#-environment-variables">Environment Variables</a> •
-    <a href="#-contributing">Contributing</a>
-  </p>
+### An AI-native knowledge workspace for deep document intelligence,<br/>research automation, and agent-powered learning.
 
-  <br/>
+<br/>
 
-  > Upload documents. Ask questions. Visualize ideas. Listen anywhere.
+[![React 19](https://img.shields.io/badge/React-19-61DAFB?style=flat-square&logo=react&logoColor=black)](https://react.dev)
+[![Node.js](https://img.shields.io/badge/Node.js-18%2B-339933?style=flat-square&logo=node.js&logoColor=white)](https://nodejs.org)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org)
+[![LangGraph](https://img.shields.io/badge/LangGraph-enabled-1C3C3C?style=flat-square&logo=langchain&logoColor=white)](https://www.langchain.com/langgraph)
+[![DeepSeek](https://img.shields.io/badge/DeepSeek_V4-Pro-4d4d4d?style=flat-square)](https://fireworks.ai)
+
+<br/>
+
+**Upload documents · Ask questions · Visualize ideas · Listen anywhere**
+
+<br/>
+
+[Overview](#-overview) · [Why NoteAtlas](#-why-noteatlas) · [vs. NotebookLM](#-noteatlas-vs-notebooklm) · [Features](#-core-features) · [Tech Stack](#-tech-stack) · [Getting Started](#-getting-started)
+
+<br/>
 
 </div>
 
@@ -38,52 +38,213 @@
 
 ## 📖 Overview
 
-**NoteAtlas** is a full-stack, AI-driven document workspace that transforms how you interact with your notes and files. Upload PDFs and text documents, then use the power of Google Gemini and LangChain to chat with your content, auto-generate interactive mind maps, and even listen to audio summaries on the go.
+NoteAtlas turns static documents into a living knowledge system.
 
-Built with a React 19 frontend, a Node.js/Express/TypeScript backend, and a robust vector-search pipeline (Pinecone + MongoDB), NoteAtlas is designed for researchers, students, and knowledge workers who need more than a plain document viewer.
+Upload PDFs, research papers, notes, transcripts, or audio recordings — and instantly unlock AI pipelines that go far beyond simple document chat. NoteAtlas is built as a collection of **specialized AI agents and retrieval architectures**, not a single LLM wrapper.
+
+It combines **Adaptive RAG**, **LangGraph agents**, **semantic search**, **structured outputs**, and **long-document processing** into one integrated workspace — so your documents don't just answer questions, they become a foundation for research, learning, and structured knowledge.
 
 ---
 
-## ✨ Features
+## 🤔 Why NoteAtlas?
 
-| | Feature | Description |
+Most AI document tools work like this:
+
+1. Upload a document
+2. Ask a question
+3. Get an answer
+
+NoteAtlas treats documents as raw material, not just context. Instead of reading through a PDF, NoteAtlas converts it into searchable knowledge, structured concepts, visual maps, entity relationships, study materials, research artifacts, and interactive AI workflows.
+
+The difference isn't just features — it's a fundamentally different model of what a document tool should do.
+
+---
+
+## ⚡ NoteAtlas vs. NotebookLM
+
+| Feature | 🗺️ NoteAtlas | 📓 NotebookLM |
 |---|---|---|
-| 📄 | **Document Processing** | Upload PDFs and plain text; content is parsed, chunked, and indexed for fast semantic retrieval. |
-| 🧠 | **AI-Powered Chat** | Ask natural language questions and get grounded answers via Google Gemini + LangChain RAG. |
-| 🗺️ | **Mind Map Generation** | Automatically build and explore interactive visual mind maps from your documents using Mind-Elixir. |
-| 🎧 | **Audio Summaries** | Convert document insights to speech with Google TTS — perfect for commutes or passive review. |
-| ⚡ | **Real-time Feedback** | WebSocket integration streams processing status so you're never left waiting in the dark. |
-| 🔐 | **Secure Authentication** | Firebase Auth handles sign-up, login, and session management out of the box. |
-| 💳 | **Flexible Payments** | Subscription and credit-pack billing via Stripe (global) and Razorpay (India). |
+| **Document chat** | ✅ ReAct agent with multi-step reasoning & tool use | ✅ Single-turn chatbot with source citations |
+| **Retrieval method** | ✅ Adaptive RAG — multi-query expansion, Cohere reranking, document grading, web fallback | 🟡 Basic RAG — chunk retrieval, no query expansion or grading |
+| **AI agents** | ✅ 10 specialized agents (research, study, timeline, debate & more) | ❌ None — fixed output set only |
+| **Knowledge graph** | ✅ Auto-extracts people, orgs, concepts, events & relationships | ❌ Text understanding only |
+| **Citation verification** | ✅ Dedicated agent with confidence scores & contradiction flagging | 🟡 Cites sources but does not verify claims |
+| **Multi-query + RRF** | ✅ Multiple semantic variations fused via Reciprocal Rank Fusion | ❌ Single query per retrieval pass |
+| **Learning system** | ✅ Flashcards, quizzes, study guides, mind maps, presentation outlines | 🟡 Study guides and FAQ only |
+| **Audio pipelines** | ✅ Whisper transcription + TTS narration + podcast-style scripts | ✅ Audio overviews (podcast-style) |
+| **Long document handling** | ✅ Chunking, map-reduce, recursive collapse, structured summarization | 🟡 Context window constraints apply |
+| **Web search fallback** | ✅ Triggered when internal retrieval is insufficient | ❌ Restricted to uploaded sources |
+| **Open source / self-host** | ✅ Full stack, deploy on your own infrastructure | ❌ Google-hosted, closed product |
+
+> **Key:** ✅ Supported &nbsp;|&nbsp; 🟡 Partial &nbsp;|&nbsp; ❌ Not available
+
+### What the table means in practice
+
+**Adaptive RAG instead of basic retrieval** — NoteAtlas expands queries into multiple sub-queries, grades retrieved chunks for relevance, and falls back to web search when internal documents fall short. The system reasons about retrieval quality; it doesn't blindly trust search results.
+
+**ReAct agent-based chat** — Instead of a single-pass chatbot, NoteAtlas uses a LangGraph ReAct agent that can reason across steps, invoke tools, search the web, look up summaries, and explore metadata before generating a response.
+
+**Agent Studio** — Ten dedicated agents, each with its own prompt and processing pipeline, for tasks no single LLM call can handle well: cross-document debate, source verification, timeline extraction, and more.
+
+**Knowledge graph generation** — NoteAtlas automatically extracts entities and maps their relationships. You can explore how ideas connect — not just read what they mean.
+
+**Citation verification** — A dedicated verification agent extracts claims, checks them against internal and external sources, assigns confidence scores, and flags contradictions. Citing isn't the same as verifying.
+
+---
+
+## ✨ Core Features
+
+<table>
+<tr>
+<td valign="top" width="50%">
+
+**📄 Document Intelligence**
+- PDF & plain text ingestion
+- Audio transcription (Whisper Large V3)
+- Semantic search across your library
+- Context-aware retrieval with citations
+
+**🔬 Research Tools**
+- Adaptive RAG with query expansion
+- Citation and fact verification
+- Research report generation
+- Cross-document analysis
+- Timeline extraction
+
+</td>
+<td valign="top" width="50%">
+
+**🎓 Learning System**
+- Auto-generated study guides
+- Flashcards and quizzes
+- Mind maps and concept trees
+- Podcast-style audio summaries
+
+**🧠 Knowledge Management**
+- Interactive knowledge graphs
+- Entity and relationship extraction
+- Structured document metadata
+- Concept clustering
+
+</td>
+</tr>
+</table>
+
+---
+
+## 🤖 Agent Studio
+
+Ten specialized agents, each built for a task that requires more than a single LLM call:
+
+| Agent | What It Does |
+|---|---|
+| 📊 Research Report Generator | Produces structured, sourced research from your documents |
+| 📚 Study Plan Generator | Builds personalized learning paths from source material |
+| 🔍 Knowledge Gap Analyzer | Identifies what's missing or underdeveloped in your docs |
+| ⚔️ Cross-Document Debate | Generates multi-perspective arguments across sources |
+| 🧑‍🔬 Research Assistant | Answers complex research questions with grounded citations |
+| ✅ Source Verification Agent | Fact-checks claims with confidence scores & contradiction flags |
+| 📝 Meeting Minutes Generator | Turns transcripts into structured, actionable summaries |
+| 🗓️ Timeline Generator | Extracts and organizes chronological events |
+| 🖼️ Presentation Generator | Builds slide-ready outlines directly from documents |
+| ♻️ Content Repurposing Agent | Adapts content for different formats and audiences |
+
+---
+
+## 🏗️ Technical Architecture
+
+```mermaid
+graph TD
+    User(("User")) -->|"Uploads PDF / Text"| UI["Frontend UI React"]
+    User -->|"Queries"| UI
+    
+    UI -->|"API Route"| Express["Express.js Backend"]
+    
+    Express -->|"Agenda.js Background Job"| Ingest["Document Ingestion Pipeline"]
+    Ingest -->|"Extract & Chunk"| Chunking["Recursive Character Splitter"]
+    Chunking -->|"Cohere Embeddings"| Pinecone[("Pinecone Vector Store")]
+    Ingest -->|"Raw File"| Supabase[("Supabase Storage")]
+    Ingest -->|"Metadata"| Mongo[("MongoDB Atlas")]
+    
+    Express -->|"Graph State"| LangGraph["LangGraph State Machine"]
+    LangGraph -->|"ReAct Cycle"| DeepSeek["DeepSeek V4 Pro Reasoning"]
+    
+    LangGraph -->|"Adaptive RAG"| Router["Groq Llama 3.3 Router"]
+    Router -->|"Query Expansion"| Retrieval["Multi-Query Retrieval"]
+    Retrieval --> Pinecone
+    Retrieval -->|"Reranking"| Cohere["Cohere Reranker"]
+    
+    LangGraph -->|"Agent Studio"| Special["10 Specialized Agents"]
+    Special -->|"Structured Output JSON"| Mongo
+    Special -->|"Generates"| UI
+```
+
+---
+
+## 🗂️ Project Structure
+
+```text
+NoteAtlas/
+├── backend/
+│   ├── src/
+│   │   ├── app/           # Express routes and controllers
+│   │   ├── config/        # Environment and DB config
+│   │   ├── lib/           # Common library logic
+│   │   ├── middleware/    # Auth and error middleware
+│   │   ├── pipelines/     # Data ingestion and map-reduce pipelines
+│   │   ├── prompt/        # LLM system prompts and agent logic
+│   │   ├── services/      # Core AI integrations (DeepSeek, Groq, Cohere)
+│   │   ├── types/         # TypeScript definitions
+│   │   └── util/          # Helper functions
+│   ├── .env.example
+├── frontend/
+│   ├── src/
+│   │   ├── api/           # API fetch functions
+│   │   ├── assets/        # Static assets
+│   │   ├── components/    # Reusable React UI components
+│   │   ├── config/        # Environment configs
+│   │   ├── helper/        # Helpers and formatters
+│   │   ├── hooks/         # Custom React hooks
+│   │   ├── layouts/       # UI layout wrappers
+│   │   ├── lib/           # Third-party integrations
+│   │   ├── pages/         # Route-level page components
+│   │   ├── router/        # React Router configs
+│   │   ├── store/         # Redux state slices
+│   │   ├── types/         # TypeScript definitions
+│   │   └── util/          # Utility functions
+│   ├── .env.example
+└── README.md
+```
 
 ---
 
 ## 🛠️ Tech Stack
 
-### Frontend
-| Category | Technology |
+| Layer | Primary Technologies |
 |---|---|
-| Framework | React 19, Vite |
-| Styling | Tailwind CSS 4, Radix UI |
-| State Management | Redux Toolkit |
-| Routing | React Router 7 |
-| Auth | Firebase |
-| Payments | Stripe React, Razorpay |
-| Visualization | Mind-Elixir |
-| Rendering | React Markdown |
+| **Frontend UI** | React 19, Vite, TailwindCSS |
+| **State Management**| Redux Toolkit |
+| **Backend API** | Node.js, Express.js |
+| **AI Orchestration**| LangChain, LangGraph |
+| **Background Jobs** | Agenda.js |
 
-### Backend
-| Category | Technology |
+### AI Models & APIs
+
+| Model / API | Provider | Role |
+|---|---|---|
+| DeepSeek V4 Pro | Fireworks AI | Primary reasoning model |
+| Llama 3.3 70B | Groq | Fast inference |
+| Cohere | Cohere | Embeddings & reranking |
+| Whisper Large V3 | — | Audio transcription |
+
+### Infrastructure
+
+| Service | Role |
 |---|---|
-| Runtime | Node.js 18+, Express, TypeScript |
-| AI & Orchestration | LangChain, LangGraph, Google GenAI (Gemini) |
-| Databases | MongoDB (primary), Supabase (storage) |
-| Vector Store | Pinecone |
-| Auth | Firebase Admin SDK |
-| Payments | Razorpay |
-| Audio | Google TTS API, Fluent-FFmpeg |
-| Real-time | WebSockets |
-| Parsing | PDF-Parse |
+| MongoDB Atlas | Metadata & knowledge graphs |
+| Pinecone | Vector database |
+| Supabase Storage | Raw file blobs |
+| Firebase | Authentication |
 
 ---
 
@@ -91,167 +252,126 @@ Built with a React 19 frontend, a Node.js/Express/TypeScript backend, and a robu
 
 ### Prerequisites
 
-Make sure you have the following installed and accounts created before you begin:
-
 - **Node.js** v18 or higher
-- **npm** or **yarn**
-- Active accounts for: [Firebase](https://firebase.google.com), [Pinecone](https://www.pinecone.io), [MongoDB Atlas](https://www.mongodb.com/atlas), [Google AI Studio (Gemini)](https://aistudio.google.com)
+- Active accounts for: [Firebase](https://firebase.google.com), [Pinecone](https://www.pinecone.io), [MongoDB Atlas](https://www.mongodb.com/atlas), [Cohere](https://cohere.com/), [Groq](https://groq.com/), [Fireworks AI](https://fireworks.ai/), [Supabase](https://supabase.com/)
 
-### 1. Clone the repository
+---
+
+### 1. Clone & Install
 
 ```bash
 git clone https://github.com/Dev-6106/NoteAtlas.git
 cd NoteAtlas
 ```
 
-### 2. Configure environment variables
+---
 
-Set up your `.env` files in both `frontend/` and `backend/` directories before starting the servers. See the [Environment Variables](#-environment-variables) section below for all required keys.
+### 2. Configure Environment Variables
 
-### 3. Start the backend
+Create `.env` files in both the `frontend` and `backend` directories.
 
+#### `backend/.env`
+
+```env
+# Application
+NODE_ENV=production
+PORT=8000
+APP_URL=https://your-backend.railway.app
+FRONTEND_URL=https://your-app.vercel.app
+
+# Database
+DB_URL=mongodb+srv://<user>:<password>@cluster0.xxxxx.mongodb.net/notebooklm
+
+# LLM Providers
+GOOGLE_GEMINI_API_KEY=
+GROQ_API_KEY=
+FIREWORKS_API_KEY=
+
+# AI Services & Search
+TAVILY_API_KEY=
+EXA_SEARCH_API_KEY=
+HUGGINGFACE_API_KEY=
+COHERE_API_KEY=
+
+# Vector Store
+PINECONE_API_KEY=
+PINECONE_INDEX=notebooklm
+
+# Storage
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=
+SUPABASE_BUCKET=Documents
+
+# Firebase Admin
+FIREBASE_PROJECT_ID=
+FIREBASE_CLIENT_EMAIL=
+FIREBASE_PRIVATE_KEY=
+
+# Payments
+RAZORPAY_KEY_ID=rzp_live_xxxxxxxxxxxxxxxx
+RAZORPAY_KEY_SECRET=your-razorpay-key-secret
+```
+
+#### `frontend/.env`
+
+```env
+# Backend API URL
+VITE_API_URL=http://localhost:8000
+
+# Firebase Auth Configuration
+VITE_FIREBASE_API_KEY=
+VITE_FIREBASE_AUTH_DOMAIN=
+VITE_FIREBASE_PROJECT_ID=
+VITE_FIREBASE_STORAGE_BUCKET=
+VITE_FIREBASE_MESSAGING_SENDER_ID=
+VITE_FIREBASE_APP_ID=
+
+# Google OAuth Client ID
+VITE_GOOGLE_CLIENT_ID=
+
+# Razor Pay
+VITE_RAZORPAY_KEY_ID=
+```
+
+---
+
+### 3. Start the Servers
+
+**Backend:**
 ```bash
 cd backend
 npm install
 npm run dev
 ```
 
-The backend server will start on the port defined in your `.env` (default: `8000`).
-
-### 4. Start the frontend
-
-Open a **new terminal window**:
-
+**Frontend** (new terminal):
 ```bash
 cd frontend
 npm install
 npm run dev
 ```
 
-The frontend dev server will start at `http://localhost:5173` by default.
-
-> **Tip:** Run both servers simultaneously — the frontend proxies API requests to the backend via `VITE_API_URL`.
+Open [http://localhost:5173](http://localhost:5173) in your browser.
 
 ---
 
-## 🔐 Environment Variables
+## 👁️ Vision
 
-Create `.env` files in each directory and populate them with the values from your service dashboards.
+> NotebookLM helps you talk to documents.  
+> **NoteAtlas helps you build knowledge systems from them.**
 
-### `backend/.env`
-
-```env
-# Server
-PORT=8000
-
-# Database
-DB_URL=your_mongodb_connection_string
-
-# Vector Store
-PINECONE_API_KEY=your_pinecone_api_key
-PINECONE_INDEX=your_pinecone_index
-
-# AI
-GOOGLE_GEMINI_API_KEY=your_gemini_api_key
-
-# Firebase Admin SDK
-FIREBASE_PROJECT_ID=your_project_id
-FIREBASE_CLIENT_EMAIL=your_client_email
-FIREBASE_PRIVATE_KEY="your_private_key"
-
-# Payments
-RAZORPAY_KEY_ID=your_razorpay_key_id
-RAZORPAY_KEY_SECRET=your_razorpay_key_secret
-
-# Supabase
-SUPABASE_URL=your_supabase_url
-SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
-```
-
-### `frontend/.env`
-
-```env
-# Firebase
-VITE_FIREBASE_API_KEY=your_firebase_api_key
-VITE_FIREBASE_AUTH_DOMAIN=your_project.firebaseapp.com
-VITE_FIREBASE_PROJECT_ID=your_project_id
-VITE_FIREBASE_STORAGE_BUCKET=your_project.appspot.com
-VITE_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
-VITE_FIREBASE_APP_ID=your_app_id
-
-# Backend
-VITE_API_URL=http://localhost:8000
-
-# Payments
-VITE_RAZORPAY_KEY_ID=your_razorpay_key_id
-```
-
----
-
-## 🗂️ Project Structure
-
-```
-NoteAtlas/
-├── backend/
-│   ├── src/
-│   │   ├── app/           # Express routes and controllers
-│   │   ├── config/        # Environment and DB config
-│   │   ├── lib/           # Database setup and common libraries
-│   │   ├── middleware/    # Express middlewares (auth, etc)
-│   │   ├── pipelines/     # Data ingestion and chunking pipelines
-│   │   ├── prompt/        # LLM system prompts
-│   │   ├── services/      # Core business logic and AI integrations
-│   │   ├── types/         # TypeScript definitions
-│   │   └── util/          # Helper utilities
-│   ├── .env
-│   └── package.json
-│
-├── frontend/
-│   ├── src/
-│   │   ├── api/           # API fetch functions
-│   │   ├── assets/        # Static assets
-│   │   ├── components/    # Reusable UI components
-│   │   ├── config/        # Environment configurations
-│   │   ├── helper/        # Helper functions
-│   │   ├── hooks/         # Custom React hooks
-│   │   ├── layouts/       # UI layout wrappers
-│   │   ├── lib/           # Third-party integrations
-│   │   ├── pages/         # Route-level page components
-│   │   ├── router/        # React Router configuration
-│   │   ├── store/         # Redux state slices
-│   │   ├── types/         # TypeScript definitions
-│   │   └── util/          # Utility functions
-│   ├── .env
-│   └── package.json
-│
-└── README.md
-```
-
----
-
-## 🤝 Contributing
-
-Contributions, bug reports, and feature requests are welcome!
-
-1. Fork the repository
-2. Create a feature branch: `git checkout -b feat/your-feature-name`
-3. Commit your changes: `git commit -m "feat: add your feature"`
-4. Push to the branch: `git push origin feat/your-feature-name`
-5. Open a Pull Request
-
-Please check the [issues page](https://github.com/Dev-6106/NoteAtlas/issues) for open tasks before starting something new.
-
----
-
-## 📄 License
-
-This project is licensed under the **ISC License**. See the [LICENSE](./LICENSE) file for details.
+The goal isn't document chat. The goal is transforming raw information into understanding, learning, research, and actionable intelligence — with AI that reasons about your content, not just retrieves it.
 
 ---
 
 <div align="center">
-  <p>Built with ❤️ using React, Node.js, and LangChain.</p>
-  <p>
-    <a href="https://github.com/Dev-6106/NoteAtlas">⭐ Star this repo</a> if you find it useful!
-  </p>
+
+<br/>
+
+Built with ❤️ using React, Node.js, and LangGraph.
+
+[⭐ Star this repo](https://github.com/Dev-6106/NoteAtlas) if you find it useful!
+
+<br/>
+
 </div>
