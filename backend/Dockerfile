@@ -9,7 +9,7 @@ ENV NODE_OPTIONS=${NODE_OPTIONS}
 
 # Install ALL deps first (layer-cached — only re-runs if package*.json changes)
 COPY package*.json ./
-RUN npm ci
+RUN npm ci --legacy-peer-deps
 
 # Copy source and compile TypeScript → dist/
 COPY . .
@@ -22,7 +22,7 @@ WORKDIR /app
 
 # Install production deps only (no devDependencies)
 COPY package*.json ./
-RUN npm ci --omit=dev
+RUN npm ci --omit=dev --legacy-peer-deps
 
 # Copy compiled JS from builder stage
 COPY --from=builder /app/dist ./dist
