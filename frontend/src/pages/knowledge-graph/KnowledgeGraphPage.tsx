@@ -199,7 +199,7 @@ export default function KnowledgeGraphPage() {
       <div style={{ flex: 1, position: "relative", overflow: "hidden" }}>
         {/* Loading state */}
         <AnimatePresence>
-          {loading && (
+          {loading && !generating && !isPolling && (
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -325,7 +325,7 @@ export default function KnowledgeGraphPage() {
 
         {/* Generating overlay */}
         <AnimatePresence>
-          {isGraphLoading && (
+          {(generating || isPolling) && (
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
