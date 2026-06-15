@@ -566,7 +566,7 @@ export const SourceViewerModal = ({
                                 onClick={handleAskAI}
                                 disabled={isAskingAI || !askAIQuery.trim()}
                                 style={{
-                                    background: "var(--primary-brand)", color: "#fff", border: "none",
+                                    background: "var(--primary-brand)", color: "var(--text-on-primary)", border: "none",
                                     borderRadius: 8, padding: "6px 12px", fontSize: 12, fontWeight: 600,
                                     cursor: "pointer", opacity: (isAskingAI || !askAIQuery.trim()) ? 0.5 : 1
                                 }}

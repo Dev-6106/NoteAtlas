@@ -106,7 +106,7 @@ export default function RenameFolderModal({
               style={{
                 padding: '10px 18px', borderRadius: 10, border: 'none',
                 background: folderName.trim() ? 'var(--primary-brand)' : 'var(--bg-card-hover)',
-                color: folderName.trim() ? '#fff' : 'var(--text-3)',
+                color: folderName.trim() ? 'var(--text-on-primary)' : 'var(--text-3)',
                 fontSize: 14, fontWeight: 500, cursor: folderName.trim() ? 'pointer' : 'not-allowed',
                 fontFamily: 'var(--font-sans)', transition: 'opacity 0.2s'
               }}
