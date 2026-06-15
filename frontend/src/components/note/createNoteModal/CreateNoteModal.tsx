@@ -177,6 +177,7 @@ const CreateNoteModal = ({ noteId }: { noteId?: string }) => {
 
 
 const UploadFileSection = ({ noteId }: { noteId?: string }) => {
+    const dispatch = useDispatch<AppDispatch>();
     const [isDragging, setIsDragging] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [loading, setLoading] = useState(false);
