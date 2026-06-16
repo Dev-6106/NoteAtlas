@@ -13,19 +13,19 @@ export const AGENT_PROMPTS: Record<string, { map: string, reduce: string }> = {
   },
   STUDY_PLAN: {
     map: `Identify all important topics, sub-topics, and estimate their learning complexity.\n\nTEXT:\n{context}`,
-    reduce: `Create a detailed {input} Study Plan based on the provided topic list.\n\nFor each day, provide:\n- The specific topics to cover\n- A brief explanation of the goal\n- 3 short quiz questions to test knowledge.\n\nFormat as a structured day-by-day Markdown schedule.\n\nTOPICS:\n{docs}`
+    reduce: `Create a detailed Study Plan based on the provided topic list.\n\nSpecifications (Timeframe, Focus Areas, etc): {input}\n\nFor each day, provide:\n- The specific topics to cover\n- A brief explanation of the goal\n- 3 short quiz questions to test knowledge.\n\nFormat as a structured day-by-day Markdown schedule.\n\nTOPICS:\n{docs}`
   },
   KNOWLEDGE_GAP: {
     map: `Extract all topics and concepts covered in the text.\n\nTEXT:\n{context}`,
-    reduce: `Compare the extracted topics against the provided curriculum/syllabus: "{input}".\n\nProvide:\n1. A Coverage Percentage.\n2. A list of Covered Topics (with a brief summary).\n3. A list of MISSING Concepts (topics in the syllabus but not found in the notes).\n4. Recommendations and links to study the missing concepts.\n\nFormat beautifully in Markdown.\n\nEXTRACTED TOPICS:\n{docs}`
+    reduce: `Compare the extracted topics against the provided curriculum/syllabus/topic: "{input}".\n\nProvide:\n1. A Coverage Percentage.\n2. A list of Covered Topics (with a brief summary).\n3. A list of MISSING Concepts (topics in the syllabus but not found in the notes).\n4. Recommendations and links to study the missing concepts.\n\nFormat beautifully in Markdown.\n\nEXTRACTED TOPICS:\n{docs}`
   },
   CROSS_DOC_DEBATE: {
     map: `Extract the primary claims, methodologies, and results from this document chunk.\n\nTEXT:\n{context}`,
     reduce: `Compare the extracted claims from the provided documents.\n\nGenerate a Cross-Document Debate Report containing:\n1. Points of Agreement\n2. Points of Contradiction / Disagreement\n3. Methodology Comparison\n4. Results Comparison\n\nFormat beautifully in Markdown.\n\nCLAIMS:\n{docs}`
   },
   RESEARCH_ASSISTANT: {
-    map: `Extract key concepts and logical learning steps for a beginner.\n\nTEXT:\n{context}`,
-    reduce: `Act as a tutor teaching "{input}".\n\nBased on the extracted text, generate an Automatic Research Assistant Guide:\n1. A logical Learning Roadmap.\n2. Summaries for each step.\n3. A final quiz to test understanding.\n\nFormat beautifully in Markdown.\n\nCONCEPTS:\n{docs}`
+    map: `Extract key concepts and logical learning steps.\n\nTarget specifications: {input}\n\nTEXT:\n{context}`,
+    reduce: `Act as a tutor.\n\nTarget specifications (Subject, Difficulty): {input}\n\nBased on the extracted text, generate an Automatic Research Assistant Guide:\n1. A logical Learning Roadmap.\n2. Summaries for each step.\n3. A final quiz to test understanding.\n\nFormat beautifully in Markdown.\n\nCONCEPTS:\n{docs}`
   },
   SOURCE_VERIFICATION: {
     map: `Find any evidence, quotes, or data that supports or refutes the following statement: "{input}".\n\nTEXT:\n{context}`,
@@ -33,19 +33,19 @@ export const AGENT_PROMPTS: Record<string, { map: string, reduce: string }> = {
   },
   MEETING_MINUTES: {
     map: `Extract participants, decisions made, and action items discussed.\n\nTEXT:\n{context}`,
-    reduce: `Generate formal Meeting Minutes.\n\nInclude:\n1. Executive Summary\n2. Decisions Made\n3. Action Items (with assignees and deadlines if mentioned)\n\nFormat beautifully in Markdown.\n\nNOTES:\n{docs}`
+    reduce: `Generate formal Meeting Minutes.\n\nContext/Date: {input}\n\nInclude:\n1. Executive Summary\n2. Decisions Made\n3. Action Items (with assignees and deadlines if mentioned)\n\nFormat beautifully in Markdown.\n\nNOTES:\n{docs}`
   },
   TIMELINE_GEN: {
     map: `Extract all dates, years, and chronological events.\n\nTEXT:\n{context}`,
     reduce: `Create a Chronological Timeline of all events extracted from the documents.\n\nFormat as a bulleted list ordered from oldest to newest.\n\nEVENTS:\n{docs}`
   },
   PRESENTATION_GEN: {
-    map: `Extract the main points suitable for a slide presentation.\n\nTEXT:\n{context}`,
-    reduce: `Generate a Slide-by-Slide Presentation outline.\n\nFor each slide, provide:\n- Slide Title\n- Bullet Points\n- Speaker Notes\n\nFormat beautifully in Markdown.\n\nMAIN POINTS:\n{docs}`
+    map: `Extract the main points suitable for a slide presentation.\n\nTarget specifications (Slide Count, Audience): {input}\n\nTEXT:\n{context}`,
+    reduce: `Generate a Slide-by-Slide Presentation outline.\n\nTarget specifications (Slide Count, Audience): {input}\n\nFor each slide, provide:\n- Slide Title\n- Bullet Points\n- Speaker Notes\n\nFormat beautifully in Markdown.\n\nMAIN POINTS:\n{docs}`
   },
   CONTENT_PIPELINE: {
-    map: `Extract the most interesting insights, statistics, and hooks.\n\nTEXT:\n{context}`,
-    reduce: `Turn these insights into a Content Creation Pipeline.\n\nGenerate:\n1. A viral LinkedIn post (with emojis and spacing).\n2. A Twitter/X thread (3-5 tweets).\n3. A Blog Post Outline.\n4. A short Newsletter summary.\n\nINSIGHTS:\n{docs}`
+    map: `Extract the most interesting insights, statistics, and hooks.\n\nTarget specifications (Platform, Tone): {input}\n\nTEXT:\n{context}`,
+    reduce: `Turn these insights into a highly engaging content piece.\n\nTarget specifications (Platform, Tone): {input}\n\nGenerate the content ONLY for the specified platform, matching the specified tone. Do not generate content for other platforms.\n\nINSIGHTS:\n{docs}`
   }
 };
 
